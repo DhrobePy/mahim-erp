@@ -1,9 +1,13 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-01-01',
-  // SPA mode: the app deploys as static files on cPanel (no Node there);
-  // all data flows client → Supabase directly, secured by RLS.
-  ssr: false,
+  // Dev runs with SSR (the nuxi dev server needs it); production builds
+  // (`nuxi generate`) ship as a static SPA for cPanel — no Node on the
+  // server, all data flows client → Supabase directly, secured by RLS.
+  ssr: true,
+  $production: {
+    ssr: false
+  },
   devtools: { enabled: true },
 
   modules: ['@nuxt/ui', '@nuxtjs/supabase', '@pinia/nuxt'],
