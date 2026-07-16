@@ -35,6 +35,29 @@ facilities across multiple banks.
 
 ## Getting started
 
+### Option A — fully local (Docker + Supabase CLI, no cloud account)
+
+```bash
+npm install
+cp .env.example .env          # local defaults already point at the local stack
+# install Docker Desktop (or Colima on macOS) and the Supabase CLI, then:
+supabase start                # boots Postgres/Auth/API/Studio in containers
+supabase db reset             # applies migrations 0001–0008 + seed (fresh DB only!)
+npm run dev                   # → http://localhost:3000
+```
+
+Local endpoints: app `:3000`, **Supabase Studio** (table browser / SQL editor —
+the phpMyAdmin equivalent) `http://127.0.0.1:54323`, API `:54321`,
+Postgres `127.0.0.1:54322` (`postgres`/`postgres`).
+
+Create your first user via the login page's **Sign up**, then grant admin in
+Studio's SQL editor (see Companies & roles below). Daily start order:
+Docker/Colima → `supabase start` → `npm run dev`. Apply new migrations to an
+existing local DB with `supabase migration up` — **never** `db reset`, which
+wipes data.
+
+### Option B — hosted database (cloud)
+
 ### 1. Install dependencies
 
 ```bash
@@ -46,7 +69,7 @@ npm install
 At [supabase.com](https://supabase.com) → new project. Then in the SQL editor,
 run the migrations and seed **in order**:
 
-1. `supabase/migrations/0001_init.sql` … `0007_hr_payroll.sql` (in numeric order)
+1. `supabase/migrations/0001_init.sql` … `0008_audit_lc_lifecycle.sql` (in numeric order)
 2. `supabase/seed.sql`
 
 ### 3. Configure environment
