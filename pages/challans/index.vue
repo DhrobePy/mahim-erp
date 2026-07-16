@@ -192,6 +192,11 @@ const statusColor = (s: string) =>
         </template>
         <template #actions-data="{ row }">
           <div class="flex gap-1 justify-end">
+            <UButton
+              v-if="row.status !== 'draft'"
+              icon="i-heroicons-printer" size="xs" color="gray" variant="ghost"
+              :to="`/print/challan/${row.id}`" target="_blank" aria-label="Print delivery challan"
+            />
             <UButton v-if="canWrite && row.status === 'draft'" size="xs" variant="soft" @click="issueDraft(row)">Issue</UButton>
             <UButton
               v-if="canWrite && row.challan_kind === 'original' && row.status === 'delivered_unbilled'"

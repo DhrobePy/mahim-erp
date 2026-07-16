@@ -34,6 +34,10 @@ onMounted(load)
   <div v-if="inv">
     <PageHeader kicker="Sales &amp; Local LC" :title="inv.invoice_no" :subtitle="`${inv.invoice_date} · ${inv.is_deemed_export ? 'deemed export (0% VAT, Mushak 6.3)' : 'domestic'}`">
       <UBadge variant="subtle" :color="inv.status === 'settled' ? 'green' : inv.status === 'billed' ? 'purple' : 'blue'">{{ inv.status }}</UBadge>
+      <UButton
+        icon="i-heroicons-printer" variant="soft"
+        :to="`/print/${inv.id}`" target="_blank"
+      >Print bank set</UButton>
     </PageHeader>
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">

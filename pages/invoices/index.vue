@@ -94,6 +94,10 @@ const statusColor = (s: string) =>
         <template #actions-data="{ row }">
           <div class="flex gap-1 justify-end">
             <UButton
+              icon="i-heroicons-printer" size="xs" color="gray" variant="ghost"
+              :to="`/print/${row.id}`" target="_blank" aria-label="Print bank document set"
+            />
+            <UButton
               v-if="canWrite && row.lc_id && row.status === 'open'"
               size="xs" variant="soft" @click="makeBill(row)"
             >Submit bill</UButton>
