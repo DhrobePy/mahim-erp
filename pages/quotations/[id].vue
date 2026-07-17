@@ -90,15 +90,22 @@ const toOrder = async () => {
         </div>
       </UCard>
 
-      <UCard>
-        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Terms</p></template>
-        <div class="text-[13px] space-y-2">
-          <div><span class="text-gray-500 dark:text-zinc-500">Payment:</span> {{ doc.payment_terms || '—' }}</div>
-          <div><span class="text-gray-500 dark:text-zinc-500">Delivery:</span> {{ doc.delivery_terms || '—' }}</div>
-          <div><span class="text-gray-500 dark:text-zinc-500">Basis:</span> {{ doc.is_deemed_export ? 'Deemed export (0% VAT)' : 'Domestic (15% VAT)' }}</div>
-          <div v-if="doc.notes"><span class="text-gray-500 dark:text-zinc-500">Notes:</span> {{ doc.notes }}</div>
-        </div>
-      </UCard>
+      <div class="space-y-4">
+        <UCard>
+          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Terms</p></template>
+          <div class="text-[13px] space-y-2">
+            <div><span class="text-gray-500 dark:text-zinc-500">Payment:</span> {{ doc.payment_terms || '—' }}</div>
+            <div><span class="text-gray-500 dark:text-zinc-500">Delivery:</span> {{ doc.delivery_terms || '—' }}</div>
+            <div><span class="text-gray-500 dark:text-zinc-500">Basis:</span> {{ doc.is_deemed_export ? 'Deemed export (0% VAT)' : 'Domestic (15% VAT)' }}</div>
+            <div v-if="doc.notes"><span class="text-gray-500 dark:text-zinc-500">Notes:</span> {{ doc.notes }}</div>
+          </div>
+        </UCard>
+
+        <UCard v-if="doc.doc_type === 'contract'">
+          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Legal</p></template>
+          <AdminLegalReview ref-table="sales_documents" :ref-id="doc.id" />
+        </UCard>
+      </div>
     </div>
   </div>
   <div v-else-if="!loading" class="text-sm text-gray-400 py-10 text-center">Document not found.</div>

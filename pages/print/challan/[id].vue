@@ -11,6 +11,7 @@ const { num } = useFmt()
 const id = route.params.id as string
 const ch = ref<any>(null)
 const company = ref<any>(null)
+const { logoUrl } = useCompanyLogo()
 const lines = ref<any[]>([])
 const loading = ref(true)
 
@@ -66,6 +67,7 @@ const fmtDate = (d?: string) => d
 
     <div v-else-if="ch && company" class="sheet">
       <div class="letterhead">
+        <img v-if="logoUrl(company)" :src="logoUrl(company)" class="co-logo" alt="Company logo">
         <div class="co-name">{{ company.legal_name || company.name }}</div>
         <div class="small">{{ company.address || '' }}</div>
       </div>
@@ -160,6 +162,7 @@ const fmtDate = (d?: string) => d
 .doc-title { text-align: center; font-size: 17px; font-weight: 700; letter-spacing: 3px; text-decoration: underline; margin: 8px 0 18px; }
 .kind-tag { display: block; font-size: 11px; letter-spacing: 1px; text-decoration: none; color: #555; margin-top: 2px; }
 .letterhead { text-align: center; border-bottom: 2px solid #111; padding-bottom: 8px; margin-bottom: 10px; }
+.co-logo { max-height: 48px; max-width: 220px; margin: 0 auto 6px; display: block; object-fit: contain; }
 .co-name { font-size: 20px; font-weight: 700; letter-spacing: 1px; }
 .small { font-size: 11px; color: #333; }
 .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
