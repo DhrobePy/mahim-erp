@@ -76,6 +76,10 @@ const fmtDate = (d?: string) => d
           <tr>
             <td><div class="small">Service</div><b>{{ serviceLabel[req.service_type] }}</b></td>
             <td v-if="req.reference_no"><div class="small">Reference</div><b class="mono">{{ req.reference_no }}</b></td>
+            <td v-if="req.service_type === 'bank_statement' && req.statement_period_from">
+              <div class="small">Statement Period</div>
+              <b>{{ fmtDate(req.statement_period_from) }} to {{ fmtDate(req.statement_period_to) }}</b>
+            </td>
             <td v-if="req.amount"><div class="small">Amount</div><b class="mono">{{ money(req.amount) }}</b></td>
             <td v-if="req.tenor_or_period"><div class="small">Tenor / Period</div><b>{{ req.tenor_or_period }}</b></td>
           </tr>

@@ -50,13 +50,15 @@ const saving = ref(false)
 const form = reactive({
   branch_id: null as string | null, service_type: 'lc_issue', reference_no: '', subject: '', body: '',
   amount: null as number | null, tenor_or_period: '', board_resolution_id: null as string | null,
-  request_date: new Date().toISOString().slice(0, 10)
+  request_date: new Date().toISOString().slice(0, 10),
+  statement_period_from: '', statement_period_to: ''
 })
 const openNew = () => {
   const t = byValue('lc_issue')
   Object.assign(form, {
     branch_id: null, service_type: 'lc_issue', reference_no: '', subject: t?.subject ?? '', body: t?.body ?? '',
-    amount: null, tenor_or_period: '', board_resolution_id: null, request_date: new Date().toISOString().slice(0, 10)
+    amount: null, tenor_or_period: '', board_resolution_id: null, request_date: new Date().toISOString().slice(0, 10),
+    statement_period_from: '', statement_period_to: ''
   })
   open.value = true
 }
@@ -68,8 +70,16 @@ const onServiceChange = (v: string) => {
 const save = async () => {
   if (!form.branch_id) { toast.add({ title: 'Pick a branch', color: 'red' }); return }
   if (!form.subject) { toast.add({ title: 'Subject is required', color: 'red' }); return }
+  if (form.service_type === 'bank_statement' && (!form.statement_period_from || !form.statement_period_to)) {
+    toast.add({ title: 'Statement period (from and to) is required', color: 'red' }); return
+  }
   saving.value = true
-  const { error } = await client.from('bank_service_requests').insert({ ...form } as any)
+  const payload: any = {
+    ...form,
+    statement_period_from: form.statement_period_from || null,
+    statement_period_to: form.statement_period_to || null
+  }
+  const { error } = await client.from('bank_service_requests').insert(payload)
   if (error) toast.add({ title: 'Save failed', description: error.message, color: 'red' })
   else { toast.add({ title: 'Bank service request created' }); open.value = false; await load() }
   saving.value = false
@@ -105,13 +115,18 @@ const setStatus = async (row: any, status: string) => {
         :columns="[
           { key: 'request_no', label: 'No.' }, { key: 'service_type', label: 'Service' },
           { key: 'branch', label: 'Branch' }, { key: 'subject', label: 'Subject' },
-          { key: 'amount', label: 'Amount (৳)' }, { key: 'status', label: 'Status' }, { key: 'actions', label: '' }
+          { key: 'amount', label: 'Amount / Period' }, { key: 'status', label: 'Status' }, { key: 'actions', label: '' }
         ]"
       >
         <template #request_no-data="{ row }"><span class="num font-medium text-amber-600 dark:text-amber-400">{{ row.request_no }}</span></template>
         <template #service_type-data="{ row }"><UBadge size="xs" variant="subtle">{{ serviceLabel[row.service_type] }}</UBadge></template>
         <template #branch-data="{ row }">{{ row.bank_branches?.parties?.name }} — {{ row.bank_branches?.branch_name }}</template>
-        <template #amount-data="{ row }"><span class="num">{{ row.amount ? money(row.amount) : '—' }}</span></template>
+        <template #amount-data="{ row }">
+          <span v-if="row.service_type === 'bank_statement'" class="num text-xs">
+            {{ row.statement_period_from ? `${row.statement_period_from} → ${row.statement_period_to}` : '—' }}
+          </span>
+          <span v-else class="num">{{ row.amount ? money(row.amount) : '—' }}</span>
+        </template>
         <template #status-data="{ row }"><UBadge size="xs" variant="subtle" :color="statusColor[row.status]">{{ row.status }}</UBadge></template>
         <template #actions-data="{ row }">
           <div class="flex gap-1 justify-end">
@@ -161,7 +176,13 @@ const setStatus = async (row: any, status: string) => {
           </UFormGroup>
           <div class="grid grid-cols-2 gap-3">
             <UFormGroup label="Date"><UInput v-model="form.request_date" type="date" /></UFormGroup>
-            <UFormGroup label="Reference no." hint="LC/bill/facility being referenced"><UInput v-model="form.reference_no" /></UFormGroup>
+            <UFormGroup label="Reference no." hint="LC/bill/facility/account no. being referenced"><UInput v-model="form.reference_no" /></UFormGroup>
+          </div>
+          <div v-if="form.service_type === 'bank_statement'" class="grid grid-cols-2 gap-3">
+            <UFormGroup label="Statement period — from" required><UInput v-model="form.statement_period_from" type="date" /></UFormGroup>
+            <UFormGroup label="Statement period — to" required><UInput v-model="form.statement_period_to" type="date" /></UFormGroup>
+          </div>
+          <div v-else class="grid grid-cols-2 gap-3">
             <UFormGroup label="Amount (৳)"><UInput v-model.number="form.amount" type="number" /></UFormGroup>
             <UFormGroup label="Tenor / period"><UInput v-model="form.tenor_or_period" placeholder="e.g. 12 months" /></UFormGroup>
           </div>
