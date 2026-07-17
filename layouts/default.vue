@@ -63,8 +63,10 @@ const adminSection = {
     { label: 'Audit trail', to: '/audit', icon: 'i-heroicons-shield-check' },
     { label: 'Company & structure', to: '/admin/company', icon: 'i-heroicons-building-office-2' },
     { label: 'Directors & partners', to: '/admin/directors', icon: 'i-heroicons-user-group' },
+    { label: 'Board resolutions', to: '/admin/resolutions', icon: 'i-heroicons-clipboard-document-check' },
     { label: 'Company documents', to: '/admin/documents', icon: 'i-heroicons-folder' },
     { label: 'Forwarding pad', to: '/admin/forwarding', icon: 'i-heroicons-paper-airplane' },
+    { label: 'Bank service requests', to: '/admin/bank-requests', icon: 'i-heroicons-building-library' },
     { label: 'Tax — IT-10B', to: '/admin/tax', icon: 'i-heroicons-calculator' }
   ]
 }
