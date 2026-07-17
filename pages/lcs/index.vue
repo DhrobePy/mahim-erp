@@ -7,6 +7,7 @@ const { extractLc } = usePdfExtract()
 const lcs = ref<any[]>([])
 const parties = ref<any[]>([])
 const banks = ref<any[]>([])
+const cashBankAccounts = ref<any[]>([])
 const loading = ref(true)
 
 const columns = [
@@ -21,12 +22,13 @@ const columns = [
 
 const load = async () => {
   loading.value = true
-  const [l, p, b] = await Promise.all([
+  const [l, p, b, cba] = await Promise.all([
     client.from('lcs')
       .select('*, buyer:buyer_party_id(name), bank:bank_party_id(name), lc_amendments(version, amount, quantity, tolerance_pct, expiry_date, bank_fee, note)')
       .order('created_at', { ascending: false }),
     client.from('parties').select('id, name').eq('is_customer', true).order('name'),
-    client.from('parties').select('id, name').eq('is_bank', true).order('name')
+    client.from('parties').select('id, name').eq('is_bank', true).order('name'),
+    client.from('cash_bank_accounts').select('id, name').eq('is_active', true).order('name')
   ])
   lcs.value = (l.data ?? []).map((row: any) => ({
     ...row,
@@ -34,6 +36,7 @@ const load = async () => {
   }))
   parties.value = p.data ?? []
   banks.value = b.data ?? []
+  cashBankAccounts.value = cba.data ?? []
   loading.value = false
 }
 onMounted(load)
@@ -130,13 +133,13 @@ const save = async () => {
 // --- Amendment (next version) ---
 const amendOpen = ref(false)
 const amendTarget = ref<any>(null)
-const amendForm = reactive({ amount: 0, quantity: null as number | null, tolerance_pct: 5, expiry_date: null as string | null, bank_fee: 0, note: '' })
+const amendForm = reactive({ amount: 0, quantity: null as number | null, tolerance_pct: 5, expiry_date: null as string | null, bank_fee: 0, cash_bank_account_id: null as string | null, note: '' })
 const openAmend = (row: any) => {
   amendTarget.value = row
   const a = active(row)
   Object.assign(amendForm, {
     amount: a?.amount ?? 0, quantity: a?.quantity, tolerance_pct: a?.tolerance_pct ?? 5,
-    expiry_date: a?.expiry_date, bank_fee: 0, note: ''
+    expiry_date: a?.expiry_date, bank_fee: 0, cash_bank_account_id: null, note: ''
   })
   amendOpen.value = true
 }
@@ -242,6 +245,9 @@ const saveAmend = async () => {
           <UFormGroup label="Expiry"><UInput v-model="amendForm.expiry_date" type="date" /></UFormGroup>
           <UFormGroup label="MT707 fee on us (৳)" hint="posts to 5400 if > 0">
             <UInput v-model.number="amendForm.bank_fee" type="number" />
+          </UFormGroup>
+          <UFormGroup v-if="amendForm.bank_fee > 0" label="Fee paid from" hint="which account the fee is debited from">
+            <USelect v-model="amendForm.cash_bank_account_id" :options="cashBankAccounts" option-attribute="name" value-attribute="id" placeholder="— default bank account —" />
           </UFormGroup>
           <UFormGroup label="Note"><UInput v-model="amendForm.note" /></UFormGroup>
         </div>

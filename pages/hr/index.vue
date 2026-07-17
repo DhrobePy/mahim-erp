@@ -5,6 +5,7 @@ const { canWrite } = useProfile()
 
 const employees = ref<any[]>([])
 const loans = ref<any[]>([])
+const cashBankAccounts = ref<any[]>([])
 const loading = ref(true)
 
 const columns = [
@@ -20,12 +21,14 @@ const columns = [
 
 const load = async () => {
   loading.value = true
-  const [e, l] = await Promise.all([
+  const [e, l, cba] = await Promise.all([
     client.from('employees').select('*').order('emp_no'),
-    client.from('employee_loans').select('*, employees(full_name)').order('created_at', { ascending: false })
+    client.from('employee_loans').select('*, employees(full_name)').order('created_at', { ascending: false }),
+    client.from('cash_bank_accounts').select('id, name').eq('is_active', true).order('name')
   ])
   employees.value = e.data ?? []
   loans.value = l.data ?? []
+  cashBankAccounts.value = cba.data ?? []
   loading.value = false
 }
 onMounted(load)
@@ -62,9 +65,9 @@ const save = async () => {
 
 // --- Loan disbursement ---
 const loanOpen = ref(false)
-const loanForm = reactive({ employee_id: null as string | null, principal: 0, installment: 0, note: '' })
+const loanForm = reactive({ employee_id: null as string | null, principal: 0, installment: 0, note: '', cash_bank_account_id: null as string | null })
 const openLoan = (row?: any) => {
-  Object.assign(loanForm, { employee_id: row?.id ?? null, principal: 0, installment: 0, note: '' })
+  Object.assign(loanForm, { employee_id: row?.id ?? null, principal: 0, installment: 0, note: '', cash_bank_account_id: null })
   loanOpen.value = true
 }
 const saveLoan = async () => {
@@ -72,7 +75,8 @@ const saveLoan = async () => {
     p_employee_id: loanForm.employee_id,
     p_principal: loanForm.principal,
     p_installment: loanForm.installment,
-    p_note: loanForm.note || null
+    p_note: loanForm.note || null,
+    p_cash_bank_account_id: loanForm.cash_bank_account_id
   } as any)
   if (error) toast.add({ title: 'Loan failed', description: error.message, color: 'red' })
   else { toast.add({ title: 'Loan disbursed & posted' }); loanOpen.value = false; await load() }
@@ -159,6 +163,9 @@ const saveLoan = async () => {
           </UFormGroup>
           <UFormGroup label="Principal (৳)" hint="max 6 × basic"><UInput v-model.number="loanForm.principal" type="number" /></UFormGroup>
           <UFormGroup label="Monthly installment (৳)"><UInput v-model.number="loanForm.installment" type="number" /></UFormGroup>
+          <UFormGroup label="Paid from account">
+            <USelect v-model="loanForm.cash_bank_account_id" :options="cashBankAccounts" option-attribute="name" value-attribute="id" placeholder="— default bank account —" />
+          </UFormGroup>
           <UFormGroup label="Note"><UInput v-model="loanForm.note" /></UFormGroup>
         </div>
         <template #footer>

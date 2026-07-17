@@ -43,7 +43,14 @@ const sections = [
     title: 'Finance',
     links: [
       { label: 'Banking / LBPD', to: '/banking', icon: 'i-heroicons-banknotes' },
-      { label: 'Accounting', to: '/accounting', icon: 'i-heroicons-calculator' }
+      { label: 'Accounting', to: '/accounting', icon: 'i-heroicons-calculator' },
+      { label: 'Bank & cash accounts', to: '/accounting/accounts', icon: 'i-heroicons-credit-card' },
+      { label: 'Cash sales', to: '/accounting/cash-sales', icon: 'i-heroicons-shopping-bag' },
+      { label: 'Transfers', to: '/accounting/transfers', icon: 'i-heroicons-arrows-right-left' },
+      { label: 'Bank charges & fees', to: '/accounting/bank-charges', icon: 'i-heroicons-currency-dollar' },
+      { label: 'Profit & Loss', to: '/accounting/pnl', icon: 'i-heroicons-chart-bar' },
+      { label: 'VAT return', to: '/accounting/vat-return', icon: 'i-heroicons-receipt-percent' },
+      { label: 'AIT summary', to: '/accounting/ait-summary', icon: 'i-heroicons-document-chart-bar' }
     ]
   },
   {
@@ -67,7 +74,8 @@ const adminSection = {
     { label: 'Company documents', to: '/admin/documents', icon: 'i-heroicons-folder' },
     { label: 'Forwarding pad', to: '/admin/forwarding', icon: 'i-heroicons-paper-airplane' },
     { label: 'Bank service requests', to: '/admin/bank-requests', icon: 'i-heroicons-building-library' },
-    { label: 'Tax — IT-10B', to: '/admin/tax', icon: 'i-heroicons-calculator' }
+    { label: 'Tax — IT-10B', to: '/admin/tax', icon: 'i-heroicons-calculator' },
+    { label: 'Corporate tax computation', to: '/admin/tax/corporate', icon: 'i-heroicons-scale' }
   ]
 }
 const visibleSections = computed(() =>

@@ -7,20 +7,23 @@ const facilities = ref<any[]>([])
 const bills = ref<any[]>([])
 const disbursements = ref<any[]>([])
 const banks = ref<any[]>([])
+const cashBankAccounts = ref<any[]>([])
 const loading = ref(true)
 
 const load = async () => {
   loading.value = true
-  const [f, b, d, bk] = await Promise.all([
+  const [f, b, d, bk, cba] = await Promise.all([
     client.from('bank_facilities').select('*, parties(name)').order('created_at'),
     client.from('bills').select('*, lcs(lc_no), invoices(invoice_no)').order('created_at', { ascending: false }),
     client.from('lbpd_disbursements').select('*, bills(bill_no, amount)').order('created_at', { ascending: false }),
-    client.from('parties').select('id, name').eq('is_bank', true).order('name')
+    client.from('parties').select('id, name').eq('is_bank', true).order('name'),
+    client.from('cash_bank_accounts').select('id, name').eq('kind', 'bank').eq('is_active', true).order('name')
   ])
   facilities.value = f.data ?? []
   bills.value = b.data ?? []
   disbursements.value = d.data ?? []
   banks.value = bk.data ?? []
+  cashBankAccounts.value = cba.data ?? []
   loading.value = false
 }
 onMounted(load)
@@ -48,17 +51,18 @@ const acceptBill = async (row: any) => {
 
 const discOpen = ref(false)
 const discTarget = ref<any>(null)
-const discForm = reactive({ facility_id: null as string | null, advance_pct: 85 })
+const discForm = reactive({ facility_id: null as string | null, advance_pct: 85, cash_bank_account_id: null as string | null })
 const openDiscount = (row: any) => {
   discTarget.value = row
-  Object.assign(discForm, { facility_id: facilities.value[0]?.id ?? null, advance_pct: 85 })
+  Object.assign(discForm, { facility_id: facilities.value[0]?.id ?? null, advance_pct: 85, cash_bank_account_id: null })
   discOpen.value = true
 }
 const saveDiscount = async () => {
   const { error } = await client.rpc('disburse_lbpd', {
     p_bill_id: discTarget.value.id,
     p_facility_id: discForm.facility_id,
-    p_advance_pct: discForm.advance_pct
+    p_advance_pct: discForm.advance_pct,
+    p_cash_bank_account_id: discForm.cash_bank_account_id
   } as any)
   if (error) toast.add({ title: 'Disbursement failed', description: error.message, color: 'red' })
   else { toast.add({ title: 'LBPD disbursed — cash in bank' }); discOpen.value = false; await load() }
@@ -217,6 +221,9 @@ const disbColor = (s: string) =>
           </UFormGroup>
           <UFormGroup label="Advance %" hint="80–90% typical">
             <UInput v-model.number="discForm.advance_pct" type="number" />
+          </UFormGroup>
+          <UFormGroup label="Credit to account" hint="which bank account receives the advance">
+            <USelect v-model="discForm.cash_bank_account_id" :options="cashBankAccounts" option-attribute="name" value-attribute="id" placeholder="— default bank account —" />
           </UFormGroup>
           <p class="text-sm text-gray-500">
             Cash now: <span class="num font-semibold text-emerald-600 dark:text-emerald-400">৳{{ (Math.round((discTarget?.amount ?? 0) * discForm.advance_pct) / 100).toLocaleString('en-IN') }}</span>

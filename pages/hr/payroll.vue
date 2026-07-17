@@ -4,6 +4,7 @@ const toast = useToast()
 const { canWrite, activeCompanyId } = useProfile()
 
 const runs = ref<any[]>([])
+const cashBankAccounts = ref<any[]>([])
 const loading = ref(true)
 const now = new Date()
 const genForm = reactive({ year: now.getFullYear(), month: now.getMonth() + 1 })
@@ -11,10 +12,14 @@ const bonusForm = reactive({ year: now.getFullYear(), month: now.getMonth() + 1,
 
 const load = async () => {
   loading.value = true
-  const { data } = await client.from('payroll_runs')
-    .select('*, payroll_lines(id, employee_id, basic, gross, days_present, days_absent, ot_hours, ot_amount, attendance_allowance, absence_deduction, loan_recovery, net_pay, employees(emp_no, full_name))')
-    .order('created_at', { ascending: false })
-  runs.value = data ?? []
+  const [r, cba] = await Promise.all([
+    client.from('payroll_runs')
+      .select('*, payroll_lines(id, employee_id, basic, gross, days_present, days_absent, ot_hours, ot_amount, attendance_allowance, absence_deduction, loan_recovery, net_pay, employees(emp_no, full_name))')
+      .order('created_at', { ascending: false }),
+    client.from('cash_bank_accounts').select('id, name').eq('is_active', true).order('name')
+  ])
+  runs.value = r.data ?? []
+  cashBankAccounts.value = cba.data ?? []
   loading.value = false
 }
 onMounted(load)
@@ -42,10 +47,14 @@ const post = async (row: any) => {
   if (error) toast.add({ title: 'Posting failed', description: error.message, color: 'red' })
   else { toast.add({ title: `${row.run_no} posted to GL — loans amortised` }); await load() }
 }
-const pay = async (row: any) => {
-  const { error } = await client.rpc('pay_payroll', { p_run_id: row.id } as any)
+const payOpen = ref(false)
+const payTarget = ref<any>(null)
+const payAccount = ref<string | null>(null)
+const openPay = (row: any) => { payTarget.value = row; payAccount.value = null; payOpen.value = true }
+const confirmPay = async () => {
+  const { error } = await client.rpc('pay_payroll', { p_run_id: payTarget.value.id, p_cash_bank_account_id: payAccount.value } as any)
   if (error) toast.add({ title: 'Payment failed', description: error.message, color: 'red' })
-  else { toast.add({ title: `${row.run_no} paid (Dr 2200 / Cr 1100)` }); await load() }
+  else { toast.add({ title: `${payTarget.value.run_no} paid (Dr 2200 / Cr bank)` }); payOpen.value = false; await load() }
 }
 
 const expanded = ref<string | null>(null)
@@ -89,7 +98,7 @@ const statusColor = (s: string) => ({ draft: 'yellow', posted: 'blue', paid: 'gr
             <div class="flex items-center gap-2">
               <UBadge size="xs" variant="subtle" :color="statusColor(r.status)">{{ r.status }}</UBadge>
               <UButton v-if="canWrite && r.status === 'draft'" size="xs" variant="soft" @click="post(r)">Post to GL</UButton>
-              <UButton v-if="canWrite && r.status === 'posted'" size="xs" variant="soft" color="green" @click="pay(r)">Pay</UButton>
+              <UButton v-if="canWrite && r.status === 'posted'" size="xs" variant="soft" color="green" @click="openPay(r)">Pay</UButton>
             </div>
           </div>
           <div v-if="expanded === r.id" class="mt-3 overflow-x-auto">
@@ -122,5 +131,24 @@ const statusColor = (s: string) => ({ draft: 'yellow', posted: 'blue', paid: 'gr
         </div>
       </div>
     </UCard>
+
+    <USlideover v-model="payOpen">
+      <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
+        <template #header>
+          <p class="font-medium">Pay {{ payTarget?.run_no }} <span class="num text-amber-500">(৳{{ Number(payTarget?.total_net).toLocaleString('en-IN') }})</span></p>
+        </template>
+        <div class="space-y-4">
+          <UFormGroup label="Pay from account">
+            <USelect v-model="payAccount" :options="cashBankAccounts" option-attribute="name" value-attribute="id" placeholder="— default bank account —" />
+          </UFormGroup>
+        </div>
+        <template #footer>
+          <div class="flex justify-end gap-2">
+            <UButton color="gray" variant="ghost" @click="payOpen = false">Cancel</UButton>
+            <UButton color="green" @click="confirmPay">Pay</UButton>
+          </div>
+        </template>
+      </UCard>
+    </USlideover>
   </div>
 </template>
