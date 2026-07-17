@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const props = defineProps<{
   modelValue: string[]
-  docs: Array<'boe' | 'ci' | 'pl' | 'challan'>
+  docs: ClauseDoc[]
 }>()
 const emit = defineEmits<{ 'update:modelValue': [string[]] }>()
 

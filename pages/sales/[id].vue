@@ -1,31 +1,47 @@
 <script setup lang="ts">
 const route = useRoute()
 const client = useSupabaseClient()
+const toast = useToast()
+const { canWrite } = useProfile()
 const { money, num } = useFmt()
 
 const id = route.params.id as string
 const so = ref<any>(null)
 const challans = ref<any[]>([])
 const invoices = ref<any[]>([])
+const linkedDocs = ref<any[]>([])
+const generatingPi = ref(false)
 const loading = ref(true)
+
+const typeLabel: Record<string, string> = { quotation: 'Quotation', pi: 'Proforma Invoice', contract: 'Sales Contract' }
 
 const load = async () => {
   loading.value = true
-  const [s, c, i] = await Promise.all([
+  const [s, c, i, d] = await Promise.all([
     client.from('sales_orders')
       .select('*, parties(id, name), lcs(id, lc_no), sales_order_lines(id, qty, unit_price, delivered_qty, items(sku, name))')
       .eq('id', id).single(),
     client.from('delivery_challans')
       .select('id, challan_no, challan_kind, status, document_date, actual_delivery_date, covers:covers_challan_id(challan_no)')
       .eq('so_id', id).order('created_at'),
-    client.from('invoices').select('id, invoice_no, invoice_date, total, status').eq('so_id', id)
+    client.from('invoices').select('id, invoice_no, invoice_date, total, status').eq('so_id', id),
+    client.from('sales_documents').select('id, doc_no, doc_type, status').eq('so_id', id)
   ])
   so.value = s.data
   challans.value = c.data ?? []
   invoices.value = i.data ?? []
+  linkedDocs.value = d.data ?? []
   loading.value = false
 }
 onMounted(load)
+
+const generatePi = async () => {
+  generatingPi.value = true
+  const { error } = await client.rpc('generate_pi_from_order', { p_so_id: id } as any)
+  if (error) toast.add({ title: 'PI generation failed', description: error.message, color: 'red' })
+  else { toast.add({ title: 'Proforma Invoice generated' }); await load() }
+  generatingPi.value = false
+}
 
 const orderValue = computed(() =>
   (so.value?.sales_order_lines ?? []).reduce((s: number, l: any) => s + l.qty * l.unit_price, 0))
@@ -44,6 +60,9 @@ const statusColor = (s: string) =>
   <div v-if="so">
     <PageHeader kicker="Sales &amp; Local LC" :title="so.so_no" :subtitle="`${so.order_date} · ${so.is_deemed_export ? 'deemed export' : 'domestic'}`">
       <UBadge variant="subtle" :color="so.status === 'delivered' ? 'green' : 'blue'">{{ so.status }}</UBadge>
+      <UButton v-if="canWrite" :loading="generatingPi" variant="soft" icon="i-heroicons-document-plus" @click="generatePi">
+        Generate PI
+      </UButton>
     </PageHeader>
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
@@ -99,6 +118,14 @@ const statusColor = (s: string) =>
           <div v-for="i in invoices" :key="i.id" class="flex justify-between py-1.5 text-[13px]">
             <NuxtLink :to="`/invoices/${i.id}`" class="num text-amber-600 dark:text-amber-400 hover:underline">{{ i.invoice_no }}</NuxtLink>
             <span class="num text-gray-500 dark:text-zinc-500">{{ i.invoice_date }} · {{ money(i.total) }} · {{ i.status }}</span>
+          </div>
+        </UCard>
+
+        <UCard v-if="linkedDocs.length">
+          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Quotations / PI / contracts</p></template>
+          <div v-for="d in linkedDocs" :key="d.id" class="flex justify-between py-1.5 text-[13px]">
+            <NuxtLink :to="`/quotations/${d.id}`" class="num text-amber-600 dark:text-amber-400 hover:underline">{{ d.doc_no }}</NuxtLink>
+            <span class="text-gray-500 dark:text-zinc-500">{{ typeLabel[d.doc_type] }} · {{ d.status }}</span>
           </div>
         </UCard>
       </div>

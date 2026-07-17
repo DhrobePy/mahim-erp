@@ -32,6 +32,7 @@ const sections = [
   {
     title: 'Sales & Local LC',
     links: [
+      { label: 'Quotations / PI', to: '/quotations', icon: 'i-heroicons-clipboard-document-list' },
       { label: 'Sales orders', to: '/sales', icon: 'i-heroicons-shopping-cart' },
       { label: 'Challans', to: '/challans', icon: 'i-heroicons-document-duplicate' },
       { label: 'LCs', to: '/lcs', icon: 'i-heroicons-document-check' },

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const props = defineProps<{
   selectedKeys: string[]
-  doc: 'boe' | 'ci' | 'pl' | 'challan'
+  doc: ClauseDoc
 }>()
 const { forDoc } = useLcClauses()
 const items = computed(() =>

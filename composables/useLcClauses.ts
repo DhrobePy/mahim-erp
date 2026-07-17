@@ -3,10 +3,12 @@
 // printed on the Bill of Exchange, Commercial Invoice, Packing List and
 // Delivery Challan for inland (non-shipment) back-to-back LC trade —
 // not legal advice; the user selects what applies to each contract.
+export type ClauseDoc = 'boe' | 'ci' | 'pl' | 'challan' | 'quotation' | 'pi' | 'contract'
+
 export interface LcClause {
   key: string
   category: string
-  appliesTo: Array<'boe' | 'ci' | 'pl' | 'challan'>
+  appliesTo: ClauseDoc[]
   text: string
   defaultOn: boolean
 }
@@ -109,13 +111,62 @@ const CLAUSES: LcClause[] = [
     appliesTo: ['challan'],
     text: 'This Delivery Challan is issued for the purpose of transport of goods only and does not constitute a tax invoice.',
     defaultOn: true
+  },
+  {
+    key: 'offer_not_binding',
+    category: 'Quotation / PI terms',
+    appliesTo: ['quotation', 'pi'],
+    text: 'This document is issued for reference only and does not constitute a binding contract until confirmed in writing by the Buyer and/or a Local Letter of Credit is opened in favour of the Beneficiary on these terms.',
+    defaultOn: true
+  },
+  {
+    key: 'lc_opening_deadline',
+    category: 'Quotation / PI terms',
+    appliesTo: ['pi', 'contract'],
+    text: 'The covering Letter of Credit must be opened within the validity period stated above, failing which this offer may be treated as lapsed and prices subject to revision.',
+    defaultOn: true
+  },
+  {
+    key: 'price_basis',
+    category: 'Quotation / PI terms',
+    appliesTo: ['quotation', 'pi', 'contract'],
+    text: 'Prices quoted are Ex-Factory, Dhaka, exclusive of VAT, and based on the specifications and quantities stated herein; any change shall be subject to re-quotation.',
+    defaultOn: true
+  },
+  {
+    key: 'delivery_schedule',
+    category: 'Contract terms',
+    appliesTo: ['contract'],
+    text: "Delivery shall be effected in accordance with the Buyer's shipment plan, subject to production lead time counted from the date of L/C acceptance or advance received, whichever is later.",
+    defaultOn: true
+  },
+  {
+    key: 'inspection_rights',
+    category: 'Contract terms',
+    appliesTo: ['contract'],
+    text: "The Buyer or the Buyer's nominated inspection agency may inspect the goods prior to dispatch upon reasonable prior notice to the Seller.",
+    defaultOn: true
+  },
+  {
+    key: 'force_majeure',
+    category: 'Contract terms',
+    appliesTo: ['contract'],
+    text: 'Neither party shall be liable for delay or failure to perform any obligation hereunder due to causes beyond its reasonable control, including but not limited to natural disaster, strike, fire, or governmental action.',
+    defaultOn: true
+  },
+  {
+    key: 'arbitration',
+    category: 'Contract terms',
+    appliesTo: ['contract'],
+    text: 'Any dispute arising out of or in connection with this contract shall first be settled amicably between the parties; failing which it shall be referred to arbitration in Dhaka, Bangladesh.',
+    defaultOn: false
   }
 ]
 
 export const useLcClauses = () => {
   const all = CLAUSES
-  const forDoc = (doc: 'boe' | 'ci' | 'pl' | 'challan') => CLAUSES.filter((c) => c.appliesTo.includes(doc))
-  const defaultsFor = (doc: 'boe' | 'ci' | 'pl' | 'challan') =>
+  const forDoc = (doc: ClauseDoc) => CLAUSES.filter((c) => c.appliesTo.includes(doc))
+  const defaultsFor = (doc: ClauseDoc) =>
     forDoc(doc).filter((c) => c.defaultOn).map((c) => c.key)
   const defaultKeys = () => CLAUSES.filter((c) => c.defaultOn).map((c) => c.key)
   const byKey = (key: string) => CLAUSES.find((c) => c.key === key)
