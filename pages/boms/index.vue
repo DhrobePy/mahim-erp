@@ -1,7 +1,8 @@
 <script setup lang="ts">
 const client = useSupabaseClient()
 const toast = useToast()
-const { canWrite } = useProfile()
+const { canWrite, activeCompanyId } = useProfile()
+const { toMm, plyLayout, recipeSummary } = useCartonMath()
 
 const boms = ref<any[]>([])
 const items = ref<any[]>([])
@@ -10,12 +11,13 @@ const loading = ref(true)
 const finishedItems = computed(() =>
   items.value.filter((i) => ['finished_good', 'wip'].includes(i.item_type))
 )
+const rawItems = computed(() => items.value.filter((i) => i.item_type === 'raw_material'))
 
 const load = async () => {
   loading.value = true
   const [{ data: b }, { data: it }] = await Promise.all([
     client.from('boms')
-      .select('*, items:finished_item_id(name, sku), bom_lines(id, qty_per, wastage_pct, component:component_item_id(name, sku))')
+      .select('*, items:finished_item_id(name, sku), bom_lines(id, qty_per, wastage_pct, note, component:component_item_id(name, sku))')
       .order('created_at', { ascending: false }),
     client.from('items').select('id, sku, name, item_type').eq('is_active', true).order('name')
   ])
@@ -83,11 +85,139 @@ const save = async () => {
     saving.value = false
   }
 }
+
+// --- Carton recipe wizard ---
+const recipeOpen = ref(false)
+const recipeSaving = ref(false)
+const unitOptions = [{ value: 'cm', label: 'cm' }, { value: 'mm', label: 'mm' }, { value: 'inch', label: 'inch' }]
+const fluteOptions = [
+  { value: 'A', label: 'A — cushioning' }, { value: 'B', label: 'B — printable/die-cut' },
+  { value: 'C', label: 'C — general purpose' }, { value: 'E', label: 'E — fine print' },
+  { value: 'F', label: 'F — micro/premium' }
+]
+const plyOptions = [3, 5, 7]
+
+const recipe = reactive({
+  item_id: null as string | null,
+  newItem: false,
+  newSku: '', newName: '',
+  unit: 'cm',
+  length: 0, width: 0, height: 0,
+  ply: 3,
+  allowance_mm: 40,
+  wastage_pct: 5,
+  layers: [] as Array<{ layer_no: number; role: 'liner' | 'medium'; flute_code: string | null; gsm: number; raw_item_id: string | null }>
+})
+
+const roleLabel = (l: typeof recipe.layers[number], idx: number, total: number) => {
+  if (l.role === 'medium') {
+    const n = recipe.layers.slice(0, idx + 1).filter((x) => x.role === 'medium').length
+    return `Medium ${n} (flute)`
+  }
+  if (idx === 0) return 'Outer liner'
+  if (idx === total - 1) return 'Inner liner'
+  return 'Middle liner'
+}
+
+const rebuildLayers = () => {
+  const roles = plyLayout(recipe.ply)
+  const prev = recipe.layers
+  recipe.layers = roles.map((role, i) => {
+    const existing = prev[i]?.role === role ? prev[i] : null
+    return existing ?? {
+      layer_no: i + 1, role,
+      flute_code: role === 'medium' ? 'C' : null,
+      gsm: role === 'liner' ? 150 : 120,
+      raw_item_id: null
+    }
+  })
+}
+watch(() => recipe.ply, rebuildLayers)
+
+const openRecipeNew = () => {
+  Object.assign(recipe, {
+    item_id: null, newItem: false, newSku: '', newName: '',
+    unit: 'cm', length: 0, width: 0, height: 0, ply: 3, allowance_mm: 40, wastage_pct: 5
+  })
+  rebuildLayers()
+  recipeOpen.value = true
+}
+
+const openRecipeEdit = async (bom: any) => {
+  const { data: spec } = await client.from('carton_specs')
+    .select('*, carton_spec_layers(layer_no, role, flute_code, gsm, raw_item_id)')
+    .eq('item_id', bom.finished_item_id).maybeSingle()
+  if (!spec) { toast.add({ title: 'No recipe found for this item', color: 'amber' }); return }
+  Object.assign(recipe, {
+    item_id: bom.finished_item_id, newItem: false, newSku: '', newName: '',
+    unit: 'mm', length: spec.length_mm, width: spec.width_mm, height: spec.height_mm,
+    ply: spec.ply_count, allowance_mm: spec.manufacturing_allowance_mm, wastage_pct: spec.wastage_pct,
+    layers: [...spec.carton_spec_layers].sort((a: any, b: any) => a.layer_no - b.layer_no)
+  })
+  recipeOpen.value = true
+}
+
+const recipeMm = computed(() => ({
+  length: toMm(recipe.length, recipe.unit),
+  width: toMm(recipe.width, recipe.unit),
+  height: toMm(recipe.height, recipe.unit)
+}))
+const preview = computed(() =>
+  recipeSummary(recipeMm.value.length, recipeMm.value.width, recipeMm.value.height, recipe.allowance_mm, recipe.layers as any))
+
+const rawItemName = (id: string | null) => rawItems.value.find((i) => i.id === id)?.sku ?? '—'
+
+const saveRecipe = async () => {
+  if (recipe.newItem) {
+    if (!recipe.newSku || !recipe.newName) {
+      toast.add({ title: 'SKU and name are required for the new item', color: 'red' }); return
+    }
+  } else if (!recipe.item_id) {
+    toast.add({ title: 'Pick a finished item', color: 'red' }); return
+  }
+  if (!recipeMm.value.length || !recipeMm.value.width || !recipeMm.value.height) {
+    toast.add({ title: 'Enter length, width and height', color: 'red' }); return
+  }
+  if (recipe.layers.some((l) => !l.raw_item_id || !l.gsm)) {
+    toast.add({ title: 'Every layer needs a GSM and a raw material', color: 'red' }); return
+  }
+  recipeSaving.value = true
+  try {
+    let itemId = recipe.item_id
+    if (recipe.newItem) {
+      const { data: newIt, error } = await client.from('items').insert({
+        sku: recipe.newSku, name: recipe.newName, item_type: 'finished_good',
+        size_spec: `${recipe.length}×${recipe.width}×${recipe.height} ${recipe.unit}`
+      } as any).select('id').single()
+      if (error) throw error
+      itemId = (newIt as any).id
+    }
+    const { error } = await client.rpc('save_carton_recipe', {
+      p_item_id: itemId,
+      p_ply_count: recipe.ply,
+      p_length_mm: recipeMm.value.length,
+      p_width_mm: recipeMm.value.width,
+      p_height_mm: recipeMm.value.height,
+      p_allowance_mm: recipe.allowance_mm,
+      p_wastage_pct: recipe.wastage_pct,
+      p_layers: recipe.layers
+    } as any)
+    if (error) throw error
+    toast.add({ title: 'Recipe saved — BOM generated', description: `${preview.value.totalKg.toFixed(4)} kg / box` })
+    recipeOpen.value = false
+    await load()
+  } catch (e: any) {
+    toast.add({ title: 'Recipe failed', description: e.message, color: 'red' })
+  } finally {
+    recipeSaving.value = false
+  }
+}
 </script>
 
 <template>
   <div>
     <PageHeader kicker="Operations" title="Bills of material" subtitle="Recipes that drive material consumption during production">
+      <UButton v-if="canWrite" variant="soft" icon="i-heroicons-cube-transparent" @click="openRecipeNew">New carton recipe</UButton>
       <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">New BOM</UButton>
     </PageHeader>
 
@@ -103,18 +233,32 @@ const save = async () => {
               <p class="text-xs text-gray-500">
                 {{ b.items?.name }} · yields {{ b.output_qty }}
               </p>
+              <p v-if="b.carton_spec_snapshot" class="num text-[11px] text-amber-600 dark:text-amber-400 mt-0.5">
+                {{ b.carton_spec_snapshot.ply_count }}-ply · {{ b.carton_spec_snapshot.flute_summary }}-flute ·
+                {{ b.carton_spec_snapshot.length_mm }}×{{ b.carton_spec_snapshot.width_mm }}×{{ b.carton_spec_snapshot.height_mm }}mm ·
+                {{ Number(b.carton_spec_snapshot.total_kg).toFixed(3) }} kg/box
+              </p>
             </div>
-            <UBadge size="xs" :color="b.is_active ? 'green' : 'gray'" variant="subtle">
-              {{ b.is_active ? 'active' : 'inactive' }}
-            </UBadge>
+            <div class="flex items-center gap-2 shrink-0">
+              <UBadge size="xs" :color="b.is_active ? 'green' : 'gray'" variant="subtle">
+                {{ b.is_active ? 'active' : 'inactive' }}
+              </UBadge>
+              <UButton
+                v-if="canWrite && b.is_auto_generated"
+                size="2xs" variant="soft" icon="i-heroicons-pencil-square" @click="openRecipeEdit(b)"
+              >Recipe</UButton>
+            </div>
           </div>
         </template>
         <ul class="text-sm divide-y divide-gray-100 dark:divide-zinc-800/60">
-          <li v-for="l in b.bom_lines" :key="l.id" class="py-1.5 flex justify-between">
-            <span>{{ l.component?.name }}</span>
-            <span class="text-gray-500">
-              {{ l.qty_per }}<span v-if="l.wastage_pct"> · +{{ l.wastage_pct }}% waste</span>
-            </span>
+          <li v-for="l in b.bom_lines" :key="l.id" class="py-1.5">
+            <div class="flex justify-between">
+              <span>{{ l.component?.name }}</span>
+              <span class="num text-gray-500">
+                {{ Number(l.qty_per).toFixed(4) }}<span v-if="l.wastage_pct"> · +{{ l.wastage_pct }}% waste</span>
+              </span>
+            </div>
+            <p v-if="l.note" class="text-[11px] text-gray-400 dark:text-zinc-600">{{ l.note }}</p>
           </li>
         </ul>
       </UCard>
@@ -163,6 +307,123 @@ const save = async () => {
           <div class="flex justify-end gap-2">
             <UButton color="gray" variant="ghost" @click="open = false">Cancel</UButton>
             <UButton :loading="saving" @click="save">Save BOM</UButton>
+          </div>
+        </template>
+      </UCard>
+    </USlideover>
+
+    <USlideover v-model="recipeOpen" :ui="{ width: 'w-screen max-w-3xl' }">
+      <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
+        <template #header>
+          <p class="font-medium">Carton recipe</p>
+          <p class="text-xs text-gray-500">Standard RSC formula — sheet size and paper weight computed from ply, flute and dimensions</p>
+        </template>
+
+        <div class="space-y-5">
+          <!-- Item -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <p class="microlabel text-gray-400 dark:text-zinc-500">Finished item</p>
+              <UCheckbox v-model="recipe.newItem" label="Create new item" />
+            </div>
+            <USelect
+              v-if="!recipe.newItem"
+              v-model="recipe.item_id" :options="finishedItems"
+              option-attribute="name" value-attribute="id" placeholder="Select a carton…"
+            />
+            <div v-else class="grid grid-cols-2 gap-2">
+              <UInput v-model="recipe.newSku" placeholder="SKU e.g. FG-CARTON-B" />
+              <UInput v-model="recipe.newName" placeholder="Name e.g. Printed Carton — Model B" />
+            </div>
+          </div>
+
+          <!-- Dimensions -->
+          <div>
+            <p class="microlabel text-gray-400 dark:text-zinc-500 mb-1.5">Internal dimensions (L × W × H)</p>
+            <div class="grid grid-cols-4 gap-2">
+              <UInput v-model.number="recipe.length" type="number" placeholder="Length" />
+              <UInput v-model.number="recipe.width" type="number" placeholder="Width" />
+              <UInput v-model.number="recipe.height" type="number" placeholder="Height" />
+              <USelect v-model="recipe.unit" :options="unitOptions" option-attribute="label" value-attribute="value" />
+            </div>
+          </div>
+
+          <!-- Ply -->
+          <div>
+            <p class="microlabel text-gray-400 dark:text-zinc-500 mb-1.5">Ply (wall construction)</p>
+            <div class="flex gap-2">
+              <button
+                v-for="p in plyOptions" :key="p"
+                class="px-4 py-1.5 rounded text-sm border cursor-pointer"
+                :class="recipe.ply === p
+                  ? 'border-amber-500 text-amber-600 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-500/10'
+                  : 'border-gray-200 dark:border-zinc-700 text-gray-500 dark:text-zinc-400'"
+                @click="recipe.ply = p"
+              >{{ p }}-ply</button>
+            </div>
+          </div>
+
+          <!-- Layers -->
+          <div>
+            <p class="microlabel text-gray-400 dark:text-zinc-500 mb-1.5">Layers (outer → inner)</p>
+            <div class="space-y-2">
+              <div
+                v-for="(l, i) in recipe.layers" :key="i"
+                class="grid grid-cols-12 gap-2 items-center rounded ring-1 ring-gray-100 dark:ring-zinc-800 p-2"
+              >
+                <span class="col-span-3 text-xs text-gray-500 dark:text-zinc-400">{{ roleLabel(l, i, recipe.layers.length) }}</span>
+                <UInput v-model.number="l.gsm" type="number" placeholder="GSM" class="col-span-2" />
+                <USelect
+                  v-if="l.role === 'medium'"
+                  v-model="l.flute_code" :options="fluteOptions"
+                  option-attribute="label" value-attribute="value" class="col-span-3"
+                />
+                <span v-else class="col-span-3" />
+                <USelect
+                  v-model="l.raw_item_id" :options="rawItems"
+                  option-attribute="sku" value-attribute="id" placeholder="Paper reel…" class="col-span-4"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Allowance & wastage -->
+          <div class="grid grid-cols-2 gap-4">
+            <UFormGroup label="Manufacturing allowance (mm)" hint="glue flap">
+              <UInput v-model.number="recipe.allowance_mm" type="number" />
+            </UFormGroup>
+            <UFormGroup label="Wastage %" hint="applied to every layer">
+              <UInput v-model.number="recipe.wastage_pct" type="number" />
+            </UFormGroup>
+          </div>
+
+          <!-- Live preview -->
+          <div class="rounded ring-1 ring-amber-500/30 bg-amber-50/40 dark:bg-amber-500/[0.04] p-3">
+            <p class="microlabel text-amber-600 dark:text-amber-400 mb-2">Live preview</p>
+            <div class="grid grid-cols-3 gap-3 text-[13px] mb-2">
+              <div><span class="text-gray-500 dark:text-zinc-500">Blank size</span><br>
+                <span class="num font-medium">{{ preview.blankLengthMm.toFixed(0) }} × {{ preview.blankWidthMm.toFixed(0) }} mm</span>
+              </div>
+              <div><span class="text-gray-500 dark:text-zinc-500">Blank area</span><br>
+                <span class="num font-medium">{{ preview.blankAreaM2.toFixed(3) }} m²</span>
+              </div>
+              <div><span class="text-gray-500 dark:text-zinc-500">Total paper / box</span><br>
+                <span class="num font-semibold text-amber-600 dark:text-amber-400">{{ preview.totalKg.toFixed(4) }} kg</span>
+              </div>
+            </div>
+            <div class="space-y-0.5">
+              <div v-for="(r, i) in preview.rows" :key="i" class="flex justify-between text-[12px] text-gray-600 dark:text-zinc-400">
+                <span>{{ roleLabel(recipe.layers[i], i, recipe.layers.length) }} — {{ rawItemName(r.raw_item_id) }}</span>
+                <span class="num">{{ r.kg.toFixed(4) }} kg</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <template #footer>
+          <div class="flex justify-end gap-2">
+            <UButton color="gray" variant="ghost" @click="recipeOpen = false">Cancel</UButton>
+            <UButton :loading="recipeSaving" @click="saveRecipe">Save recipe &amp; generate BOM</UButton>
           </div>
         </template>
       </UCard>
