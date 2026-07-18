@@ -3,22 +3,18 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { profile, activeCompanyId } = useProfile()
 const user = useSupabaseUser()
+const { groupedModules, load: loadPermissionCatalog, loadFor, saveFor } = usePermissions()
 
 const rows = ref<any[]>([])
 const loading = ref(true)
 
-const roleOptions = ['admin', 'manager', 'store', 'production', 'sales', 'accounts', 'viewer']
-
-// Role capabilities, shown so privileges are explicit rather than folklore.
-const privileges: Record<string, string> = {
-  admin: 'Everything + member management, CoA, audit trail',
-  manager: 'Write access to all operational modules',
-  store: 'Stock, GRNs, challans dispatch',
-  production: 'BOMs, production orders, completion posting',
-  sales: 'Read-only (sales pages) — write coming with quotations',
-  accounts: 'Read-only (finance pages)',
-  viewer: 'Read-only everywhere'
-}
+// Only two tiers now: admin (everything, manages permissions) or member
+// (starts with nothing but the dashboard — exact capabilities are the
+// per-page grants below, not a predefined bundle).
+const roleOptions = [
+  { value: 'admin', label: 'Admin' },
+  { value: 'viewer', label: 'Member (custom permissions)' }
+]
 
 const load = async () => {
   loading.value = true
@@ -34,7 +30,7 @@ const load = async () => {
   }))
   loading.value = false
 }
-onMounted(load)
+onMounted(() => { load(); loadPermissionCatalog() })
 
 const setRole = async (row: any, role: string) => {
   const { error } = await client.from('company_members').upsert({
@@ -100,6 +96,39 @@ const copyCreds = async () => {
   await navigator.clipboard.writeText(`Email: ${created.value.email}\nPassword: ${created.value.password}`)
   toast.add({ title: 'Copied to clipboard' })
 }
+
+// --- Per-user permission editor (the actual "not predefined" access list) ---
+const permOpen = ref(false)
+const permSaving = ref(false)
+const permTarget = ref<any>(null)
+const permState = ref<Record<string, { view: boolean; write: boolean }>>({})
+
+const openPermissions = async (row: any) => {
+  permTarget.value = row
+  permState.value = await loadFor(row.id, activeCompanyId.value as string)
+  permOpen.value = true
+}
+// Write implies view — no point letting someone edit a page they can't see.
+const toggleWrite = (key: string, v: boolean) => {
+  permState.value[key].write = v
+  if (v) permState.value[key].view = true
+}
+const toggleView = (key: string, v: boolean) => {
+  permState.value[key].view = v
+  if (!v) permState.value[key].write = false
+}
+const savePermissions = async () => {
+  permSaving.value = true
+  try {
+    await saveFor(permTarget.value.id, activeCompanyId.value as string, permState.value)
+    toast.add({ title: `Permissions updated for ${permTarget.value.full_name || 'user'}` })
+    permOpen.value = false
+  } catch (e: any) {
+    toast.add({ title: 'Save failed', description: e.message, color: 'red' })
+  } finally {
+    permSaving.value = false
+  }
+}
 </script>
 
 <template>
@@ -118,8 +147,7 @@ const copyCreds = async () => {
           :rows="rows" :loading="loading"
           :columns="[
             { key: 'full_name', label: 'User' },
-            { key: 'role', label: 'Role in this company' },
-            { key: 'privilege', label: 'Privileges' },
+            { key: 'role', label: 'Tier' },
             { key: 'actions', label: '' }
           ]"
         >
@@ -135,9 +163,10 @@ const copyCreds = async () => {
               <USelect
                 :model-value="row.pendingRole"
                 :options="roleOptions"
+                option-attribute="label" value-attribute="value"
                 placeholder="No access"
                 size="xs"
-                class="w-32"
+                class="w-52"
                 :disabled="row.id === user?.id"
                 @update:model-value="(v: string) => setRole(row, v)"
               />
@@ -147,23 +176,26 @@ const copyCreds = async () => {
               >no access</UBadge>
             </div>
           </template>
-          <template #privilege-data="{ row }">
-            <span class="text-xs text-gray-500 dark:text-zinc-500">
-              {{ row.membership?.is_active ? privileges[row.membership.role] : '—' }}
-            </span>
-          </template>
           <template #actions-data="{ row }">
-            <UButton
-              v-if="row.membership?.is_active && row.id !== user?.id"
-              size="xs" variant="soft" color="red" @click="revoke(row)"
-            >Revoke</UButton>
+            <div class="flex items-center gap-2 justify-end">
+              <UButton
+                v-if="row.membership?.is_active && row.membership.role !== 'admin'"
+                size="xs" variant="soft" icon="i-heroicons-adjustments-horizontal" @click="openPermissions(row)"
+              >Permissions</UButton>
+              <UButton
+                v-if="row.membership?.is_active && row.id !== user?.id"
+                size="xs" variant="soft" color="red" @click="revoke(row)"
+              >Revoke</UButton>
+            </div>
           </template>
         </UTable>
       </UCard>
 
       <p class="text-xs text-gray-400 dark:text-zinc-600">
-        Public sign-up is disabled — use "New user" above to provision access. Roles
-        apply per company; changing your own role is deliberately disabled.
+        Public sign-up is disabled — use "New user" above to provision access.
+        Admins have everything; every other member's access is exactly the
+        per-page checklist you set via "Permissions" — nothing predefined.
+        Changing your own tier is deliberately disabled.
       </p>
     </template>
 
@@ -197,7 +229,7 @@ const copyCreds = async () => {
             </div>
           </UFormGroup>
           <UFormGroup label="Role in this company">
-            <USelect v-model="form.role" :options="roleOptions" />
+            <USelect v-model="form.role" :options="roleOptions" option-attribute="label" value-attribute="value" />
           </UFormGroup>
         </div>
 
@@ -205,6 +237,46 @@ const copyCreds = async () => {
           <div class="flex justify-end gap-2">
             <UButton color="gray" variant="ghost" @click="open = false">{{ created ? 'Close' : 'Cancel' }}</UButton>
             <UButton v-if="!created" :loading="creating" @click="createUser">Create user</UButton>
+          </div>
+        </template>
+      </UCard>
+    </USlideover>
+
+    <USlideover v-model="permOpen" :ui="{ width: 'w-screen max-w-2xl' }">
+      <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
+        <template #header>
+          <p class="font-medium">Permissions — {{ permTarget?.full_name || 'user' }}</p>
+          <p class="text-xs text-gray-500">Off = the page doesn't exist for them, not just uneditable</p>
+        </template>
+
+        <div class="space-y-5">
+          <div v-for="(mods, group) in groupedModules" :key="group">
+            <p class="microlabel text-amber-600 dark:text-amber-400 mb-2">{{ group }}</p>
+            <div class="space-y-1.5">
+              <div
+                v-for="m in mods" :key="m.key"
+                class="flex items-center justify-between rounded ring-1 ring-gray-100 dark:ring-zinc-800 px-3 py-2"
+              >
+                <span class="text-sm dark:text-zinc-200">{{ m.label }}</span>
+                <div class="flex items-center gap-4">
+                  <UCheckbox
+                    :model-value="permState[m.key]?.view" label="View"
+                    @update:model-value="(v: boolean) => toggleView(m.key, v)"
+                  />
+                  <UCheckbox
+                    :model-value="permState[m.key]?.write" label="Write"
+                    @update:model-value="(v: boolean) => toggleWrite(m.key, v)"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <template #footer>
+          <div class="flex justify-end gap-2">
+            <UButton color="gray" variant="ghost" @click="permOpen = false">Cancel</UButton>
+            <UButton :loading="permSaving" @click="savePermissions">Save permissions</UButton>
           </div>
         </template>
       </UCard>

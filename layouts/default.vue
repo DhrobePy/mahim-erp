@@ -2,86 +2,99 @@
 const client = useSupabaseClient()
 const user = useSupabaseUser()
 const { profile, load } = useProfile()
+const { canView, load: loadPermissions } = usePermissions()
 
 await load()
+await loadPermissions()
 
 const sections = [
   {
     title: 'Executive',
     links: [
-      { label: 'CEO overview', to: '/ceo', icon: 'i-heroicons-chart-bar-square' }
+      { label: 'CEO overview', to: '/ceo', icon: 'i-heroicons-chart-bar-square', module: 'ceo' }
     ]
   },
   {
     title: 'Operations',
     links: [
-      { label: 'Dashboard', to: '/', icon: 'i-heroicons-home' },
-      { label: 'Items', to: '/items', icon: 'i-heroicons-cube' },
-      { label: 'Stock', to: '/stock', icon: 'i-heroicons-archive-box' },
-      { label: 'BOMs', to: '/boms', icon: 'i-heroicons-rectangle-stack' },
-      { label: 'Production', to: '/production', icon: 'i-heroicons-cog-6-tooth' }
+      { label: 'Dashboard', to: '/', icon: 'i-heroicons-home', module: 'dashboard' },
+      { label: 'Items', to: '/items', icon: 'i-heroicons-cube', module: 'items' },
+      { label: 'Stock', to: '/stock', icon: 'i-heroicons-archive-box', module: 'stock' },
+      { label: 'BOMs', to: '/boms', icon: 'i-heroicons-rectangle-stack', module: 'boms' },
+      { label: 'Production', to: '/production', icon: 'i-heroicons-cog-6-tooth', module: 'production' }
     ]
   },
   {
     title: 'Procurement',
     links: [
-      { label: 'Parties', to: '/parties', icon: 'i-heroicons-users' },
-      { label: 'GRNs', to: '/procurement', icon: 'i-heroicons-truck' }
+      { label: 'Parties', to: '/parties', icon: 'i-heroicons-users', module: 'parties' },
+      { label: 'GRNs', to: '/procurement', icon: 'i-heroicons-truck', module: 'procurement' }
     ]
   },
   {
     title: 'Sales & Local LC',
     links: [
-      { label: 'Quotations / PI', to: '/quotations', icon: 'i-heroicons-clipboard-document-list' },
-      { label: 'Sales orders', to: '/sales', icon: 'i-heroicons-shopping-cart' },
-      { label: 'Challans', to: '/challans', icon: 'i-heroicons-document-duplicate' },
-      { label: 'LCs', to: '/lcs', icon: 'i-heroicons-document-check' },
-      { label: 'Invoices', to: '/invoices', icon: 'i-heroicons-document-text' }
+      { label: 'Quotations / PI', to: '/quotations', icon: 'i-heroicons-clipboard-document-list', module: 'quotations' },
+      { label: 'Sales orders', to: '/sales', icon: 'i-heroicons-shopping-cart', module: 'sales_orders' },
+      { label: 'Challans', to: '/challans', icon: 'i-heroicons-document-duplicate', module: 'challans' },
+      { label: 'LCs', to: '/lcs', icon: 'i-heroicons-document-check', module: 'lcs' },
+      { label: 'Invoices', to: '/invoices', icon: 'i-heroicons-document-text', module: 'invoices' }
     ]
   },
   {
     title: 'Finance',
     links: [
-      { label: 'Banking / LBPD', to: '/banking', icon: 'i-heroicons-banknotes' },
-      { label: 'Accounting', to: '/accounting', icon: 'i-heroicons-calculator' },
-      { label: 'Bank & cash accounts', to: '/accounting/accounts', icon: 'i-heroicons-credit-card' },
-      { label: 'Cash sales', to: '/accounting/cash-sales', icon: 'i-heroicons-shopping-bag' },
-      { label: 'Transfers', to: '/accounting/transfers', icon: 'i-heroicons-arrows-right-left' },
-      { label: 'Bank charges & fees', to: '/accounting/bank-charges', icon: 'i-heroicons-currency-dollar' },
-      { label: 'Profit & Loss', to: '/accounting/pnl', icon: 'i-heroicons-chart-bar' },
-      { label: 'VAT return', to: '/accounting/vat-return', icon: 'i-heroicons-receipt-percent' },
-      { label: 'AIT summary', to: '/accounting/ait-summary', icon: 'i-heroicons-document-chart-bar' }
+      { label: 'Banking / LBPD', to: '/banking', icon: 'i-heroicons-banknotes', module: 'banking' },
+      { label: 'Accounting', to: '/accounting', icon: 'i-heroicons-calculator', module: 'accounting' },
+      { label: 'Bank & cash accounts', to: '/accounting/accounts', icon: 'i-heroicons-credit-card', module: 'bank_accounts' },
+      { label: 'Cash sales', to: '/accounting/cash-sales', icon: 'i-heroicons-shopping-bag', module: 'cash_sales' },
+      { label: 'Transfers', to: '/accounting/transfers', icon: 'i-heroicons-arrows-right-left', module: 'transfers' },
+      { label: 'Bank charges & fees', to: '/accounting/bank-charges', icon: 'i-heroicons-currency-dollar', module: 'bank_charges' },
+      { label: 'Profit & Loss', to: '/accounting/pnl', icon: 'i-heroicons-chart-bar', module: 'pnl' },
+      { label: 'VAT return', to: '/accounting/vat-return', icon: 'i-heroicons-receipt-percent', module: 'vat_return' },
+      { label: 'AIT summary', to: '/accounting/ait-summary', icon: 'i-heroicons-document-chart-bar', module: 'ait_summary' }
     ]
   },
   {
     title: 'HR',
     links: [
-      { label: 'Employees', to: '/hr', icon: 'i-heroicons-identification' },
-      { label: 'Attendance', to: '/hr/attendance', icon: 'i-heroicons-finger-print' },
-      { label: 'Payroll', to: '/hr/payroll', icon: 'i-heroicons-currency-bangladeshi' },
-      { label: 'Office stationery', to: '/hr/stationery', icon: 'i-heroicons-pencil-square' }
+      { label: 'Employees', to: '/hr', icon: 'i-heroicons-identification', module: 'hr' },
+      { label: 'Attendance', to: '/hr/attendance', icon: 'i-heroicons-finger-print', module: 'attendance' },
+      { label: 'Payroll', to: '/hr/payroll', icon: 'i-heroicons-currency-bangladeshi', module: 'payroll' },
+      { label: 'Office stationery', to: '/hr/stationery', icon: 'i-heroicons-pencil-square', module: 'stationery' }
+    ]
+  },
+  {
+    title: 'Admin',
+    links: [
+      { label: 'Audit trail', to: '/audit', icon: 'i-heroicons-shield-check', module: 'audit' },
+      { label: 'Company & structure', to: '/admin/company', icon: 'i-heroicons-building-office-2', module: 'company' },
+      { label: 'Directors & partners', to: '/admin/directors', icon: 'i-heroicons-user-group', module: 'directors' },
+      { label: 'Board resolutions', to: '/admin/resolutions', icon: 'i-heroicons-clipboard-document-check', module: 'resolutions' },
+      { label: 'Company documents', to: '/admin/documents', icon: 'i-heroicons-folder', module: 'documents' },
+      { label: 'Forwarding pad', to: '/admin/forwarding', icon: 'i-heroicons-paper-airplane', module: 'forwarding' },
+      { label: 'Bank service requests', to: '/admin/bank-requests', icon: 'i-heroicons-building-library', module: 'bank_requests' },
+      { label: 'Tax — IT-10B', to: '/admin/tax', icon: 'i-heroicons-calculator', module: 'tax_it10b' },
+      { label: 'Corporate tax computation', to: '/admin/tax/corporate', icon: 'i-heroicons-scale', module: 'tax_corporate' }
     ]
   }
 ]
 
-const adminSection = {
-  title: 'Admin',
-  links: [
-    { label: 'Access & roles', to: '/access', icon: 'i-heroicons-key' },
-    { label: 'Audit trail', to: '/audit', icon: 'i-heroicons-shield-check' },
-    { label: 'Company & structure', to: '/admin/company', icon: 'i-heroicons-building-office-2' },
-    { label: 'Directors & partners', to: '/admin/directors', icon: 'i-heroicons-user-group' },
-    { label: 'Board resolutions', to: '/admin/resolutions', icon: 'i-heroicons-clipboard-document-check' },
-    { label: 'Company documents', to: '/admin/documents', icon: 'i-heroicons-folder' },
-    { label: 'Forwarding pad', to: '/admin/forwarding', icon: 'i-heroicons-paper-airplane' },
-    { label: 'Bank service requests', to: '/admin/bank-requests', icon: 'i-heroicons-building-library' },
-    { label: 'Tax — IT-10B', to: '/admin/tax', icon: 'i-heroicons-calculator' },
-    { label: 'Corporate tax computation', to: '/admin/tax/corporate', icon: 'i-heroicons-scale' }
-  ]
-}
-const visibleSections = computed(() =>
-  profile.value?.role === 'admin' ? [...sections, adminSection] : sections
-)
+// "Access & roles" is the tool that grants everyone else's permissions —
+// deliberately kept admin-only outright, never toggleable via the same
+// system it manages.
+const visibleSections = computed(() => {
+  const out = sections
+    .map((s) => ({ ...s, links: s.links.filter((l) => canView(l.module)) }))
+    .filter((s) => s.links.length)
+  if (profile.value?.role === 'admin') {
+    const admin = out.find((s) => s.title === 'Admin')
+    const accessLink = { label: 'Access & roles', to: '/access', icon: 'i-heroicons-key', module: 'access' }
+    if (admin) admin.links.unshift(accessLink)
+    else out.push({ title: 'Admin', links: [accessLink] })
+  }
+  return out
+})
 
 // Collapsible sections: user's choices persist; the section holding the
 // current route always opens so you never lose your place.
