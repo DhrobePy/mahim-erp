@@ -6,23 +6,27 @@ const { toMm, plyLayout, recipeSummary } = useCartonMath()
 
 const boms = ref<any[]>([])
 const items = ref<any[]>([])
+const templates = ref<any[]>([])
 const loading = ref(true)
 
 const finishedItems = computed(() =>
   items.value.filter((i) => ['finished_good', 'wip'].includes(i.item_type))
 )
 const rawItems = computed(() => items.value.filter((i) => i.item_type === 'raw_material'))
+const templateOptions = computed(() => templates.value.map((t) => ({ value: t.id, label: `${t.name}` })))
 
 const load = async () => {
   loading.value = true
-  const [{ data: b }, { data: it }] = await Promise.all([
+  const [{ data: b }, { data: it }, { data: tpl }] = await Promise.all([
     client.from('boms')
       .select('*, items:finished_item_id(name, sku), bom_lines(id, qty_per, wastage_pct, note, component:component_item_id(name, sku))')
       .order('created_at', { ascending: false }),
-    client.from('items').select('id, sku, name, item_type').eq('is_active', true).order('name')
+    client.from('items').select('id, sku, name, item_type').eq('is_active', true).order('name'),
+    client.from('carton_recipe_templates').select('*').order('ply_count').order('name')
   ])
   boms.value = b ?? []
   items.value = it ?? []
+  templates.value = tpl ?? []
   loading.value = false
 }
 onMounted(load)
@@ -108,6 +112,7 @@ const recipe = reactive({
   wastage_pct: 5,
   layers: [] as Array<{ layer_no: number; role: 'liner' | 'medium'; flute_code: string | null; gsm: number; raw_item_id: string | null }>
 })
+const selectedTemplateId = ref<string | null>(null)
 
 const roleLabel = (l: typeof recipe.layers[number], idx: number, total: number) => {
   if (l.role === 'medium') {
@@ -134,11 +139,19 @@ const rebuildLayers = () => {
 }
 watch(() => recipe.ply, rebuildLayers)
 
+const applyTemplate = (id: string | null) => {
+  const tpl = templates.value.find((t) => t.id === id)
+  if (!tpl) return
+  recipe.ply = tpl.ply_count
+  recipe.layers = tpl.layers.map((l: any) => ({ ...l, raw_item_id: null }))
+}
+
 const openRecipeNew = () => {
   Object.assign(recipe, {
     item_id: null, newItem: false, newSku: '', newName: '',
     unit: 'cm', length: 0, width: 0, height: 0, ply: 3, allowance_mm: 40, wastage_pct: 5
   })
+  selectedTemplateId.value = null
   rebuildLayers()
   recipeOpen.value = true
 }
@@ -148,6 +161,7 @@ const openRecipeEdit = async (bom: any) => {
     .select('*, carton_spec_layers(layer_no, role, flute_code, gsm, raw_item_id)')
     .eq('item_id', bom.finished_item_id).maybeSingle()
   if (!spec) { toast.add({ title: 'No recipe found for this item', color: 'amber' }); return }
+  selectedTemplateId.value = null
   Object.assign(recipe, {
     item_id: bom.finished_item_id, newItem: false, newSku: '', newName: '',
     unit: 'mm', length: spec.length_mm, width: spec.width_mm, height: spec.height_mm,
@@ -212,11 +226,79 @@ const saveRecipe = async () => {
     recipeSaving.value = false
   }
 }
+
+// --- Template manager (create/edit/delete reusable ply recipes) ---
+const tplMgrOpen = ref(false)
+const tplEditorOpen = ref(false)
+const tplSaving = ref(false)
+const tplForm = reactive({
+  id: null as string | null,
+  name: '',
+  ply: 3,
+  layers: [] as Array<{ layer_no: number; role: 'liner' | 'medium'; flute_code: string | null; gsm: number }>
+})
+
+const tplRoleLabel = (l: typeof tplForm.layers[number], idx: number, total: number) => {
+  if (l.role === 'medium') {
+    const n = tplForm.layers.slice(0, idx + 1).filter((x) => x.role === 'medium').length
+    return `Medium ${n} (flute)`
+  }
+  if (idx === 0) return 'Outer liner'
+  if (idx === total - 1) return 'Inner liner'
+  return 'Middle liner'
+}
+
+const tplRebuildLayers = () => {
+  const roles = plyLayout(tplForm.ply)
+  const prev = tplForm.layers
+  tplForm.layers = roles.map((role, i) => {
+    const existing = prev[i]?.role === role ? prev[i] : null
+    return existing ?? { layer_no: i + 1, role, flute_code: role === 'medium' ? 'C' : null, gsm: role === 'liner' ? 150 : 120 }
+  })
+}
+watch(() => tplForm.ply, tplRebuildLayers)
+
+const openTplNew = () => {
+  Object.assign(tplForm, { id: null, name: '', ply: 3 })
+  tplRebuildLayers()
+  tplEditorOpen.value = true
+}
+const openTplEdit = (t: any) => {
+  Object.assign(tplForm, { id: t.id, name: t.name, ply: t.ply_count, layers: [...t.layers] })
+  tplEditorOpen.value = true
+}
+const saveTemplate = async () => {
+  if (!tplForm.name) { toast.add({ title: 'Template name is required', color: 'red' }); return }
+  if (tplForm.layers.some((l) => !l.gsm)) { toast.add({ title: 'Every layer needs a GSM', color: 'red' }); return }
+  tplSaving.value = true
+  try {
+    const payload = { name: tplForm.name, ply_count: tplForm.ply, layers: tplForm.layers }
+    const { error } = tplForm.id
+      ? await client.from('carton_recipe_templates').update(payload).eq('id', tplForm.id)
+      : await client.from('carton_recipe_templates').insert(payload)
+    if (error) throw error
+    toast.add({ title: tplForm.id ? 'Template updated' : 'Template created' })
+    tplEditorOpen.value = false
+    await load()
+  } catch (e: any) {
+    toast.add({ title: 'Save failed', description: e.message, color: 'red' })
+  } finally {
+    tplSaving.value = false
+  }
+}
+const deleteTemplate = async (t: any) => {
+  if (!confirm(`Delete template "${t.name}"?`)) return
+  const { error } = await client.from('carton_recipe_templates').delete().eq('id', t.id)
+  if (error) { toast.add({ title: 'Delete failed', description: error.message, color: 'red' }); return }
+  toast.add({ title: 'Template deleted' })
+  await load()
+}
 </script>
 
 <template>
   <div>
     <PageHeader kicker="Operations" title="Bills of material" subtitle="Recipes that drive material consumption during production">
+      <UButton v-if="canWrite" variant="ghost" icon="i-heroicons-rectangle-stack" @click="tplMgrOpen = true">Recipe templates</UButton>
       <UButton v-if="canWrite" variant="soft" icon="i-heroicons-cube-transparent" @click="openRecipeNew">New carton recipe</UButton>
       <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">New BOM</UButton>
     </PageHeader>
@@ -320,6 +402,16 @@ const saveRecipe = async () => {
         </template>
 
         <div class="space-y-5">
+          <!-- Template -->
+          <div>
+            <p class="microlabel text-gray-400 dark:text-zinc-500 mb-1.5">Start from template <span class="text-gray-300 dark:text-zinc-700">(optional)</span></p>
+            <USelect
+              v-model="selectedTemplateId" :options="templateOptions"
+              option-attribute="label" value-attribute="value" placeholder="Pick a 3/5/7-ply starting point…"
+              @update:model-value="applyTemplate"
+            />
+          </div>
+
           <!-- Item -->
           <div>
             <div class="flex items-center justify-between mb-1.5">
@@ -424,6 +516,88 @@ const saveRecipe = async () => {
           <div class="flex justify-end gap-2">
             <UButton color="gray" variant="ghost" @click="recipeOpen = false">Cancel</UButton>
             <UButton :loading="recipeSaving" @click="saveRecipe">Save recipe &amp; generate BOM</UButton>
+          </div>
+        </template>
+      </UCard>
+    </USlideover>
+
+    <!-- Template manager: list -->
+    <USlideover v-model="tplMgrOpen" :ui="{ width: 'w-screen max-w-xl' }">
+      <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
+        <template #header>
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="font-medium">Carton recipe templates</p>
+              <p class="text-xs text-gray-500">Reusable ply/flute/GSM starting points for the recipe wizard</p>
+            </div>
+            <UButton v-if="canWrite" size="xs" icon="i-heroicons-plus" @click="openTplNew">New template</UButton>
+          </div>
+        </template>
+        <div class="space-y-2">
+          <div v-if="!templates.length" class="text-sm text-gray-400">No templates yet.</div>
+          <div
+            v-for="t in templates" :key="t.id"
+            class="flex items-center justify-between rounded ring-1 ring-gray-100 dark:ring-zinc-800 p-3"
+          >
+            <div>
+              <p class="text-sm font-medium">{{ t.name }}</p>
+              <p class="text-xs text-gray-500 dark:text-zinc-500 num">{{ t.ply_count }}-ply · {{ t.layers.length }} layers</p>
+            </div>
+            <div v-if="canWrite" class="flex items-center gap-1 shrink-0">
+              <UButton size="2xs" variant="ghost" icon="i-heroicons-pencil-square" @click="openTplEdit(t)" />
+              <UButton size="2xs" variant="ghost" color="red" icon="i-heroicons-trash" @click="deleteTemplate(t)" />
+            </div>
+          </div>
+        </div>
+      </UCard>
+    </USlideover>
+
+    <!-- Template manager: create/edit editor -->
+    <USlideover v-model="tplEditorOpen" :ui="{ width: 'w-screen max-w-2xl' }">
+      <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
+        <template #header><p class="font-medium">{{ tplForm.id ? 'Edit template' : 'New template' }}</p></template>
+        <div class="space-y-5">
+          <UFormGroup label="Name" required>
+            <UInput v-model="tplForm.name" placeholder="e.g. 5-Ply — Double Wall (BC-flute)" />
+          </UFormGroup>
+
+          <div>
+            <p class="microlabel text-gray-400 dark:text-zinc-500 mb-1.5">Ply (wall construction)</p>
+            <div class="flex gap-2">
+              <button
+                v-for="p in plyOptions" :key="p"
+                class="px-4 py-1.5 rounded text-sm border cursor-pointer"
+                :class="tplForm.ply === p
+                  ? 'border-amber-500 text-amber-600 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-500/10'
+                  : 'border-gray-200 dark:border-zinc-700 text-gray-500 dark:text-zinc-400'"
+                @click="tplForm.ply = p"
+              >{{ p }}-ply</button>
+            </div>
+          </div>
+
+          <div>
+            <p class="microlabel text-gray-400 dark:text-zinc-500 mb-1.5">Layers (outer → inner)</p>
+            <div class="space-y-2">
+              <div
+                v-for="(l, i) in tplForm.layers" :key="i"
+                class="grid grid-cols-12 gap-2 items-center rounded ring-1 ring-gray-100 dark:ring-zinc-800 p-2"
+              >
+                <span class="col-span-5 text-xs text-gray-500 dark:text-zinc-400">{{ tplRoleLabel(l, i, tplForm.layers.length) }}</span>
+                <UInput v-model.number="l.gsm" type="number" placeholder="GSM" class="col-span-3" />
+                <USelect
+                  v-if="l.role === 'medium'"
+                  v-model="l.flute_code" :options="fluteOptions"
+                  option-attribute="label" value-attribute="value" class="col-span-4"
+                />
+                <span v-else class="col-span-4" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <template #footer>
+          <div class="flex justify-end gap-2">
+            <UButton color="gray" variant="ghost" @click="tplEditorOpen = false">Cancel</UButton>
+            <UButton :loading="tplSaving" @click="saveTemplate">Save template</UButton>
           </div>
         </template>
       </UCard>
