@@ -107,6 +107,19 @@ const toggle = (title: string) => {
   try { localStorage.setItem('erp-nav-open', JSON.stringify(openSections.value)) } catch {}
 }
 
+// Sidebar: desktop collapses to an icon-only rail; mobile slides in as an
+// overlay drawer over the content instead of permanently eating viewport width.
+const sidebarCollapsed = ref(false)
+const mobileNavOpen = ref(false)
+onMounted(() => {
+  try { sidebarCollapsed.value = localStorage.getItem('erp-nav-collapsed') === '1' } catch {}
+})
+const toggleCollapsed = () => {
+  sidebarCollapsed.value = !sidebarCollapsed.value
+  try { localStorage.setItem('erp-nav-collapsed', sidebarCollapsed.value ? '1' : '0') } catch {}
+}
+watch(() => route.path, () => { mobileNavOpen.value = false })
+
 const signOut = async () => {
   await client.auth.signOut()
   await navigateTo('/login')
@@ -121,21 +134,38 @@ const profileMenu = computed(() => [
 
 <template>
   <div class="min-h-screen flex bg-gray-50 dark:bg-[#09090b]">
+    <!-- Mobile backdrop -->
+    <div
+      v-if="mobileNavOpen" class="fixed inset-0 bg-black/50 z-30 lg:hidden"
+      @click="mobileNavOpen = false"
+    />
+
     <!-- Sidebar -->
-    <aside class="w-56 shrink-0 border-r border-gray-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c0c0f] flex flex-col">
-      <div class="h-12 flex items-center gap-2.5 px-4 border-b border-gray-200 dark:border-zinc-800/80">
-        <div class="w-6 h-6 rounded-sm bg-amber-500 flex items-center justify-center">
+    <aside
+      class="shrink-0 border-r border-gray-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c0c0f] flex flex-col
+             fixed inset-y-0 left-0 z-40 transition-[transform,width] duration-200 lg:static lg:translate-x-0"
+      :class="[
+        mobileNavOpen ? 'translate-x-0' : '-translate-x-full',
+        sidebarCollapsed ? 'w-16' : 'w-56'
+      ]"
+    >
+      <div
+        class="h-12 flex items-center gap-2.5 border-b border-gray-200 dark:border-zinc-800/80 shrink-0"
+        :class="sidebarCollapsed ? 'justify-center px-0' : 'px-4'"
+      >
+        <div class="w-6 h-6 rounded-sm bg-amber-500 flex items-center justify-center shrink-0">
           <UIcon name="i-heroicons-cube-transparent" class="text-black text-sm" />
         </div>
-        <div class="leading-none">
+        <div v-if="!sidebarCollapsed" class="leading-none">
           <p class="font-semibold text-[13px] tracking-tight dark:text-zinc-100">MAHIM</p>
           <p class="microlabel text-gray-400 dark:text-zinc-600 mt-0.5">Packaging ERP</p>
         </div>
       </div>
 
-      <nav class="py-2 flex-1 overflow-y-auto">
+      <nav class="py-2 flex-1 overflow-y-auto overflow-x-hidden">
         <template v-for="section in visibleSections" :key="section.title">
           <button
+            v-if="!sidebarCollapsed"
             class="w-full flex items-center justify-between px-4 pt-3.5 pb-1 cursor-pointer group"
             @click="toggle(section.title)"
           >
@@ -147,46 +177,66 @@ const profileMenu = computed(() => [
               class="text-xs text-gray-300 dark:text-zinc-700 group-hover:text-gray-500 dark:group-hover:text-zinc-500"
             />
           </button>
-          <template v-if="isOpen(section.title)">
+          <template v-if="sidebarCollapsed || isOpen(section.title)">
             <ULink
               v-for="link in section.links"
               :key="link.to"
               :to="link.to"
+              :title="sidebarCollapsed ? link.label : undefined"
               active-class="!border-amber-500 !text-amber-600 dark:!text-amber-400 bg-amber-50/60 dark:bg-amber-500/[0.06]"
-              class="flex items-center gap-2.5 pl-[15px] pr-3 py-[7px] text-[13px] border-l-2 border-transparent text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors duration-150 cursor-pointer"
+              class="flex items-center gap-2.5 py-[7px] text-[13px] border-l-2 border-transparent text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors duration-150 cursor-pointer"
+              :class="sidebarCollapsed ? 'justify-center px-0' : 'pl-[15px] pr-3'"
+              @click="mobileNavOpen = false"
             >
-              <UIcon :name="link.icon" class="text-base opacity-70" />
-              {{ link.label }}
+              <UIcon :name="link.icon" class="text-base opacity-70 shrink-0" />
+              <span v-if="!sidebarCollapsed">{{ link.label }}</span>
             </ULink>
           </template>
         </template>
       </nav>
 
-      <div class="px-4 py-3 border-t border-gray-200 dark:border-zinc-800/80">
+      <div v-if="!sidebarCollapsed" class="px-4 py-3 border-t border-gray-200 dark:border-zinc-800/80 shrink-0">
         <p class="microlabel text-gray-400 dark:text-zinc-600">Company</p>
         <p class="text-[12px] mt-0.5 dark:text-zinc-300 truncate">Mahim Packaging Ltd.</p>
       </div>
+
+      <button
+        class="hidden lg:flex items-center justify-center h-9 shrink-0 border-t border-gray-200 dark:border-zinc-800/80 text-gray-400 dark:text-zinc-600 hover:text-gray-700 dark:hover:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-900 cursor-pointer"
+        :aria-label="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+        @click="toggleCollapsed"
+      >
+        <UIcon :name="sidebarCollapsed ? 'i-heroicons-chevron-double-right' : 'i-heroicons-chevron-double-left'" class="text-sm" />
+      </button>
     </aside>
 
     <!-- Main -->
     <div class="flex-1 flex flex-col min-w-0">
-      <header class="h-12 shrink-0 flex items-center justify-end gap-2.5 px-5 border-b border-gray-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c0c0f]">
-        <NotificationBell />
-        <span class="microlabel px-1.5 py-0.5 rounded border border-amber-500/40 text-amber-600 dark:text-amber-400">
-          {{ profile?.role || 'viewer' }}
-        </span>
-        <UDropdown :items="profileMenu" :popper="{ placement: 'bottom-end' }">
-          <button class="flex items-center gap-2 rounded-full cursor-pointer hover:opacity-80" aria-label="Profile menu">
-            <UAvatar
-              :alt="displayName"
-              size="sm"
-              :ui="{ background: 'bg-amber-500 dark:bg-amber-500', text: 'text-black font-semibold' }"
-            />
-          </button>
-        </UDropdown>
+      <header class="h-12 shrink-0 flex items-center justify-between gap-2.5 px-3 lg:px-5 border-b border-gray-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c0c0f]">
+        <button
+          class="lg:hidden flex items-center justify-center cursor-pointer text-gray-500 dark:text-zinc-400"
+          aria-label="Open menu" @click="mobileNavOpen = true"
+        >
+          <UIcon name="i-heroicons-bars-3" class="text-xl" />
+        </button>
+        <div class="flex-1" />
+        <div class="flex items-center gap-2.5">
+          <NotificationBell />
+          <span class="microlabel px-1.5 py-0.5 rounded border border-amber-500/40 text-amber-600 dark:text-amber-400">
+            {{ profile?.role || 'viewer' }}
+          </span>
+          <UDropdown :items="profileMenu" :popper="{ placement: 'bottom-end' }">
+            <button class="flex items-center gap-2 rounded-full cursor-pointer hover:opacity-80" aria-label="Profile menu">
+              <UAvatar
+                :alt="displayName"
+                size="sm"
+                :ui="{ background: 'bg-amber-500 dark:bg-amber-500', text: 'text-black font-semibold' }"
+              />
+            </button>
+          </UDropdown>
+        </div>
       </header>
 
-      <main class="flex-1 overflow-auto p-5">
+      <main class="flex-1 overflow-auto p-3 sm:p-5">
         <slot />
       </main>
     </div>
