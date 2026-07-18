@@ -2,6 +2,7 @@
 const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
+const { all: topics, byValue } = useForwardingTopics()
 
 const letters = ref<any[]>([])
 const loading = ref(true)
@@ -17,16 +18,26 @@ onMounted(load)
 const open = ref(false)
 const saving = ref(false)
 const blank = () => ({
-  to_name: '', to_address: '', subject: '', body: '',
+  topic: 'general', to_name: '', to_address: '', subject: '', body: '',
   enclosures: '', cc: '', letter_date: new Date().toISOString().slice(0, 10)
 })
 const form = reactive(blank())
-const openNew = () => { Object.assign(form, blank()); open.value = true }
+const openNew = () => {
+  Object.assign(form, blank())
+  const t = byValue('general')
+  if (t) { form.subject = t.subject; form.body = t.body }
+  open.value = true
+}
+const onTopicChange = (v: string) => {
+  const t = byValue(v)
+  if (t) { form.subject = t.subject; form.body = t.body }
+}
 
 const save = async () => {
   if (!form.to_name || !form.subject) { toast.add({ title: 'Addressee and subject are required', color: 'red' }); return }
   saving.value = true
-  const { error } = await client.from('forwarding_letters').insert({ ...form } as any)
+  const { topic, ...payload } = form
+  const { error } = await client.from('forwarding_letters').insert(payload as any)
   if (error) toast.add({ title: 'Save failed', description: error.message, color: 'red' })
   else { toast.add({ title: 'Forwarding letter created' }); open.value = false; await load() }
   saving.value = false
@@ -62,6 +73,9 @@ const save = async () => {
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
         <template #header><p class="font-medium">New forwarding letter</p></template>
         <div class="space-y-3">
+          <UFormGroup label="Topic">
+            <USelect v-model="form.topic" :options="topics" option-attribute="label" value-attribute="value" @update:model-value="onTopicChange" />
+          </UFormGroup>
           <UFormGroup label="Date"><UInput v-model="form.letter_date" type="date" /></UFormGroup>
           <UFormGroup label="To" required><UInput v-model="form.to_name" placeholder="e.g. Islami Bank Bangladesh, Narayanganj Branch" /></UFormGroup>
           <UFormGroup label="Address"><UInput v-model="form.to_address" /></UFormGroup>
