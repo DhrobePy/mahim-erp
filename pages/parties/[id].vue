@@ -25,7 +25,7 @@ const load = async () => {
     client.from('invoices').select('id, invoice_no, invoice_date, total, status').eq('customer_party_id', id).order('created_at', { ascending: false }).limit(15),
     client.from('grns').select('id, grn_no, grn_date, status, mushak_61_no').eq('supplier_party_id', id).order('created_at', { ascending: false }).limit(15),
     client.from('debit_notes').select('dn_no, qty, amount, created_at').eq('supplier_party_id', id).limit(10),
-    client.from('lcs').select('id, lc_no, status, opened_at').or(`buyer_party_id.eq.${id},bank_party_id.eq.${id}`).limit(15),
+    client.from('lcs').select('id, lc_no, status, opened_at').or(`counterparty_party_id.eq.${id},bank_party_id.eq.${id}`).limit(15),
     client.from('journal_lines')
       .select('debit, credit, note, journal_id, accounts(code, name), journals(journal_no, journal_date, memo)')
       .eq('party_id', id).order('journal_id', { ascending: false }).limit(20)

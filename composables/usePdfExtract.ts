@@ -9,7 +9,15 @@ export interface LcExtract {
   expiry_date?: string
   usance_days?: number
   applicant?: string
+  beneficiary?: string
   tolerance_pct?: number
+  incoterm?: string
+  port_of_loading?: string
+  port_of_discharge?: string
+  latest_shipment_date?: string
+  presentation_period_days?: number
+  available_with_by?: string
+  lc_role?: 'export_local' | 'export_direct' | 'import'
   raw_text?: string
 }
 
@@ -66,15 +74,57 @@ export const usePdfExtract = () => {
     const tol = t.match(/(?:tolerance|39A)[:\s]*(?:\+\/?-?\s*)?(\d{1,2})\s*(?:%|percent)/i)
     if (tol) out.tolerance_pct = Number(tol[1])
 
-    const applicant = t.match(/(?::?50:?\s*(?:applicant)?|applicant)\s*[:\-]?\s*([A-Z][A-Za-z0-9 .,&()\-]{4,60})/i)
+    const applicant = t.match(/:50:\s*(?:applicant)?\s*([A-Z][A-Za-z0-9 .,&()\-]{4,80}?)(?=\s*:5[09]:|\s*:32B:)/i)
+      ?? t.match(/applicant\s*[:\-]?\s*([A-Z][A-Za-z0-9 .,&()\-]{4,60})/i)
     if (applicant) out.applicant = applicant[1].trim().replace(/\s{2,}/g, ' ')
+
+    const beneficiary = t.match(/:59:\s*(?:beneficiary)?\s*([A-Z][A-Za-z0-9 .,&()\-]{4,80}?)(?=\s*:32B:|\s*:41[AD]:)/i)
+      ?? t.match(/beneficiary\s*[:\-]?\s*([A-Z][A-Za-z0-9 .,&()\-]{4,60})/i)
+    if (beneficiary) out.beneficiary = beneficiary[1].trim().replace(/\s{2,}/g, ' ')
+
+    const loadPort = t.match(/(?:44E:?\s*(?:port of loading\/airport of departure)?|port of loading)\s*[:\-]?\s*([A-Za-z][A-Za-z0-9 ,.\-]{2,50}?)(?=\s*:?44F:|\s*port of discharge)/i)
+    if (loadPort) out.port_of_loading = loadPort[1].trim().replace(/\s{2,}/g, ' ')
+
+    const dischargePort = t.match(/(?:44F:?\s*(?:port of discharge\/airport of destination)?|port of discharge)\s*[:\-]?\s*([A-Za-z][A-Za-z0-9 ,.\-]{2,50}?)(?=\s*:?44C:|\s*latest date of shipment)/i)
+    if (dischargePort) out.port_of_discharge = dischargePort[1].trim().replace(/\s{2,}/g, ' ')
+
+    const shipDate = t.match(/(?:44C:?\s*(?:latest date of shipment)?|latest date of shipment)\s*[:\-]?\s*(\d{6}|\d{1,2}[\/-]\d{1,2}[\/-]\d{4}|\d{4}-\d{2}-\d{2})/i)
+    if (shipDate) out.latest_shipment_date = toIsoDate(shipDate[1])
+
+    const incoterm = t.match(/\b(EXW|FCA|FAS|FOB|CFR|CIF|CPT|CIP|DAP|DPU|DDP)\b\s+[A-Za-z][A-Za-z0-9 ,.\-]{2,40}/)
+    if (incoterm) out.incoterm = incoterm[1].toUpperCase()
+
+    const presentation = t.match(/period for presentation[^\d]{0,20}(\d{1,3})\s*\/?\s*days/i) ?? t.match(/(\d{1,3})\s*\/\s*days from/i)
+    if (presentation) out.presentation_period_days = Number(presentation[1])
+
+    const availWithBy = t.match(/(?:41[AD]:?\s*(?:available with\s*\.\.\.\s*by\s*\.\.\.)?)\s*([A-Za-z][A-Za-z0-9 ,.\-]{4,60}?)(?=\s*:4[23][ACP]:)/i)
+    if (availWithBy) out.available_with_by = availWithBy[1].trim().replace(/\s{2,}/g, ' ')
 
     return out
   }
 
-  const extractLc = async (file: File): Promise<LcExtract> => {
+  // Best-effort direction detection: compare the extracted applicant/
+  // beneficiary names against the user's own company name. Falls back to
+  // 'export_local' (the original/majority flow) when neither side matches
+  // or shipment fields are absent — the user always reviews before saving.
+  const inferRole = (f: LcExtract, ownCompanyName?: string): 'export_local' | 'export_direct' | 'import' => {
+    const norm = (s?: string) => (s ?? '').toLowerCase().replace(/[^a-z0-9]/g, '')
+    const own = norm(ownCompanyName)
+    if (own) {
+      if (norm(f.applicant).includes(own) || own.includes(norm(f.applicant)) && f.applicant) {
+        return 'import'
+      }
+      if (norm(f.beneficiary).includes(own) || (own && own.includes(norm(f.beneficiary)) && f.beneficiary)) {
+        return (f.port_of_loading || f.port_of_discharge) ? 'export_direct' : 'export_local'
+      }
+    }
+    return 'export_local'
+  }
+
+  const extractLc = async (file: File, ownCompanyName?: string): Promise<LcExtract> => {
     const text = await extractText(file)
     const fields = parseLcFields(text)
+    fields.lc_role = inferRole(fields, ownCompanyName)
     fields.raw_text = text.slice(0, 4000)
     return fields
   }

@@ -18,7 +18,7 @@ const loading = ref(true)
 const load = async () => {
   loading.value = true
   const [l, e, b, d, p, a] = await Promise.all([
-    client.from('lcs').select('*, buyer:buyer_party_id(name), bank:bank_party_id(name), lc_amendments(version, amount, quantity, tolerance_pct, expiry_date, bank_fee, created_at)').eq('id', lcId).single(),
+    client.from('lcs').select('*, counterparty:counterparty_party_id(name, is_foreign, country), bank:bank_party_id(name), lc_amendments(version, amount, quantity, tolerance_pct, expiry_date, bank_fee, created_at)').eq('id', lcId).single(),
     client.from('lc_events').select('*').eq('lc_id', lcId).order('created_at', { ascending: false }),
     client.from('bills').select('*, invoices(invoice_no)').eq('lc_id', lcId).order('created_at'),
     client.from('lc_documents').select('*').eq('lc_id', lcId).order('created_at', { ascending: false }),
@@ -117,15 +117,22 @@ const eventColor = (t: string) => ({
 
 const billColor = (s: string) =>
   ({ submitted: 'gray', accepted: 'blue', discounted: 'purple', realized: 'green', overdue: 'red' } as any)[s] || 'gray'
+
+const roleLabel: Record<string, string> = {
+  export_local: 'Export — Local LC (back-to-back)', export_direct: 'Export — Direct (foreign)', import: 'Import (foreign)'
+}
+const roleColor: Record<string, string> = { export_local: 'green', export_direct: 'blue', import: 'amber' }
+const counterpartyLabel = computed(() => lc.value?.lc_role === 'import' ? 'supplier' : 'buyer')
 </script>
 
 <template>
   <div v-if="lc">
     <PageHeader
-      kicker="Sales &amp; Local LC"
+      kicker="Sales &amp; Trade Finance"
       :title="`LC ${lc.lc_no}`"
       :subtitle="`${lc.lc_type}${lc.lc_type === 'usance' ? ' ' + lc.usance_days + 'd' : ''} · opened ${lc.opened_at}`"
     >
+      <UBadge variant="subtle" :color="roleColor[lc.lc_role]">{{ roleLabel[lc.lc_role] }}</UBadge>
       <UBadge variant="subtle" :color="lc.status === 'active' ? 'green' : 'gray'">{{ lc.status }}</UBadge>
       <UButton v-if="canWrite && lc.status === 'active'" color="gray" variant="soft" icon="i-heroicons-lock-closed" @click="closeOut">
         Close out
@@ -133,12 +140,14 @@ const billColor = (s: string) =>
     </PageHeader>
 
     <div class="flex flex-wrap gap-3 mb-4 text-[12.5px]">
-      <NuxtLink :to="`/parties/${lc.buyer_party_id}`" class="text-amber-600 dark:text-amber-400 hover:underline">
-        → buyer: {{ lc.buyer?.name }}
+      <NuxtLink :to="`/parties/${lc.counterparty_party_id}`" class="text-amber-600 dark:text-amber-400 hover:underline">
+        → {{ counterpartyLabel }}: {{ lc.counterparty?.name }}
+        <span v-if="lc.counterparty?.is_foreign" class="text-gray-400">({{ lc.counterparty?.country || 'foreign' }})</span>
       </NuxtLink>
       <NuxtLink v-if="lc.bank_party_id" :to="`/parties/${lc.bank_party_id}`" class="text-amber-600 dark:text-amber-400 hover:underline">
         → issuing bank: {{ lc.bank?.name }}
       </NuxtLink>
+      <span v-if="lc.incoterm" class="text-gray-500 dark:text-zinc-500">{{ lc.incoterm }}{{ lc.port_of_loading ? ' · ' + lc.port_of_loading : '' }}{{ lc.port_of_discharge ? ' → ' + lc.port_of_discharge : '' }}</span>
     </div>
 
     <div v-if="alerts.length" class="mb-4 space-y-1">
@@ -157,7 +166,7 @@ const billColor = (s: string) =>
       </div>
     </div>
 
-    <div class="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
+    <div v-if="lc.lc_role === 'export_local'" class="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
       <StatCard label="Active terms" :value="active ? 'v' + active.version : '—'" :sub="active ? money(active.amount) + ' · ±' + active.tolerance_pct + '%' : ''" />
       <StatCard label="Revenue" :value="money(pnl?.revenue ?? 0)" />
       <StatCard label="Returns" :value="money(pnl?.returns ?? 0)" :tone="Number(pnl?.returns) > 0 ? 'red' : 'default'" />
@@ -165,6 +174,18 @@ const billColor = (s: string) =>
       <StatCard label="Bank fees + interest" :value="money(Number(pnl?.bank_fees ?? 0) + Number(pnl?.interest ?? 0))" />
       <StatCard label="Contract profit" :value="money(pnl?.contract_profit ?? 0)" :tone="Number(pnl?.contract_profit) >= 0 ? 'green' : 'red'" />
     </div>
+
+    <div v-else class="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
+      <StatCard label="Active terms" :value="active ? 'v' + active.version : '—'" :sub="active ? lc.currency + ' ' + money(active.amount).replace('৳','') + ' · ±' + active.tolerance_pct + '%' : ''" />
+      <StatCard label="Incoterm" :value="lc.incoterm || '—'" />
+      <StatCard label="Latest shipment" :value="lc.latest_shipment_date || '—'" />
+      <StatCard label="Presentation period" :value="lc.presentation_period_days ? lc.presentation_period_days + ' days' : '—'" />
+      <StatCard label="Port of loading" :value="lc.port_of_loading || '—'" />
+      <StatCard label="Port of discharge" :value="lc.port_of_discharge || '—'" />
+    </div>
+    <p v-if="lc.lc_role !== 'export_local'" class="text-xs text-gray-400 dark:text-zinc-500 -mt-2 mb-4">
+      Money movement for this LC (GRN/payable, bill retirement, realization) is posted via a manual journal on the Accounting page for now.
+    </p>
 
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
       <!-- Timeline -->
@@ -195,7 +216,7 @@ const billColor = (s: string) =>
 
       <div class="space-y-4">
         <!-- Bills -->
-        <UCard>
+        <UCard v-if="lc.lc_role === 'export_local'">
           <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Bills under this LC</p></template>
           <UTable
             :rows="bills"

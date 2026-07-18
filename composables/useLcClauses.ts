@@ -1,8 +1,8 @@
-// Standard clause library for Bangladeshi back-to-back Local LC / deemed
-// export documentation. These are boilerplate declarations commonly
-// printed on the Bill of Exchange, Commercial Invoice, Packing List and
-// Delivery Challan for inland (non-shipment) back-to-back LC trade —
-// not legal advice; the user selects what applies to each contract.
+// Standard clause library for Bangladeshi LC documentation — originally
+// written for back-to-back Local LC / deemed export trade, extended to
+// cover genuine foreign export (direct shipment, real export VAT) and
+// import (Mahim as applicant) scenarios. Not legal advice; the user
+// selects what applies to each contract.
 export type ClauseDoc = 'boe' | 'ci' | 'pl' | 'challan' | 'quotation' | 'pi' | 'contract'
 
 export interface LcClause {
@@ -159,6 +159,73 @@ const CLAUSES: LcClause[] = [
     category: 'Contract terms',
     appliesTo: ['contract'],
     text: 'Any dispute arising out of or in connection with this contract shall first be settled amicably between the parties; failing which it shall be referred to arbitration in Dhaka, Bangladesh.',
+    defaultOn: false
+  },
+
+  // ---- Foreign direct export (real shipment, not deemed export) ----
+  {
+    key: 'actual_export_vat',
+    category: 'Foreign Export / Shipment',
+    appliesTo: ['ci'],
+    text: 'This being an actual export shipment out of Bangladesh, the supply is zero-rated for VAT purposes and no VAT has been charged on this invoice.',
+    defaultOn: true
+  },
+  {
+    key: 'incoterm_reference',
+    category: 'Foreign Export / Shipment',
+    appliesTo: ['ci', 'pl', 'boe'],
+    text: 'Shipment is made on the Incoterm(s) 2020 basis stated on the covering Letter of Credit; risk and cost allocation between the parties shall be governed accordingly.',
+    defaultOn: true
+  },
+  {
+    key: 'marine_insurance',
+    category: 'Foreign Export / Shipment',
+    appliesTo: ['ci', 'pl'],
+    text: 'Marine/transit insurance has been arranged as per the terms of the covering Letter of Credit and the Incoterm quoted; the relevant cover note/certificate accompanies the shipping documents.',
+    defaultOn: false
+  },
+  {
+    key: 'shipping_marks',
+    category: 'Foreign Export / Shipment',
+    appliesTo: ['pl'],
+    text: 'Shipping marks, package numbers and country of origin (Bangladesh) are clearly marked on each package as required under the covering Letter of Credit.',
+    defaultOn: true
+  },
+  {
+    key: 'export_origin_bd',
+    category: 'Foreign Export / Shipment',
+    appliesTo: ['ci'],
+    text: 'Certified that the goods described herein are of Bangladeshi origin, manufactured by the Beneficiary, and comply with the export policy of the People’s Republic of Bangladesh currently in force.',
+    defaultOn: true
+  },
+
+  // ---- Import (Mahim as Applicant) ----
+  {
+    key: 'import_own_use',
+    category: 'Import (Applicant)',
+    appliesTo: ['contract'],
+    text: 'The imported goods covered under this Letter of Credit are for the Applicant’s own manufacturing/business use and are not intended for resale in an unaltered state, except as otherwise permitted under the relevant Import Policy Order.',
+    defaultOn: true
+  },
+  {
+    key: 'import_policy_compliance',
+    category: 'Import (Applicant)',
+    appliesTo: ['contract'],
+    text: 'The Applicant confirms that the goods covered under this Letter of Credit are not restricted or prohibited under the current Import Policy Order of the People’s Republic of Bangladesh, and that all applicable IRC, TIN and BIN details have been correctly furnished to the Issuing Bank.',
+    defaultOn: true
+  },
+  {
+    key: 'import_lc_over_po',
+    category: 'Import (Applicant)',
+    appliesTo: ['contract'],
+    text: 'In the event of any conflict between the terms of this document and the terms of the Letter of Credit issued in respect of this purchase, the terms of the Letter of Credit shall prevail.',
+    defaultOn: false
+  },
+  {
+    key: 'import_origin_cert',
+    category: 'Import (Applicant)',
+    appliesTo: ['contract'],
+    text: 'The Beneficiary/Supplier shall furnish a Certificate of Origin, issued by the relevant government authority or Chamber of Commerce of the exporting country, certifying the country of origin of the goods, along with the shipping documents.',
     defaultOn: false
   }
 ]

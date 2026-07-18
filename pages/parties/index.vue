@@ -38,6 +38,7 @@ const roleBadges = (p: any) => {
   if (p.is_supplier) r.push('supplier')
   if (p.is_transporter) r.push('transporter')
   if (p.is_bank) r.push('bank')
+  if (p.is_foreign) r.push(p.country ? `foreign · ${p.country}` : 'foreign')
   return r
 }
 
@@ -47,7 +48,8 @@ const blank = () => ({
   id: null as string | null,
   code: '', name: '', is_customer: false, is_supplier: false,
   is_transporter: false, is_bank: false,
-  phone: '', email: '', address: '', bin_no: '', tin_no: '', is_active: true
+  phone: '', email: '', address: '', bin_no: '', tin_no: '', is_active: true,
+  is_foreign: false, country: ''
 })
 const form = reactive(blank())
 const openNew = () => { Object.assign(form, blank()); open.value = true }
@@ -121,12 +123,14 @@ const save = async () => {
             <UCheckbox v-model="form.is_supplier" label="Supplier" />
             <UCheckbox v-model="form.is_transporter" label="Transporter" />
             <UCheckbox v-model="form.is_bank" label="Bank" />
+            <UCheckbox v-model="form.is_foreign" label="Foreign (overseas)" />
           </div>
           <UFormGroup label="Phone"><UInput v-model="form.phone" /></UFormGroup>
           <UFormGroup label="Email"><UInput v-model="form.email" /></UFormGroup>
           <UFormGroup label="BIN (VAT reg.)"><UInput v-model="form.bin_no" /></UFormGroup>
           <UFormGroup label="TIN"><UInput v-model="form.tin_no" /></UFormGroup>
           <UFormGroup label="Address" class="col-span-2"><UInput v-model="form.address" /></UFormGroup>
+          <UFormGroup v-if="form.is_foreign" label="Country"><UInput v-model="form.country" placeholder="e.g. China" /></UFormGroup>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
