@@ -35,7 +35,10 @@ const load = async () => {
   ])
 
   const bal = (code: string) => Number((balances ?? []).find((b: any) => b.code === code)?.balance ?? 0)
-  stats.bank = bal('1100') + bal('1150')
+  const balPrefix = (prefix: string) => (balances ?? [])
+    .filter((b: any) => b.code === prefix || b.code.startsWith(prefix + '-'))
+    .reduce((s: number, b: any) => s + Number(b.balance ?? 0), 0)
+  stats.bank = balPrefix('1100') + balPrefix('1150')
   stats.receivables = bal('1200') + bal('1210') + bal('1220')
   stats.lbpd = -(bal('2300') + bal('2310'))
   stats.stockValue = (stockRows ?? []).reduce((s: number, r: any) => s + Number(r.stock_value || 0), 0)

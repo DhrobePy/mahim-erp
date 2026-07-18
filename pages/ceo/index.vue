@@ -67,7 +67,10 @@ const load = async () => {
 onMounted(load)
 
 const g = (code: string) => bal.value.get(code) ?? 0
-const cash = computed(() => g('1100') + g('1150'))
+const gPrefix = (prefix: string) => [...bal.value.entries()]
+  .filter(([code]) => code === prefix || code.startsWith(prefix + '-'))
+  .reduce((s, [, v]) => s + v, 0)
+const cash = computed(() => gPrefix('1100') + gPrefix('1150'))
 const receivableLc = computed(() => g('1210'))
 const receivableOpen = computed(() => g('1200'))
 const gdni = computed(() => g('1220'))
