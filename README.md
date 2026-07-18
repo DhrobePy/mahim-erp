@@ -182,13 +182,198 @@ manual "Register from PDF" button already uses.
 
 Production hosting target is **cPanel**. Supabase itself cannot run there —
 the database stays on hosted Supabase (supabase.com); only the Nuxt app
-deploys to cPanel. Two options:
+deploys to cPanel as a **static SPA**. The repo already keeps a built copy at
+`cpanel-deploy/` committed to git, so most of the time deploying is just
+"pull the repo, point the domain at `cpanel-deploy/`" — see the update
+workflow at the bottom. The steps below are the **first-time setup**.
 
-1. **Static SPA (recommended):** set `ssr: false` in `nuxt.config.ts`, run
-   `npx nuxi generate`, upload `.output/public/` to `public_html/`. The
-   browser talks to Supabase directly; RLS is the security boundary. Add an
-   `.htaccess` SPA fallback rewriting unknown paths to `index.html`.
-2. **Node SSR via Passenger:** if the host offers "Setup Node.js App", point
-   it at a small CommonJS launcher that imports `.output/server/index.mjs`
-   (built with `npm run build`). More moving parts; only worth it if SSR is
-   actually needed — for a login-gated ERP it usually isn't.
+> **Before you do anything else:** whatever is currently committed in
+> `cpanel-deploy/` was built against the **local dev** Supabase instance
+> (`http://127.0.0.1:54321`) — that URL and anon key are baked directly into
+> every prerendered HTML page (Nuxt inlines `runtimeConfig.public` at build
+> time; there is no server to read `.env` from at request time). Uploading
+> it as-is means every visitor's browser tries to reach `127.0.0.1` and the
+> site will look "logged out" / show zero data everywhere, with no obvious
+> error. You **must** rebuild against a production Supabase project (step 4)
+> before the first real deploy.
+
+### 1. Create the production Supabase project
+
+At [supabase.com](https://supabase.com) → New project. Pick a region close
+to Bangladesh (Singapore is usually lowest latency). Save the generated DB
+password somewhere safe — you won't need it day-to-day, but you will if you
+ever connect a SQL client directly.
+
+This is a **separate, empty database** from your local dev stack — none of
+your local data/companies/users carry over automatically.
+
+### 2. Apply the schema
+
+In the Supabase dashboard → **SQL Editor**, run every file in
+`supabase/migrations/` **in exact numeric order** (0001 → 0016 as of this
+writing — check `ls supabase/migrations` for the current last number, this
+list grows over time), then `supabase/seed.sql` last. Paste one file at a
+time and run it — don't concatenate them, some migrations reference
+functions/types created in the previous one and Postgres needs them to
+already exist.
+
+Prefer the CLI over copy-paste? `supabase link --project-ref <ref>` then
+`supabase db push` applies every migration file in order automatically —
+equivalent result, less clicking.
+
+`seed.sql` inserts real reference data you'll want in production (UOMs,
+warehouses, cost centers, the `production_order` numbering series) plus a
+handful of **illustrative** items (`RM-BOARD-250`, `FG-CARTON-A`, etc.) —
+rename or delete those once you've entered your actual item catalog; they're
+placeholders, not required data.
+
+Confirm it worked: **Table Editor** should show `companies` with one row
+(the mother company, fixed id `00000000-0000-0000-0000-000000000001`), and
+**Storage** should show two buckets already created by the migrations —
+`company-assets` (public, for logos) and `lc-docs` (private, for LC PDFs).
+
+### 3. Configure Auth
+
+**Authentication → URL Configuration**: set **Site URL** to your real
+production domain (e.g. `https://erp.mahimpackaging.com`) and add it to
+**Redirect URLs** too — Supabase rejects auth callbacks to unlisted URLs.
+
+**Authentication → Providers → Email**: decide on "Confirm email". Local
+dev usually turns this **off** for convenience; for production, leaving it
+**on** is the safer default so account creation requires a real inbox. Since
+this ERP doesn't have public sign-up flows in practice (you'll create
+accounts for known staff), either setting is defensible — just make the
+choice deliberately rather than by accident.
+
+### 4. Point the build at production and regenerate
+
+```bash
+cp .env .env.local.bak          # keep your local dev credentials safe
+```
+
+Edit `.env` (or make a fresh copy from `.env.example`) with the
+**production** project's values from Project Settings → API:
+
+```
+SUPABASE_URL=https://<your-project-ref>.supabase.co
+SUPABASE_KEY=<production anon public key>
+```
+
+Then rebuild:
+
+```bash
+rm -rf .nuxt .output
+npx nuxi generate
+rm -rf cpanel-deploy
+cp -R .output/public cpanel-deploy
+```
+
+**Sanity-check before deploying** — this should print nothing:
+
+```bash
+grep -r "127.0.0.1" cpanel-deploy/index.html
+```
+
+If it prints the local URL, the build picked up the wrong `.env` — fix that
+before continuing, don't deploy it.
+
+Once confirmed, restore your local dev `.env` for day-to-day development:
+
+```bash
+cp .env.local.bak .env
+```
+
+### 5. Ship it to cPanel
+
+Two ways to get `cpanel-deploy/` onto the server — pick one:
+
+**A. Git Version Control (recommended)** — cPanel → *Git Version Control* →
+*Create* → paste `https://github.com/DhrobePy/mahim-erp.git`, set the
+repository path to something outside `public_html` (e.g.
+`~/repos/mahim-erp`), branch `main`. After cloning, use cPanel's *File
+Manager* (or a symlink) to point your domain's document root at
+`~/repos/mahim-erp/cpanel-deploy` — or set the Git repo's deployment path
+directly to your `public_html`/subdomain folder if the host's Git feature
+supports it. Future updates are then `git pull` (via the Git UI's "Manage"
+→ "Pull" or SSH if available), no re-upload needed.
+
+**B. File Manager / FTP upload** — zip the **contents** of `cpanel-deploy/`
+(not the folder itself — you want `index.html` etc. at the top level of the
+zip) and upload+extract into `public_html/` (or a subdomain's document
+root) via File Manager's Upload + Extract, or any FTP client.
+
+Either way: the domain's document root must point at the folder containing
+`index.html`, not at the repo root — `cpanel-deploy/` is the deployable
+artifact, the rest of the repo (source, migrations) has no business being
+web-accessible.
+
+### 6. SPA routing — add `.htaccess`
+
+Most pages were prerendered as their own `index.html` (e.g. `/accounting/pnl/`
+resolves naturally), but pages with a dynamic id in the URL — `/hr/<uuid>`,
+`/print/payslip/<uuid>`, `/lcs/<uuid>`, etc. — have no matching file on disk
+and need a fallback so a hard refresh or direct link doesn't 404. Add this
+`.htaccess` next to `index.html` in the deployed folder:
+
+```apache
+DirectoryIndex index.html
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ /200.html [L]
+</IfModule>
+```
+
+`200.html` is the same app shell as `index.html` — Nuxt's convention for
+"serve this with a 200 status and let the client-side router figure out
+what page it is," which is what a dynamic id route needs.
+
+### 7. Domain + SSL
+
+If deploying to a subdomain (recommended, e.g. `erp.yourdomain.com`), create
+it under cPanel → *Domains* first, pointing at the folder from step 5. Then
+cPanel → *SSL/TLS Status* → run **AutoSSL** (or issue Let's Encrypt manually
+if AutoSSL isn't enabled) so the site serves over HTTPS — Supabase's auth
+cookies are set `secure`, so the app won't authenticate correctly over plain
+HTTP.
+
+### 8. Bootstrap your first admin user
+
+Visit the deployed site → **Sign up** with your real email. Then in the
+production Supabase **SQL Editor**:
+
+```sql
+insert into company_members (user_id, company_id, role)
+select id, '00000000-0000-0000-0000-000000000001', 'admin'
+from auth.users where email = 'you@company.com';
+```
+
+Sign out and back in to pick up the membership — new signups have **no**
+company membership by default and see no data until one is granted, exactly
+like local dev.
+
+### 9. Post-deploy smoke test
+
+- Log in, confirm the sidebar and dashboard load with real (empty) data, not
+  a blank/frozen screen (that symptom means step 4's rebuild didn't happen
+  or picked up the wrong `.env`).
+- Create one real record in a couple of modules (an item, a party) to
+  confirm writes work — this exercises RLS end-to-end, not just reads.
+- Open a print page (e.g. any `/print/...` route) to confirm the company
+  logo/letterhead renders — this confirms the `company-assets` storage
+  bucket and its public URL are reachable from the internet, not just from
+  your machine.
+- Hard-refresh a dynamic-id page (e.g. an employee detail page) to confirm
+  step 6's `.htaccess` fallback is actually working.
+
+### Updating an existing deployment
+
+For ordinary code changes (no new migration): repeat step 4 (rebuild with
+production `.env`) and step 5 (redeploy — `git pull` if using Git Version
+Control, or re-upload if using File Manager). For changes that include a new
+migration file: apply the new migration in the production SQL Editor first
+(same as step 2, just the one new file), *then* rebuild and redeploy — the
+frontend and schema should never drift apart for more than the few minutes
+it takes to do both.
