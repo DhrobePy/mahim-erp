@@ -41,7 +41,9 @@ const blank = () => ({
   id: null as string | null, full_name: '', designation: '', department: '',
   joining_date: new Date().toISOString().slice(0, 10),
   basic_salary: 0, gross_salary: 0, attendance_allowance: 0,
-  biometric_id: '', phone: '', nid_no: '', is_active: true
+  biometric_id: '', phone: '', nid_no: '', is_active: true,
+  date_of_birth: null as string | null, blood_group: '', marital_status: '', father_name: '',
+  present_address: '', permanent_address: '', emergency_contact_name: '', emergency_contact_phone: ''
 })
 const form = reactive(blank())
 const openNew = () => { Object.assign(form, blank()); open.value = true }
@@ -144,6 +146,19 @@ const saveLoan = async () => {
           <UFormGroup label="Gross salary (৳)"><UInput v-model.number="form.gross_salary" type="number" /></UFormGroup>
           <UFormGroup label="Attendance allowance (৳/mo)"><UInput v-model.number="form.attendance_allowance" type="number" /></UFormGroup>
           <UFormGroup label="Phone"><UInput v-model="form.phone" /></UFormGroup>
+          <UFormGroup label="NID no."><UInput v-model="form.nid_no" /></UFormGroup>
+        </div>
+
+        <p class="microlabel text-gray-400 dark:text-zinc-500 mt-5 mb-2">Personal information</p>
+        <div class="grid grid-cols-2 gap-4">
+          <UFormGroup label="Father's name"><UInput v-model="form.father_name" /></UFormGroup>
+          <UFormGroup label="Date of birth"><UInput v-model="form.date_of_birth" type="date" /></UFormGroup>
+          <UFormGroup label="Blood group"><UInput v-model="form.blood_group" placeholder="e.g. B+" /></UFormGroup>
+          <UFormGroup label="Marital status"><UInput v-model="form.marital_status" placeholder="single / married" /></UFormGroup>
+          <UFormGroup label="Present address" class="col-span-2"><UTextarea v-model="form.present_address" :rows="2" /></UFormGroup>
+          <UFormGroup label="Permanent address" class="col-span-2"><UTextarea v-model="form.permanent_address" :rows="2" /></UFormGroup>
+          <UFormGroup label="Emergency contact name"><UInput v-model="form.emergency_contact_name" /></UFormGroup>
+          <UFormGroup label="Emergency contact phone"><UInput v-model="form.emergency_contact_phone" /></UFormGroup>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">

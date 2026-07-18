@@ -58,7 +58,8 @@ const sections = [
     links: [
       { label: 'Employees', to: '/hr', icon: 'i-heroicons-identification' },
       { label: 'Attendance', to: '/hr/attendance', icon: 'i-heroicons-finger-print' },
-      { label: 'Payroll', to: '/hr/payroll', icon: 'i-heroicons-currency-bangladeshi' }
+      { label: 'Payroll', to: '/hr/payroll', icon: 'i-heroicons-currency-bangladeshi' },
+      { label: 'Office stationery', to: '/hr/stationery', icon: 'i-heroicons-pencil-square' }
     ]
   }
 ]
