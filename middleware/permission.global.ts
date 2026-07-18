@@ -30,6 +30,7 @@ const ROUTE_MODULES: Array<[string, string]> = [
   ['/boms', 'boms'],
   ['/production', 'production'],
   ['/parties', 'parties'],
+  ['/procurement/purchase-orders', 'purchase_orders'],
   ['/procurement', 'procurement'],
   ['/quotations', 'quotations'],
   ['/sales', 'sales_orders'],

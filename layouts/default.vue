@@ -28,6 +28,7 @@ const sections = [
     title: 'Procurement',
     links: [
       { label: 'Parties', to: '/parties', icon: 'i-heroicons-users', module: 'parties' },
+      { label: 'Purchase orders', to: '/procurement/purchase-orders', icon: 'i-heroicons-clipboard-document-list', module: 'purchase_orders' },
       { label: 'GRNs', to: '/procurement', icon: 'i-heroicons-truck', module: 'procurement' }
     ]
   },

@@ -8,6 +8,7 @@ const debitNotes = ref<any[]>([])
 const suppliers = ref<any[]>([])
 const items = ref<any[]>([])
 const warehouses = ref<any[]>([])
+const openPOs = ref<any[]>([])
 const loading = ref(true)
 
 const columns = [
@@ -21,21 +22,45 @@ const columns = [
 
 const load = async () => {
   loading.value = true
-  const [g, d, s, i, w] = await Promise.all([
+  const [g, d, s, i, w, po] = await Promise.all([
     client.from('grns').select('*, parties(name), grn_lines(id, item_id, invoice_qty, accepted_qty, unit_price)').order('created_at', { ascending: false }),
     client.from('debit_notes').select('*, parties(name)').order('created_at', { ascending: false }),
     client.from('parties').select('id, code, name').eq('is_supplier', true).order('name'),
     client.from('items').select('id, sku, name').eq('is_active', true).order('sku'),
-    client.from('warehouses').select('id, code, name').order('code')
+    client.from('warehouses').select('id, code, name').order('code'),
+    client.from('purchase_orders')
+      .select('id, po_no, supplier_party_id, status, v_purchase_order_lines(id, item_id, qty, received_qty, landed_unit_cost)')
+      .in('status', ['approved', 'partially_received'])
   ])
   grns.value = g.data ?? []
   debitNotes.value = d.data ?? []
   suppliers.value = s.data ?? []
   items.value = i.data ?? []
   warehouses.value = w.data ?? []
+  openPOs.value = po.data ?? []
   loading.value = false
 }
 onMounted(load)
+
+// PO picker in "New GRN" — filtered to the chosen supplier's open POs.
+const supplierPOs = computed(() =>
+  openPOs.value.filter((p) => p.supplier_party_id === form.supplier_party_id)
+)
+const selectedPOId = ref<string | null>(null)
+const applyPO = (poId: string | null) => {
+  const po = openPOs.value.find((p) => p.id === poId)
+  if (!po) return
+  const remaining = po.v_purchase_order_lines.filter((l: any) => l.received_qty < l.qty)
+  if (!remaining.length) { toast.add({ title: 'This PO has nothing left to receive', color: 'amber' }); return }
+  lines.value = remaining.map((l: any) => ({
+    ...blankLine(),
+    item_id: l.item_id,
+    invoice_qty: l.qty - l.received_qty,
+    gross_weight: null, // let complete_grn's coalesce fall back to invoice_qty — no scale reading yet
+    unit_price: Number(l.landed_unit_cost).toFixed(4),
+    po_line_id: l.id
+  }))
+}
 
 // --- New GRN ---
 const open = ref(false)
@@ -50,11 +75,12 @@ const form = reactive({
 const lines = ref<any[]>([])
 const blankLine = () => ({
   item_id: null, invoice_qty: 0, gross_weight: 0,
-  core_tare_weight: 0, moisture_pct: 0, unit_price: 0, batch_no: '', is_fsc: false
+  core_tare_weight: 0, moisture_pct: 0, unit_price: 0, batch_no: '', is_fsc: false, po_line_id: null as string | null
 })
 const openNew = () => {
   Object.assign(form, { supplier_party_id: null, warehouse_id: null, mushak_61_no: '', vat_applicable: true, note: '' })
   lines.value = [blankLine()]
+  selectedPOId.value = null
   open.value = true
 }
 
@@ -167,6 +193,12 @@ const statusColor = (s: string) =>
           </UFormGroup>
           <UFormGroup label="Supplier Mushak 6.1 no.">
             <UInput v-model="form.mushak_61_no" />
+          </UFormGroup>
+          <UFormGroup v-if="supplierPOs.length" label="Receive against purchase order" class="col-span-3" hint="Prefills lines with remaining qty and landed unit cost">
+            <USelect
+              v-model="selectedPOId" :options="supplierPOs" option-attribute="po_no" value-attribute="id"
+              placeholder="Standalone receipt — no PO" @update:model-value="applyPO"
+            />
           </UFormGroup>
         </div>
 
