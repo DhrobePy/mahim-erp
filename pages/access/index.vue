@@ -19,7 +19,7 @@ const roleOptions = [
 const load = async () => {
   loading.value = true
   const [{ data: profiles }, { data: members }] = await Promise.all([
-    client.from('profiles').select('id, full_name, is_active, created_at').order('created_at'),
+    client.from('profiles').select('id, full_name, email, is_active, created_at').order('created_at'),
     client.from('company_members').select('user_id, role, is_active').eq('company_id', activeCompanyId.value)
   ])
   const byUser = new Map((members ?? []).map((m: any) => [m.user_id, m]))
@@ -129,6 +129,45 @@ const savePermissions = async () => {
     permSaving.value = false
   }
 }
+
+// --- Edit user (name / email / password reset) ---
+const editOpen = ref(false)
+const editSaving = ref(false)
+const editTarget = ref<any>(null)
+const editForm = reactive({ full_name: '', email: '', password: '' })
+
+const openEdit = (row: any) => {
+  editTarget.value = row
+  Object.assign(editForm, { full_name: row.full_name ?? '', email: row.email ?? '', password: '' })
+  editOpen.value = true
+}
+const genEditPassword = () => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'
+  editForm.password = Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+}
+const saveEdit = async () => {
+  editSaving.value = true
+  try {
+    const { data: { session } } = await client.auth.getSession()
+    const { data, error } = await client.functions.invoke('admin-update-user', {
+      body: {
+        user_id: editTarget.value.id, company_id: activeCompanyId.value,
+        full_name: editForm.full_name, email: editForm.email,
+        password: editForm.password || undefined
+      },
+      headers: { Authorization: `Bearer ${session?.access_token}` }
+    })
+    if (error) throw error
+    if (data?.error) throw new Error(data.error)
+    toast.add({ title: 'User updated' })
+    editOpen.value = false
+    await load()
+  } catch (e: any) {
+    toast.add({ title: 'Update failed', description: e.message, color: 'red' })
+  } finally {
+    editSaving.value = false
+  }
+}
 </script>
 
 <template>
@@ -178,6 +217,10 @@ const savePermissions = async () => {
           </template>
           <template #actions-data="{ row }">
             <div class="flex items-center gap-2 justify-end">
+              <UButton
+                v-if="row.membership?.is_active"
+                size="xs" variant="soft" icon="i-heroicons-pencil-square" @click="openEdit(row)"
+              >Edit</UButton>
               <UButton
                 v-if="row.membership?.is_active && row.membership.role !== 'admin'"
                 size="xs" variant="soft" icon="i-heroicons-adjustments-horizontal" @click="openPermissions(row)"
@@ -277,6 +320,34 @@ const savePermissions = async () => {
           <div class="flex justify-end gap-2">
             <UButton color="gray" variant="ghost" @click="permOpen = false">Cancel</UButton>
             <UButton :loading="permSaving" @click="savePermissions">Save permissions</UButton>
+          </div>
+        </template>
+      </UCard>
+    </USlideover>
+
+    <USlideover v-model="editOpen" :ui="{ width: 'w-screen max-w-md' }">
+      <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
+        <template #header><p class="font-medium">Edit user</p></template>
+
+        <div class="space-y-4">
+          <UFormGroup label="Full name">
+            <UInput v-model="editForm.full_name" placeholder="Their name" />
+          </UFormGroup>
+          <UFormGroup label="Email">
+            <UInput v-model="editForm.email" type="email" placeholder="them@company.com" />
+          </UFormGroup>
+          <UFormGroup label="New password" hint="Leave blank to keep their current password">
+            <div class="flex gap-2">
+              <UInput v-model="editForm.password" placeholder="•••••••• (unchanged)" class="flex-1" />
+              <UButton size="xs" variant="soft" icon="i-heroicons-arrow-path" @click="genEditPassword" />
+            </div>
+          </UFormGroup>
+        </div>
+
+        <template #footer>
+          <div class="flex justify-end gap-2">
+            <UButton color="gray" variant="ghost" @click="editOpen = false">Cancel</UButton>
+            <UButton :loading="editSaving" @click="saveEdit">Save changes</UButton>
           </div>
         </template>
       </UCard>
