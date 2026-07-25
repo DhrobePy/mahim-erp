@@ -43,5 +43,32 @@ export const useCartonMath = () => {
     return { blankLengthMm, blankWidthMm, blankAreaM2: (blankLengthMm / 1000) * (blankWidthMm / 1000), rows, totalKg }
   }
 
-  return { toMm, plyLayout, blankDims, layerKg, recipeSummary, TAKE_UP }
+  // Phase 1 costing: paper cost (from the recipe, at today's standard_cost)
+  // + a flat other-direct-materials rate + overhead % + margin % = a
+  // suggested selling price per box. Nothing here is persisted — it's
+  // recomputed live so it always reflects current item costs, not
+  // whatever they were when the recipe was last saved.
+  const costBreakdown = (
+    rows: Array<{ raw_item_id: string | null; kg: number }>,
+    costOf: (itemId: string | null) => number,
+    wastagePct: number,
+    otherMaterialsCostPerBox: number,
+    overheadPct: number,
+    marginPct: number
+  ) => {
+    const paperLines = rows.map((r) => {
+      const kgWithWastage = r.kg * (1 + (Number(wastagePct) || 0) / 100)
+      const unitCost = costOf(r.raw_item_id)
+      return { raw_item_id: r.raw_item_id, kg: kgWithWastage, unitCost, cost: kgWithWastage * unitCost }
+    })
+    const paperCost = paperLines.reduce((s, r) => s + r.cost, 0)
+    const otherCost = Number(otherMaterialsCostPerBox) || 0
+    const materialSubtotal = paperCost + otherCost
+    const overheadAmount = materialSubtotal * ((Number(overheadPct) || 0) / 100)
+    const totalCost = materialSubtotal + overheadAmount
+    const suggestedPrice = totalCost * (1 + (Number(marginPct) || 0) / 100)
+    return { paperLines, paperCost, otherCost, materialSubtotal, overheadAmount, totalCost, suggestedPrice }
+  }
+
+  return { toMm, plyLayout, blankDims, layerKg, recipeSummary, costBreakdown, TAKE_UP }
 }

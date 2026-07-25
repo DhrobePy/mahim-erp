@@ -7,7 +7,14 @@ const company = ref<any>(null)
 const children = ref<any[]>([])
 const loading = ref(true)
 const saving = ref(false)
+const savingCosting = ref(false)
 const uploadingLogo = ref(false)
+
+const impliedOverheadPct = computed(() => {
+  const mat = Number(company.value?.ref_material_cost) || 0
+  const fac = Number(company.value?.ref_factory_cost) || 0
+  return mat > 0 ? Math.round((fac / mat) * 1000) / 10 : 0
+})
 
 const load = async () => {
   loading.value = true
@@ -36,6 +43,18 @@ const saveProfile = async () => {
   if (error) toast.add({ title: 'Save failed', description: error.message, color: 'red' })
   else toast.add({ title: 'Company profile updated' })
   saving.value = false
+}
+
+const saveCosting = async () => {
+  savingCosting.value = true
+  const { error } = await client.from('companies').update({
+    ref_material_cost: company.value.ref_material_cost,
+    ref_factory_cost: company.value.ref_factory_cost,
+    default_margin_pct: company.value.default_margin_pct
+  } as any).eq('id', activeCompanyId.value)
+  if (error) toast.add({ title: 'Save failed', description: error.message, color: 'red' })
+  else toast.add({ title: 'Costing defaults updated' })
+  savingCosting.value = false
 }
 
 const onLogo = async (ev: Event) => {
@@ -152,6 +171,30 @@ const switchTo = async (companyId: string) => {
           v-if="activeCompanyId !== company.id"
           size="xs" variant="soft" block @click="switchTo(company.id)"
         >Switch to mother company</UButton>
+      </UCard>
+
+      <UCard class="xl:col-span-2">
+        <template #header>
+          <p class="microlabel text-gray-400 dark:text-zinc-500">Costing defaults</p>
+          <p class="text-xs text-gray-500 mt-0.5">Feeds the suggested overhead % and margin % on every carton recipe's cost breakdown</p>
+        </template>
+        <div class="grid grid-cols-2 gap-3">
+          <UFormGroup label="Reference material cost" hint="a period's actual total, e.g. last full year">
+            <UInput v-model.number="company.ref_material_cost" type="number" />
+          </UFormGroup>
+          <UFormGroup label="Reference factory cost" hint="same period's factory/overhead total">
+            <UInput v-model.number="company.ref_factory_cost" type="number" />
+          </UFormGroup>
+          <UFormGroup label="Implied overhead %" class="col-span-2">
+            <div class="num text-lg font-semibold text-emerald-600 dark:text-emerald-400 py-1.5">{{ impliedOverheadPct }}%</div>
+          </UFormGroup>
+          <UFormGroup label="Default margin %" class="col-span-2" hint="used unless a recipe overrides it">
+            <UInput v-model.number="company.default_margin_pct" type="number" step="0.1" class="w-40" />
+          </UFormGroup>
+        </div>
+        <div class="flex justify-end mt-4">
+          <UButton :loading="savingCosting" @click="saveCosting">Save costing defaults</UButton>
+        </div>
       </UCard>
     </div>
 

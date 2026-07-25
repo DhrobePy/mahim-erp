@@ -2,13 +2,22 @@
 const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite, activeCompanyId } = useProfile()
-const { toMm, plyLayout, recipeSummary } = useCartonMath()
+const { toMm, plyLayout, recipeSummary, costBreakdown } = useCartonMath()
+const { money } = useFmt()
 const { deleteRecord } = useRecycleBin()
 
 const boms = ref<any[]>([])
 const items = ref<any[]>([])
 const templates = ref<any[]>([])
+const company = ref<any>(null)
 const loading = ref(true)
+
+const costOf = (itemId: string | null) => items.value.find((i) => i.id === itemId)?.standard_cost ?? 0
+const suggestedOverheadPct = computed(() => {
+  const mat = Number(company.value?.ref_material_cost) || 0
+  const fac = Number(company.value?.ref_factory_cost) || 0
+  return mat > 0 ? Math.round((fac / mat) * 1000) / 10 : 0
+})
 
 const finishedItems = computed(() =>
   items.value.filter((i) => ['finished_good', 'wip'].includes(i.item_type))
@@ -18,17 +27,19 @@ const templateOptions = computed(() => templates.value.map((t) => ({ value: t.id
 
 const load = async () => {
   loading.value = true
-  const [{ data: b }, { data: it }, { data: tpl }] = await Promise.all([
+  const [{ data: b }, { data: it }, { data: tpl }, { data: co }] = await Promise.all([
     client.from('boms')
       .select('*, items:finished_item_id(name, sku), bom_lines(id, qty_per, wastage_pct, note, component:component_item_id(name, sku))')
       .is('deleted_at', null)
       .order('created_at', { ascending: false }),
-    client.from('items').select('id, sku, name, item_type').eq('is_active', true).is('deleted_at', null).order('name'),
-    client.from('carton_recipe_templates').select('*').order('ply_count').order('name')
+    client.from('items').select('id, sku, name, item_type, standard_cost').eq('is_active', true).is('deleted_at', null).order('name'),
+    client.from('carton_recipe_templates').select('*').order('ply_count').order('name'),
+    client.from('companies').select('ref_material_cost, ref_factory_cost, default_margin_pct').eq('id', activeCompanyId.value).single()
   ])
   boms.value = b ?? []
   items.value = it ?? []
   templates.value = tpl ?? []
+  company.value = co
   loading.value = false
 }
 onMounted(load)
@@ -117,6 +128,9 @@ const recipe = reactive({
   ply: 3,
   allowance_mm: 40,
   wastage_pct: 5,
+  other_materials_cost_per_box: 0,
+  overhead_pct_override: null as number | null,
+  margin_pct_override: null as number | null,
   layers: [] as Array<{ layer_no: number; role: 'liner' | 'medium'; flute_code: string | null; gsm: number; raw_item_id: string | null }>
 })
 const selectedTemplateId = ref<string | null>(null)
@@ -156,7 +170,8 @@ const applyTemplate = (id: string | null) => {
 const openRecipeNew = () => {
   Object.assign(recipe, {
     item_id: null, newItem: false, newSku: '', newName: '',
-    unit: 'cm', length: 0, width: 0, height: 0, ply: 3, allowance_mm: 40, wastage_pct: 5
+    unit: 'cm', length: 0, width: 0, height: 0, ply: 3, allowance_mm: 40, wastage_pct: 5,
+    other_materials_cost_per_box: 0, overhead_pct_override: null, margin_pct_override: null
   })
   selectedTemplateId.value = null
   rebuildLayers()
@@ -173,6 +188,8 @@ const openRecipeEdit = async (bom: any) => {
     item_id: bom.finished_item_id, newItem: false, newSku: '', newName: '',
     unit: 'mm', length: spec.length_mm, width: spec.width_mm, height: spec.height_mm,
     ply: spec.ply_count, allowance_mm: spec.manufacturing_allowance_mm, wastage_pct: spec.wastage_pct,
+    other_materials_cost_per_box: spec.other_materials_cost_per_box ?? 0,
+    overhead_pct_override: spec.overhead_pct_override, margin_pct_override: spec.margin_pct_override,
     layers: [...spec.carton_spec_layers].sort((a: any, b: any) => a.layer_no - b.layer_no)
   })
   recipeOpen.value = true
@@ -185,6 +202,12 @@ const recipeMm = computed(() => ({
 }))
 const preview = computed(() =>
   recipeSummary(recipeMm.value.length, recipeMm.value.width, recipeMm.value.height, recipe.allowance_mm, recipe.layers as any))
+
+const costPreview = computed(() => costBreakdown(
+  preview.value.rows, costOf, recipe.wastage_pct, recipe.other_materials_cost_per_box,
+  recipe.overhead_pct_override ?? suggestedOverheadPct.value,
+  recipe.margin_pct_override ?? (Number(company.value?.default_margin_pct) || 0)
+))
 
 const rawItemName = (id: string | null) => rawItems.value.find((i) => i.id === id)?.sku ?? '—'
 
@@ -221,7 +244,10 @@ const saveRecipe = async () => {
       p_height_mm: recipeMm.value.height,
       p_allowance_mm: recipe.allowance_mm,
       p_wastage_pct: recipe.wastage_pct,
-      p_layers: recipe.layers
+      p_layers: recipe.layers,
+      p_other_materials_cost_per_box: recipe.other_materials_cost_per_box,
+      p_overhead_pct_override: recipe.overhead_pct_override,
+      p_margin_pct_override: recipe.margin_pct_override
     } as any)
     if (error) throw error
     toast.add({ title: 'Recipe saved — BOM generated', description: `${preview.value.totalKg.toFixed(4)} kg / box` })
@@ -518,6 +544,47 @@ const deleteTemplate = async (t: any) => {
               <div v-for="(r, i) in preview.rows" :key="i" class="flex justify-between text-[12px] text-gray-600 dark:text-zinc-400">
                 <span>{{ roleLabel(recipe.layers[i], i, recipe.layers.length) }} — {{ rawItemName(r.raw_item_id) }}</span>
                 <span class="num">{{ r.kg.toFixed(4) }} kg</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Costing & suggested price -->
+          <div class="rounded ring-1 ring-emerald-500/30 bg-emerald-50/40 dark:bg-emerald-500/[0.04] p-3">
+            <p class="microlabel text-emerald-600 dark:text-emerald-400 mb-2">Costing &amp; suggested price (per box)</p>
+
+            <div class="space-y-0.5 text-[12px] mb-3">
+              <div v-for="(r, i) in costPreview.paperLines" :key="i" class="flex justify-between text-gray-600 dark:text-zinc-400">
+                <span>{{ rawItemName(r.raw_item_id) }} — {{ r.kg.toFixed(4) }} kg × {{ money(r.unitCost) }}</span>
+                <span class="num">{{ money(r.cost) }}</span>
+              </div>
+              <div class="flex justify-between text-gray-600 dark:text-zinc-400">
+                <span>Paper subtotal (incl. {{ recipe.wastage_pct }}% wastage)</span>
+                <span class="num">{{ money(costPreview.paperCost) }}</span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-3">
+              <UFormGroup label="Other direct materials / box" hint="starch, glue, ink, gum tape">
+                <UInput v-model.number="recipe.other_materials_cost_per_box" type="number" step="0.01" />
+              </UFormGroup>
+              <UFormGroup
+                label="Overhead %"
+                :hint="`Suggested ${suggestedOverheadPct}% from your reference costs — leave blank to use it`"
+              >
+                <UInput v-model.number="recipe.overhead_pct_override" type="number" step="0.1" :placeholder="String(suggestedOverheadPct)" />
+              </UFormGroup>
+            </div>
+            <UFormGroup label="Margin %" class="mb-3" :hint="`Company default is ${company?.default_margin_pct ?? 0}% — leave blank to use it`">
+              <UInput v-model.number="recipe.margin_pct_override" type="number" step="0.1" class="w-40" :placeholder="String(company?.default_margin_pct ?? 0)" />
+            </UFormGroup>
+
+            <div class="space-y-1 text-[13px] border-t border-emerald-500/20 pt-2">
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-zinc-500">Material subtotal</span><span class="num">{{ money(costPreview.materialSubtotal) }}</span></div>
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-zinc-500">Overhead ({{ recipe.overhead_pct_override ?? suggestedOverheadPct }}%)</span><span class="num">{{ money(costPreview.overheadAmount) }}</span></div>
+              <div class="flex justify-between font-medium"><span>Total cost</span><span class="num">{{ money(costPreview.totalCost) }}</span></div>
+              <div class="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold text-[15px] pt-1">
+                <span>Suggested price ({{ recipe.margin_pct_override ?? (company?.default_margin_pct ?? 0) }}% margin)</span>
+                <span class="num">{{ money(costPreview.suggestedPrice) }}</span>
               </div>
             </div>
           </div>
