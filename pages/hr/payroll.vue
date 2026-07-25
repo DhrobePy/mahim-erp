@@ -2,6 +2,7 @@
 const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite, activeCompanyId } = useProfile()
+const { deleteRecord } = useRecycleBin()
 
 const runs = ref<any[]>([])
 const cashBankAccounts = ref<any[]>([])
@@ -15,8 +16,9 @@ const load = async () => {
   const [r, cba] = await Promise.all([
     client.from('payroll_runs')
       .select('*, payroll_lines(id, employee_id, basic, gross, days_present, days_absent, ot_hours, ot_amount, attendance_allowance, absence_deduction, loan_recovery, net_pay, employees(emp_no, full_name))')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false }),
-    client.from('cash_bank_accounts').select('id, name').eq('is_active', true).order('name')
+    client.from('cash_bank_accounts').select('id, name').eq('is_active', true).is('deleted_at', null).order('name')
   ])
   runs.value = r.data ?? []
   cashBankAccounts.value = cba.data ?? []
@@ -59,6 +61,10 @@ const confirmPay = async () => {
 
 const expanded = ref<string | null>(null)
 const statusColor = (s: string) => ({ draft: 'yellow', posted: 'blue', paid: 'green' } as any)[s] || 'gray'
+
+const remove = async (row: any) => {
+  if (await deleteRecord('payroll_runs', row.id, row.run_no)) await load()
+}
 </script>
 
 <template>
@@ -99,6 +105,7 @@ const statusColor = (s: string) => ({ draft: 'yellow', posted: 'blue', paid: 'gr
               <UBadge size="xs" variant="subtle" :color="statusColor(r.status)">{{ r.status }}</UBadge>
               <UButton v-if="canWrite && r.status === 'draft'" size="xs" variant="soft" @click="post(r)">Post to GL</UButton>
               <UButton v-if="canWrite && r.status === 'posted'" size="xs" variant="soft" color="green" @click="openPay(r)">Pay</UButton>
+              <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="remove(r)" />
             </div>
           </div>
           <div v-if="expanded === r.id" class="mt-3 overflow-x-auto">

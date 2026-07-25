@@ -3,13 +3,14 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { all: topics, byValue } = useForwardingTopics()
+const { deleteRecord } = useRecycleBin()
 
 const letters = ref<any[]>([])
 const loading = ref(true)
 
 const load = async () => {
   loading.value = true
-  const { data } = await client.from('forwarding_letters').select('*').order('created_at', { ascending: false })
+  const { data } = await client.from('forwarding_letters').select('*').is('deleted_at', null).order('created_at', { ascending: false })
   letters.value = data ?? []
   loading.value = false
 }
@@ -42,6 +43,10 @@ const save = async () => {
   else { toast.add({ title: 'Forwarding letter created' }); open.value = false; await load() }
   saving.value = false
 }
+
+const remove = async (row: any) => {
+  if (await deleteRecord('forwarding_letters', row.id, row.subject)) await load()
+}
 </script>
 
 <template>
@@ -61,7 +66,10 @@ const save = async () => {
         <template #letter_no-data="{ row }"><span class="num font-medium text-amber-600 dark:text-amber-400">{{ row.letter_no }}</span></template>
         <template #letter_date-data="{ row }"><span class="num">{{ row.letter_date }}</span></template>
         <template #actions-data="{ row }">
-          <UButton icon="i-heroicons-printer" size="xs" color="gray" variant="ghost" :to="`/print/forwarding/${row.id}`" target="_blank" aria-label="Print" />
+          <div class="flex gap-1 justify-end">
+            <UButton icon="i-heroicons-printer" size="xs" color="gray" variant="ghost" :to="`/print/forwarding/${row.id}`" target="_blank" aria-label="Print" />
+            <UButton v-if="canWrite" icon="i-heroicons-trash" size="xs" color="red" variant="ghost" @click="remove(row)" />
+          </div>
         </template>
         <template #empty-state>
           <div class="text-center py-6 text-sm text-gray-400">No forwarding letters yet.</div>

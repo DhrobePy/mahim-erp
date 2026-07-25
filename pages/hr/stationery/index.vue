@@ -3,6 +3,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { money } = useFmt()
+const { deleteRecord } = useRecycleBin()
 
 const items = ref<any[]>([])
 const stock = ref<any[]>([])
@@ -17,13 +18,13 @@ const loading = ref(true)
 const load = async () => {
   loading.value = true
   const [i, s, e, cba, p, r, iss, u] = await Promise.all([
-    client.from('items').select('id, sku, name, reorder_level, standard_cost').eq('item_type', 'consumable').eq('is_active', true).order('name'),
+    client.from('items').select('id, sku, name, reorder_level, standard_cost').eq('item_type', 'consumable').eq('is_active', true).is('deleted_at', null).order('name'),
     client.from('current_stock').select('item_id, qty, stock_value'),
-    client.from('employees').select('id, emp_no, full_name').eq('is_active', true).order('full_name'),
-    client.from('cash_bank_accounts').select('id, name').eq('is_active', true).order('name'),
-    client.from('parties').select('id, name').eq('is_supplier', true).order('name'),
-    client.from('stationery_receipts').select('*, items(sku, name)').order('created_at', { ascending: false }).limit(20),
-    client.from('stationery_issues').select('*, items(sku, name), employees(emp_no, full_name)').order('created_at', { ascending: false }).limit(20),
+    client.from('employees').select('id, emp_no, full_name').eq('is_active', true).is('deleted_at', null).order('full_name'),
+    client.from('cash_bank_accounts').select('id, name').eq('is_active', true).is('deleted_at', null).order('name'),
+    client.from('parties').select('id, name').eq('is_supplier', true).is('deleted_at', null).order('name'),
+    client.from('stationery_receipts').select('*, items(sku, name)').is('deleted_at', null).order('created_at', { ascending: false }).limit(20),
+    client.from('stationery_issues').select('*, items(sku, name), employees(emp_no, full_name)').is('deleted_at', null).order('created_at', { ascending: false }).limit(20),
     client.from('v_stationery_usage_by_employee').select('*').order('total_cost', { ascending: false })
   ])
   items.value = i.data ?? []
@@ -83,6 +84,13 @@ const saveIssue = async () => {
   else { toast.add({ title: 'Issued to employee desk' }); issueOpen.value = false; await load() }
   savingIssue.value = false
 }
+
+const removeReceipt = async (row: any) => {
+  if (await deleteRecord('stationery_receipts', row.id, row.receipt_no)) await load()
+}
+const removeIssue = async (row: any) => {
+  if (await deleteRecord('stationery_issues', row.id, row.issue_no)) await load()
+}
 </script>
 
 <template>
@@ -123,17 +131,23 @@ const saveIssue = async () => {
       <UCard :loading="loading">
         <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Recent receipts</p></template>
         <div v-if="!receipts.length" class="text-sm text-gray-400 py-3 text-center">None yet.</div>
-        <div v-for="r in receipts" :key="r.id" class="flex justify-between py-1.5 text-[13px] border-b border-gray-100 dark:border-zinc-800/60 last:border-0">
+        <div v-for="r in receipts" :key="r.id" class="flex justify-between items-center py-1.5 text-[13px] border-b border-gray-100 dark:border-zinc-800/60 last:border-0">
           <span><span class="num text-xs text-gray-400 mr-2">{{ r.receipt_date }}</span>{{ r.items?.sku }} — <span class="num">{{ r.qty }}</span> @ ৳{{ r.unit_cost }}</span>
-          <span class="num text-gray-500">{{ r.receipt_no }}</span>
+          <span class="flex items-center gap-1">
+            <span class="num text-gray-500">{{ r.receipt_no }}</span>
+            <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="removeReceipt(r)" />
+          </span>
         </div>
       </UCard>
       <UCard :loading="loading">
         <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Recent issues</p></template>
         <div v-if="!issues.length" class="text-sm text-gray-400 py-3 text-center">None yet.</div>
-        <div v-for="r in issues" :key="r.id" class="flex justify-between py-1.5 text-[13px] border-b border-gray-100 dark:border-zinc-800/60 last:border-0">
+        <div v-for="r in issues" :key="r.id" class="flex justify-between items-center py-1.5 text-[13px] border-b border-gray-100 dark:border-zinc-800/60 last:border-0">
           <span><span class="num text-xs text-gray-400 mr-2">{{ r.issue_date }}</span>{{ r.items?.sku }} — <span class="num">{{ r.qty }}</span> → {{ r.employees?.full_name }}</span>
-          <span class="num text-gray-500">{{ r.issue_no }}</span>
+          <span class="flex items-center gap-1">
+            <span class="num text-gray-500">{{ r.issue_no }}</span>
+            <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="removeIssue(r)" />
+          </span>
         </div>
       </UCard>
     </div>

@@ -2,6 +2,7 @@
 const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
+const { deleteRecord } = useRecycleBin()
 
 const orders = ref<any[]>([])
 const customers = ref<any[]>([])
@@ -15,7 +16,8 @@ const columns = [
   { key: 'order_date', label: 'Date' },
   { key: 'lc', label: 'LC' },
   { key: 'lines', label: 'Lines' },
-  { key: 'status', label: 'Status' }
+  { key: 'status', label: 'Status' },
+  { key: 'actions', label: '' }
 ]
 
 const load = async () => {
@@ -23,9 +25,10 @@ const load = async () => {
   const [o, c, i, l] = await Promise.all([
     client.from('sales_orders')
       .select('*, parties(name), lcs(lc_no), sales_order_lines(id, item_id, qty, unit_price, delivered_qty, items(sku))')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false }),
-    client.from('parties').select('id, name').eq('is_customer', true).order('name'),
-    client.from('items').select('id, sku, name').eq('is_active', true).order('sku'),
+    client.from('parties').select('id, name').eq('is_customer', true).is('deleted_at', null).order('name'),
+    client.from('items').select('id, sku, name').eq('is_active', true).is('deleted_at', null).order('sku'),
     client.from('lcs').select('id, lc_no').eq('status', 'active')
   ])
   orders.value = o.data ?? []
@@ -75,6 +78,9 @@ const save = async () => {
 
 const statusColor = (s: string) =>
   ({ open: 'blue', partially_delivered: 'yellow', delivered: 'green', closed: 'gray', cancelled: 'red' } as any)[s] || 'gray'
+const onDelete = async (row: any) => {
+  if (await deleteRecord('sales_orders', row.id, row.so_no)) await load()
+}
 </script>
 
 <template>
@@ -104,6 +110,11 @@ const statusColor = (s: string) =>
         </template>
         <template #status-data="{ row }">
           <UBadge size="xs" variant="subtle" :color="statusColor(row.status)">{{ row.status }}</UBadge>
+        </template>
+        <template #actions-data="{ row }">
+          <div class="flex gap-1 justify-end">
+            <UButton v-if="canWrite" icon="i-heroicons-trash" size="xs" color="red" variant="ghost" aria-label="Delete" @click="onDelete(row)" />
+          </div>
         </template>
         <template #empty-state>
           <div class="text-center py-6 text-sm text-gray-400">No sales orders yet.</div>

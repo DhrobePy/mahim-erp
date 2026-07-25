@@ -38,7 +38,8 @@ const ROUTE_MODULES: Array<[string, string]> = [
   ['/lcs', 'lcs'],
   ['/invoices', 'invoices'],
   ['/banking', 'banking'],
-  ['/audit', 'audit']
+  ['/audit', 'audit'],
+  ['/recycle-bin', 'recycle_bin']
 ]
 const UNGATED = ['/login', '/confirm', '/access']
 

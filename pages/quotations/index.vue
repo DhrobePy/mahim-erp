@@ -3,6 +3,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { money, num } = useFmt()
+const { deleteRecord } = useRecycleBin()
 
 const docs = ref<any[]>([])
 const parties = ref<any[]>([])
@@ -24,9 +25,10 @@ const load = async () => {
   const [d, p, i] = await Promise.all([
     client.from('sales_documents')
       .select('*, parties(name), parent:parent_doc_id(doc_no), sales_document_lines(qty, unit_price)')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false }),
-    client.from('parties').select('id, name').eq('is_customer', true).order('name'),
-    client.from('items').select('id, sku, name').eq('is_active', true).order('sku')
+    client.from('parties').select('id, name').eq('is_customer', true).is('deleted_at', null).order('name'),
+    client.from('items').select('id, sku, name').eq('is_active', true).is('deleted_at', null).order('sku')
   ])
   docs.value = d.data ?? []
   parties.value = p.data ?? []
@@ -114,6 +116,9 @@ const toOrder = async (row: any) => {
   if (error) toast.add({ title: 'Conversion failed', description: error.message, color: 'red' })
   else { toast.add({ title: 'Sales order created' }); await load() }
 }
+const onDelete = async (row: any) => {
+  if (await deleteRecord('sales_documents', row.id, row.doc_no)) await load()
+}
 </script>
 
 <template>
@@ -159,6 +164,7 @@ const toOrder = async (row: any) => {
               <UButton size="2xs" variant="soft" color="amber" @click="toOrder(row)">→ Order</UButton>
               <UButton size="2xs" variant="ghost" color="red" @click="setStatus(row, 'cancelled')">Cancel</UButton>
             </template>
+            <UButton v-if="canWrite" icon="i-heroicons-trash" size="xs" color="red" variant="ghost" aria-label="Delete" @click="onDelete(row)" />
           </div>
         </template>
         <template #empty-state>

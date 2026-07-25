@@ -22,8 +22,8 @@ const load = async () => {
   loading.value = true
   const [{ data: stock }, { data: it }, { data: wh }] = await Promise.all([
     client.from('current_stock').select('*'),
-    client.from('items').select('id, sku, name, reorder_level, uoms(code)'),
-    client.from('warehouses').select('id, code, name')
+    client.from('items').select('id, sku, name, reorder_level, uoms(code)').is('deleted_at', null),
+    client.from('warehouses').select('id, code, name').is('deleted_at', null)
   ])
   items.value = it ?? []
   warehouses.value = wh ?? []

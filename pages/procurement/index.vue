@@ -2,6 +2,7 @@
 const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
+const { deleteRecord } = useRecycleBin()
 
 const grns = ref<any[]>([])
 const debitNotes = ref<any[]>([])
@@ -23,11 +24,11 @@ const columns = [
 const load = async () => {
   loading.value = true
   const [g, d, s, i, w, po] = await Promise.all([
-    client.from('grns').select('*, parties(name), grn_lines(id, item_id, invoice_qty, accepted_qty, unit_price)').order('created_at', { ascending: false }),
+    client.from('grns').select('*, parties(name), grn_lines(id, item_id, invoice_qty, accepted_qty, unit_price)').is('deleted_at', null).order('created_at', { ascending: false }),
     client.from('debit_notes').select('*, parties(name)').order('created_at', { ascending: false }),
-    client.from('parties').select('id, code, name').eq('is_supplier', true).order('name'),
-    client.from('items').select('id, sku, name').eq('is_active', true).order('sku'),
-    client.from('warehouses').select('id, code, name').order('code'),
+    client.from('parties').select('id, code, name').eq('is_supplier', true).is('deleted_at', null).order('name'),
+    client.from('items').select('id, sku, name').eq('is_active', true).is('deleted_at', null).order('sku'),
+    client.from('warehouses').select('id, code, name').is('deleted_at', null).order('code'),
     client.from('purchase_orders')
       .select('id, po_no, supplier_party_id, status, v_purchase_order_lines(id, item_id, qty, received_qty, landed_unit_cost)')
       .in('status', ['approved', 'partially_received'])
@@ -124,6 +125,11 @@ const completeDraft = async (row: any) => {
   else { toast.add({ title: `${row.grn_no} completed & posted` }); await load() }
 }
 
+const deleteGrn = async (row: any) => {
+  const ok = await deleteRecord('grns', row.id, row.grn_no)
+  if (ok) await load()
+}
+
 const statusColor = (s: string) =>
   s === 'completed' ? 'green' : s === 'cancelled' ? 'red' : 'yellow'
 </script>
@@ -147,10 +153,16 @@ const statusColor = (s: string) =>
           <UBadge size="xs" variant="subtle" :color="statusColor(row.status)">{{ row.status }}</UBadge>
         </template>
         <template #actions-data="{ row }">
-          <UButton
-            v-if="canWrite && row.status === 'draft'"
-            size="xs" variant="soft" @click="completeDraft(row)"
-          >Complete &amp; post</UButton>
+          <div class="flex items-center gap-1.5 justify-end">
+            <UButton
+              v-if="canWrite && row.status === 'draft'"
+              size="xs" variant="soft" @click="completeDraft(row)"
+            >Complete &amp; post</UButton>
+            <UButton
+              v-if="canWrite && row.status === 'draft'"
+              icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="deleteGrn(row)"
+            />
+          </div>
         </template>
         <template #empty-state>
           <div class="text-center py-6 text-sm text-gray-400">No GRNs yet.</div>

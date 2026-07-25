@@ -2,6 +2,7 @@
 const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
+const { deleteRecord } = useRecycleBin()
 
 const challans = ref<any[]>([])
 const orders = ref<any[]>([])
@@ -25,12 +26,13 @@ const load = async () => {
   const [c, o, l, i] = await Promise.all([
     client.from('delivery_challans')
       .select('*, parties(name), lcs(lc_no), covers:covers_challan_id(challan_no), delivery_challan_lines(id, qty, unit_price, items(sku))')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false }),
     client.from('sales_orders')
       .select('id, so_no, customer_party_id, lc_id, status, parties(name), sales_order_lines(item_id, qty, unit_price, delivered_qty, items(sku))')
       .in('status', ['open', 'partially_delivered']),
     client.from('lcs').select('id, lc_no').eq('status', 'active'),
-    client.from('items').select('id, sku').eq('is_active', true).order('sku')
+    client.from('items').select('id, sku').eq('is_active', true).is('deleted_at', null).order('sku')
   ])
   challans.value = c.data ?? []
   orders.value = o.data ?? []
@@ -151,6 +153,10 @@ const invoiceChallan = async (row: any) => {
   else { toast.add({ title: `Invoice created for ${row.challan_no}` }); await load() }
 }
 
+const onDelete = async (row: any) => {
+  if (await deleteRecord('delivery_challans', row.id, row.challan_no)) await load()
+}
+
 const kindColor = (k: string) =>
   ({ standard: 'blue', original: 'amber', covering: 'purple' } as any)[k] || 'gray'
 const statusColor = (s: string) =>
@@ -206,6 +212,7 @@ const statusColor = (s: string) =>
               v-if="canWrite && row.status === 'issued' && row.challan_kind !== 'original'"
               size="xs" variant="soft" color="green" @click="invoiceChallan(row)"
             >Invoice</UButton>
+            <UButton v-if="canWrite" icon="i-heroicons-trash" size="xs" color="red" variant="ghost" aria-label="Delete" @click="onDelete(row)" />
           </div>
         </template>
         <template #empty-state>

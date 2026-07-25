@@ -4,6 +4,7 @@ const toast = useToast()
 const { canWrite } = useProfile()
 const { money } = useFmt()
 const { all: serviceTemplates, byValue } = useBankRequestTemplates()
+const { deleteRecord } = useRecycleBin()
 
 const branches = ref<any[]>([])
 const banks = ref<any[]>([])
@@ -17,9 +18,9 @@ const serviceLabel: Record<string, string> = Object.fromEntries(serviceTemplates
 const load = async () => {
   loading.value = true
   const [b, bk, r, res] = await Promise.all([
-    client.from('bank_branches').select('*, parties(name)').order('created_at'),
-    client.from('parties').select('id, name').eq('is_bank', true).order('name'),
-    client.from('bank_service_requests').select('*, bank_branches(branch_name, parties(name))').order('created_at', { ascending: false }),
+    client.from('bank_branches').select('*, parties(name)').is('deleted_at', null).order('created_at'),
+    client.from('parties').select('id, name').eq('is_bank', true).is('deleted_at', null).order('name'),
+    client.from('bank_service_requests').select('*, bank_branches(branch_name, parties(name))').is('deleted_at', null).order('created_at', { ascending: false }),
     client.from('board_resolutions').select('id, resolution_no, meeting_no').order('meeting_date', { ascending: false })
   ])
   branches.value = b.data ?? []
@@ -90,6 +91,13 @@ const setStatus = async (row: any, status: string) => {
   if (error) toast.add({ title: 'Update failed', description: error.message, color: 'red' })
   else await load()
 }
+
+const removeBranch = async (row: any) => {
+  if (await deleteRecord('bank_branches', row.id, row.branch_name)) await load()
+}
+const removeRequest = async (row: any) => {
+  if (await deleteRecord('bank_service_requests', row.id, row.request_no)) await load()
+}
 </script>
 
 <template>
@@ -102,9 +110,12 @@ const setStatus = async (row: any, status: string) => {
     <UCard class="mb-4">
       <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Bank branches</p></template>
       <div v-if="!branches.length" class="text-sm text-gray-400 py-3 text-center">No branches registered yet.</div>
-      <div v-for="b in branches" :key="b.id" class="flex justify-between py-1.5 text-[13px] border-b border-gray-100 dark:border-zinc-800/60 last:border-0">
+      <div v-for="b in branches" :key="b.id" class="flex justify-between items-center py-1.5 text-[13px] border-b border-gray-100 dark:border-zinc-800/60 last:border-0">
         <span class="dark:text-zinc-200">{{ b.parties?.name }} — {{ b.branch_name }}</span>
-        <span class="text-gray-500 dark:text-zinc-500">{{ b.contact_person }}{{ b.phone ? ' · ' + b.phone : '' }}</span>
+        <span class="flex items-center gap-2">
+          <span class="text-gray-500 dark:text-zinc-500">{{ b.contact_person }}{{ b.phone ? ' · ' + b.phone : '' }}</span>
+          <UButton v-if="canWrite" icon="i-heroicons-trash" size="2xs" color="red" variant="ghost" @click="removeBranch(b)" />
+        </span>
       </div>
     </UCard>
 
@@ -134,6 +145,7 @@ const setStatus = async (row: any, status: string) => {
             <UButton v-if="canWrite && row.status === 'draft'" size="2xs" variant="soft" @click="setStatus(row, 'submitted')">Submitted</UButton>
             <UButton v-if="canWrite && row.status === 'submitted'" size="2xs" variant="soft" color="amber" @click="setStatus(row, 'acknowledged')">Acknowledged</UButton>
             <UButton v-if="canWrite && row.status === 'acknowledged'" size="2xs" variant="soft" color="green" @click="setStatus(row, 'completed')">Completed</UButton>
+            <UButton v-if="canWrite" icon="i-heroicons-trash" size="xs" color="red" variant="ghost" @click="removeRequest(row)" />
           </div>
         </template>
         <template #empty-state>

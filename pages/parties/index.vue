@@ -2,6 +2,7 @@
 const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
+const { deleteRecord } = useRecycleBin()
 
 const rows = ref<any[]>([])
 const loading = ref(true)
@@ -18,7 +19,7 @@ const columns = [
 
 const load = async () => {
   loading.value = true
-  const { data } = await client.from('parties').select('*').order('code')
+  const { data } = await client.from('parties').select('*').is('deleted_at', null).order('code')
   rows.value = data ?? []
   loading.value = false
 }
@@ -54,6 +55,11 @@ const blank = () => ({
 const form = reactive(blank())
 const openNew = () => { Object.assign(form, blank()); open.value = true }
 const openEdit = (row: any) => { Object.assign(form, blank(), row); open.value = true }
+
+const removeParty = async (row: any) => {
+  const ok = await deleteRecord('parties', row.id, row.name)
+  if (ok) await load()
+}
 
 const save = async () => {
   saving.value = true
@@ -105,6 +111,7 @@ const save = async () => {
         <template #phone-data="{ row }">{{ row.phone || '—' }}</template>
         <template #actions-data="{ row }">
           <UButton v-if="canWrite" icon="i-heroicons-pencil-square" color="gray" variant="ghost" size="xs" @click="openEdit(row)" />
+          <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="removeParty(row)" />
         </template>
         <template #empty-state>
           <div class="text-center py-6 text-sm text-gray-400">No parties yet.</div>

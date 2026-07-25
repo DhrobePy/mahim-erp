@@ -3,6 +3,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { money } = useFmt()
+const { deleteRecord } = useRecycleBin()
 
 const transfers = ref<any[]>([])
 const accounts = ref<any[]>([])
@@ -13,8 +14,9 @@ const load = async () => {
   const [t, a] = await Promise.all([
     client.from('account_transfers')
       .select('*, from:cash_bank_accounts!account_transfers_from_account_id_fkey(name), to:cash_bank_accounts!account_transfers_to_account_id_fkey(name)')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false }),
-    client.from('cash_bank_accounts').select('id, name').eq('is_active', true).order('name')
+    client.from('cash_bank_accounts').select('id, name').eq('is_active', true).is('deleted_at', null).order('name')
   ])
   transfers.value = t.data ?? []
   accounts.value = a.data ?? []
@@ -43,6 +45,10 @@ const save = async () => {
   else { toast.add({ title: 'Transfer posted' }); open.value = false; await load() }
   saving.value = false
 }
+
+const remove = async (row: any) => {
+  if (await deleteRecord('account_transfers', row.id, row.transfer_no)) await load()
+}
 </script>
 
 <template>
@@ -57,7 +63,8 @@ const save = async () => {
         :columns="[
           { key: 'transfer_no', label: 'No.' }, { key: 'transfer_date', label: 'Date' },
           { key: 'from', label: 'From' }, { key: 'to', label: 'To' },
-          { key: 'amount', label: 'Amount (৳)' }, { key: 'note', label: 'Note' }
+          { key: 'amount', label: 'Amount (৳)' }, { key: 'note', label: 'Note' },
+          { key: 'actions', label: '' }
         ]"
       >
         <template #transfer_no-data="{ row }"><span class="num font-medium text-amber-600 dark:text-amber-400">{{ row.transfer_no }}</span></template>
@@ -65,6 +72,11 @@ const save = async () => {
         <template #from-data="{ row }">{{ row.from?.name }}</template>
         <template #to-data="{ row }">{{ row.to?.name }}</template>
         <template #amount-data="{ row }"><span class="num font-semibold">{{ money(row.amount) }}</span></template>
+        <template #actions-data="{ row }">
+          <div class="flex gap-1 justify-end">
+            <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="remove(row)" />
+          </div>
+        </template>
         <template #empty-state><div class="text-center py-6 text-sm text-gray-400">No transfers yet.</div></template>
       </UTable>
     </UCard>

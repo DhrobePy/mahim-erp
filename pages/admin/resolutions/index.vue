@@ -3,6 +3,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { grouped } = useBoardAgendas()
+const { deleteRecord } = useRecycleBin()
 
 const resolutions = ref<any[]>([])
 const directors = ref<any[]>([])
@@ -22,6 +23,7 @@ const load = async () => {
   const [r, d] = await Promise.all([
     client.from('board_resolutions')
       .select('*, board_resolution_agendas(id), board_resolution_attendees(director_id)')
+      .is('deleted_at', null)
       .order('meeting_date', { ascending: false }),
     client.from('company_directors').select('id, full_name, designation').eq('is_active', true).order('full_name')
   ])
@@ -94,6 +96,10 @@ const save = async () => {
     saving.value = false
   }
 }
+
+const remove = async (row: any) => {
+  if (await deleteRecord('board_resolutions', row.id, row.resolution_no)) await load()
+}
 </script>
 
 <template>
@@ -125,6 +131,7 @@ const save = async () => {
           <div class="flex gap-1 justify-end">
             <UButton icon="i-heroicons-printer" size="xs" color="gray" variant="ghost" :to="`/print/resolution/${row.id}`" target="_blank" aria-label="Print" />
             <UButton v-if="canWrite && row.status === 'draft'" size="2xs" variant="soft" color="green" @click="setStatus(row, 'passed')">Mark passed</UButton>
+            <UButton v-if="canWrite" icon="i-heroicons-trash" size="xs" color="red" variant="ghost" @click="remove(row)" />
           </div>
         </template>
         <template #empty-state>

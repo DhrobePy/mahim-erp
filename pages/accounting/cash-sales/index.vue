@@ -3,6 +3,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { money } = useFmt()
+const { deleteRecord } = useRecycleBin()
 
 const sales = ref<any[]>([])
 const customers = ref<any[]>([])
@@ -26,10 +27,11 @@ const load = async () => {
   const [s, c, i, cba] = await Promise.all([
     client.from('cash_sales')
       .select('*, parties(name), cash_bank_accounts(name), cash_sale_lines(id, item_id, qty, unit_price, items(sku))')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false }),
-    client.from('parties').select('id, name').eq('is_customer', true).order('name'),
-    client.from('items').select('id, sku, name').eq('is_active', true).order('sku'),
-    client.from('cash_bank_accounts').select('id, name').eq('is_active', true).order('name')
+    client.from('parties').select('id, name').eq('is_customer', true).is('deleted_at', null).order('name'),
+    client.from('items').select('id, sku, name').eq('is_active', true).is('deleted_at', null).order('sku'),
+    client.from('cash_bank_accounts').select('id, name').eq('is_active', true).is('deleted_at', null).order('name')
   ])
   sales.value = s.data ?? []
   customers.value = c.data ?? []
@@ -113,6 +115,10 @@ const complete = async (row: any) => {
 }
 
 const statusColor = (s: string) => ({ draft: 'gray', completed: 'green' } as any)[s] || 'gray'
+
+const remove = async (row: any) => {
+  if (await deleteRecord('cash_sales', row.id, row.sale_no)) await load()
+}
 </script>
 
 <template>
@@ -145,6 +151,7 @@ const statusColor = (s: string) => ({ draft: 'gray', completed: 'green' } as any
           <div class="flex gap-1 justify-end">
             <UButton icon="i-heroicons-printer" size="xs" color="gray" variant="ghost" :to="`/print/cashsale/${row.id}`" target="_blank" aria-label="Print" />
             <UButton v-if="canWrite && row.status === 'draft'" size="xs" variant="soft" color="green" :loading="completing === row.id" @click="complete(row)">Complete</UButton>
+            <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="remove(row)" />
           </div>
         </template>
         <template #empty-state>

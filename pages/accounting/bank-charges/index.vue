@@ -3,6 +3,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { money } = useFmt()
+const { deleteRecord } = useRecycleBin()
 
 const entries = ref<any[]>([])
 const accounts = ref<any[]>([])
@@ -24,8 +25,8 @@ const categoryColor: Record<string, string> = {
 const load = async () => {
   loading.value = true
   const [e, a] = await Promise.all([
-    client.from('bank_charge_entries').select('*, cash_bank_accounts(name)').order('created_at', { ascending: false }),
-    client.from('cash_bank_accounts').select('id, name').eq('is_active', true).order('name')
+    client.from('bank_charge_entries').select('*, cash_bank_accounts(name)').is('deleted_at', null).order('created_at', { ascending: false }),
+    client.from('cash_bank_accounts').select('id, name').eq('is_active', true).is('deleted_at', null).order('name')
   ])
   entries.value = e.data ?? []
   accounts.value = a.data ?? []
@@ -59,6 +60,10 @@ const save = async () => {
 }
 
 const debitAccount = (cat: string) => ({ legal_fee: '5430 Legal & Professional Fees', ait_deducted: '1250 Advance Income Tax' } as any)[cat] || '5400 Bank Charges & LC Fees'
+
+const remove = async (row: any) => {
+  if (await deleteRecord('bank_charge_entries', row.id, row.entry_no)) await load()
+}
 </script>
 
 <template>
@@ -74,7 +79,7 @@ const debitAccount = (cat: string) => ({ legal_fee: '5430 Legal & Professional F
           { key: 'entry_no', label: 'No.' }, { key: 'entry_date', label: 'Date' },
           { key: 'account', label: 'Account' }, { key: 'category', label: 'Category' },
           { key: 'description', label: 'Description' }, { key: 'amount', label: 'Amount (৳)' },
-          { key: 'vat_amount', label: 'VAT (৳)' }
+          { key: 'vat_amount', label: 'VAT (৳)' }, { key: 'actions', label: '' }
         ]"
       >
         <template #entry_no-data="{ row }"><span class="num font-medium text-amber-600 dark:text-amber-400">{{ row.entry_no }}</span></template>
@@ -83,6 +88,11 @@ const debitAccount = (cat: string) => ({ legal_fee: '5430 Legal & Professional F
         <template #category-data="{ row }"><UBadge size="xs" variant="subtle" :color="categoryColor[row.category]">{{ categoryLabel[row.category] }}</UBadge></template>
         <template #amount-data="{ row }"><span class="num font-semibold">{{ money(row.amount) }}</span></template>
         <template #vat_amount-data="{ row }"><span class="num">{{ row.vat_amount > 0 ? money(row.vat_amount) : '—' }}</span></template>
+        <template #actions-data="{ row }">
+          <div class="flex gap-1 justify-end">
+            <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="remove(row)" />
+          </div>
+        </template>
         <template #empty-state><div class="text-center py-6 text-sm text-gray-400">No charge entries yet.</div></template>
       </UTable>
     </UCard>

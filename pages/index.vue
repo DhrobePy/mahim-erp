@@ -22,7 +22,7 @@ const load = async () => {
     { data: jvs }
   ] = await Promise.all([
     client.from('account_balances').select('code, balance'),
-    client.from('items').select('id', { count: 'exact', head: true }).eq('is_active', true),
+    client.from('items').select('id', { count: 'exact', head: true }).eq('is_active', true).is('deleted_at', null),
     client.from('current_stock').select('item_id, qty, stock_value'),
     client.from('production_orders').select('id', { count: 'exact', head: true })
       .in('status', ['planned', 'released', 'in_progress']),
@@ -46,7 +46,7 @@ const load = async () => {
   stats.openOrders = openCount ?? 0
   stats.unbilled = unbilledCount ?? 0
 
-  const { data: items } = await client.from('items').select('id, reorder_level')
+  const { data: items } = await client.from('items').select('id, reorder_level').is('deleted_at', null)
   const qtyByItem = new Map<string, number>()
   ;(stockRows ?? []).forEach((r: any) => qtyByItem.set(r.item_id, (qtyByItem.get(r.item_id) || 0) + Number(r.qty)))
   stats.lowStock = (items ?? []).filter((i: any) =>

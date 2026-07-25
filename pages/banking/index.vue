@@ -2,6 +2,7 @@
 const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
+const { deleteRecord } = useRecycleBin()
 
 const facilities = ref<any[]>([])
 const bills = ref<any[]>([])
@@ -13,11 +14,11 @@ const loading = ref(true)
 const load = async () => {
   loading.value = true
   const [f, b, d, bk, cba] = await Promise.all([
-    client.from('bank_facilities').select('*, parties(name)').order('created_at'),
-    client.from('bills').select('*, lcs(lc_no), invoices(invoice_no)').order('created_at', { ascending: false }),
-    client.from('lbpd_disbursements').select('*, bills(bill_no, amount)').order('created_at', { ascending: false }),
-    client.from('parties').select('id, name').eq('is_bank', true).order('name'),
-    client.from('cash_bank_accounts').select('id, name').eq('kind', 'bank').eq('is_active', true).order('name')
+    client.from('bank_facilities').select('*, parties(name)').is('deleted_at', null).order('created_at'),
+    client.from('bills').select('*, lcs(lc_no), invoices(invoice_no)').is('deleted_at', null).order('created_at', { ascending: false }),
+    client.from('lbpd_disbursements').select('*, bills(bill_no, amount)').is('deleted_at', null).order('created_at', { ascending: false }),
+    client.from('parties').select('id, name').eq('is_bank', true).is('deleted_at', null).order('name'),
+    client.from('cash_bank_accounts').select('id, name').eq('kind', 'bank').eq('is_active', true).is('deleted_at', null).order('name')
   ])
   facilities.value = f.data ?? []
   bills.value = b.data ?? []
@@ -86,6 +87,16 @@ const forcePad = async (row: any) => {
   else { toast.add({ title: 'Converted to forced PAD (penalty profile)', color: 'amber' }); await load() }
 }
 
+const removeFacility = async (row: any) => {
+  if (await deleteRecord('bank_facilities', row.id, row.name)) await load()
+}
+const removeBill = async (row: any) => {
+  if (await deleteRecord('bills', row.id, row.bill_no)) await load()
+}
+const removeDisbursement = async (row: any) => {
+  if (await deleteRecord('lbpd_disbursements', row.id, row.bills?.bill_no ?? row.id)) await load()
+}
+
 const billColor = (s: string) =>
   ({ submitted: 'gray', accepted: 'blue', discounted: 'purple', realized: 'green', overdue: 'red' } as any)[s] || 'gray'
 const disbColor = (s: string) =>
@@ -105,7 +116,8 @@ const disbColor = (s: string) =>
         :columns="[
           { key: 'name', label: 'Facility' }, { key: 'bank', label: 'Bank' },
           { key: 'facility_type', label: 'Type' }, { key: 'limit_amount', label: 'Limit (৳)' },
-          { key: 'exposure', label: 'Exposure (৳)' }, { key: 'interest_rate', label: 'Rate %' }
+          { key: 'exposure', label: 'Exposure (৳)' }, { key: 'interest_rate', label: 'Rate %' },
+          { key: 'actions', label: '' }
         ]"
       >
         <template #bank-data="{ row }">
@@ -118,6 +130,11 @@ const disbColor = (s: string) =>
           <span class="num font-medium" :class="exposure(row) > row.limit_amount * 0.9 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'">
             {{ exposure(row).toLocaleString('en-IN') }}
           </span>
+        </template>
+        <template #actions-data="{ row }">
+          <div class="flex gap-1 justify-end">
+            <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="removeFacility(row)" />
+          </div>
         </template>
         <template #empty-state><div class="text-center py-4 text-sm text-gray-400">No facilities.</div></template>
       </UTable>
@@ -154,6 +171,7 @@ const disbColor = (s: string) =>
           <div class="flex gap-1 justify-end">
             <UButton v-if="canWrite && row.status === 'submitted'" size="xs" variant="soft" @click="acceptBill(row)">Accept</UButton>
             <UButton v-if="canWrite && row.status === 'accepted'" size="xs" variant="soft" color="purple" @click="openDiscount(row)">Discount (LBPD)</UButton>
+            <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="removeBill(row)" />
           </div>
         </template>
         <template #empty-state><div class="text-center py-4 text-sm text-gray-400">No bills submitted.</div></template>
@@ -183,6 +201,7 @@ const disbColor = (s: string) =>
           <div class="flex gap-1 justify-end">
             <UButton v-if="canWrite && row.status !== 'settled'" size="xs" variant="soft" color="green" @click="openSettle(row)">Settle</UButton>
             <UButton v-if="canWrite && row.status === 'open'" size="xs" variant="soft" color="red" @click="forcePad(row)">Forced PAD</UButton>
+            <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="removeDisbursement(row)" />
           </div>
         </template>
         <template #empty-state><div class="text-center py-4 text-sm text-gray-400">No disbursements.</div></template>

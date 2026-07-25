@@ -2,6 +2,7 @@
 const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
+const { deleteRecord } = useRecycleBin()
 
 const invoices = ref<any[]>([])
 const loading = ref(true)
@@ -21,6 +22,7 @@ const load = async () => {
   loading.value = true
   const { data } = await client.from('invoices')
     .select('*, parties(name), lcs(lc_no), delivery_challans!invoices_challan_id_fkey(challan_no, challan_kind), invoice_lines(id, qty, unit_price, item_id, items(sku))')
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
   invoices.value = data ?? []
   loading.value = false
@@ -56,6 +58,10 @@ const saveReturn = async () => {
     retOpen.value = false
     await load()
   }
+}
+
+const onDelete = async (row: any) => {
+  if (await deleteRecord('invoices', row.id, row.invoice_no)) await load()
 }
 
 const statusColor = (s: string) =>
@@ -105,6 +111,7 @@ const statusColor = (s: string) =>
               v-if="canWrite && row.status !== 'open'"
               size="xs" variant="soft" color="red" @click="openReturn(row)"
             >Return</UButton>
+            <UButton v-if="canWrite" icon="i-heroicons-trash" size="xs" color="red" variant="ghost" aria-label="Delete" @click="onDelete(row)" />
           </div>
         </template>
         <template #empty-state>

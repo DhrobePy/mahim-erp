@@ -3,6 +3,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { money } = useFmt()
+const { deleteRecord } = useRecycleBin()
 
 const accounts = ref<any[]>([])
 const banks = ref<any[]>([])
@@ -11,12 +12,16 @@ const loading = ref(true)
 
 const load = async () => {
   loading.value = true
-  const [a, bk, br] = await Promise.all([
+  const [a, bk, br, del] = await Promise.all([
     client.from('v_cash_bank_balances').select('*').order('kind'),
-    client.from('parties').select('id, name').eq('is_bank', true).order('name'),
-    client.from('bank_branches').select('id, branch_name, bank_party_id').order('branch_name')
+    client.from('parties').select('id, name').eq('is_bank', true).is('deleted_at', null).order('name'),
+    client.from('bank_branches').select('id, branch_name, bank_party_id').order('branch_name'),
+    // v_cash_bank_balances has no deleted_at column, so hide soft-deleted
+    // cash_bank_accounts rows client-side instead
+    client.from('cash_bank_accounts').select('id').not('deleted_at', 'is', null)
   ])
-  accounts.value = a.data ?? []
+  const deletedIds = new Set((del.data ?? []).map((d: any) => d.id))
+  accounts.value = (a.data ?? []).filter((x: any) => !deletedIds.has(x.id))
   banks.value = bk.data ?? []
   branches.value = br.data ?? []
   loading.value = false
@@ -59,6 +64,11 @@ const save = async () => {
     saving.value = false
   }
 }
+
+const removeAccount = async (a: any) => {
+  const ok = await deleteRecord('cash_bank_accounts', a.id, a.name)
+  if (ok) await load()
+}
 </script>
 
 <template>
@@ -71,26 +81,28 @@ const save = async () => {
       <UCard>
         <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Bank accounts</p></template>
         <div v-if="!bankAccounts.length" class="text-sm text-gray-400 py-3 text-center">None yet.</div>
-        <NuxtLink
-          v-for="a in bankAccounts" :key="a.id" :to="`/accounting/reconcile/${a.id}`"
-          class="flex justify-between py-2 text-[13px] border-b border-gray-100 dark:border-zinc-800/60 last:border-0 hover:bg-gray-50 dark:hover:bg-zinc-900 -mx-1 px-1 rounded"
+        <div
+          v-for="a in bankAccounts" :key="a.id"
+          class="flex justify-between items-center py-2 text-[13px] border-b border-gray-100 dark:border-zinc-800/60 last:border-0 -mx-1 px-1 rounded"
         >
-          <span class="dark:text-zinc-200">
+          <NuxtLink :to="`/accounting/reconcile/${a.id}`" class="flex-1 hover:underline dark:text-zinc-200">
             {{ a.name }} <span class="num text-[11px] text-gray-400 dark:text-zinc-600">{{ a.gl_code }}</span>
             <UBadge v-if="!a.is_active" size="xs" variant="subtle" color="gray" class="ml-1">inactive</UBadge>
-          </span>
+          </NuxtLink>
           <span class="num font-medium">{{ money(a.balance) }}</span>
-        </NuxtLink>
+          <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" class="ml-2" @click="removeAccount(a)" />
+        </div>
       </UCard>
 
       <UCard>
         <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Cash points</p></template>
         <div v-if="!cashAccounts.length" class="text-sm text-gray-400 py-3 text-center">None yet.</div>
-        <div v-for="a in cashAccounts" :key="a.id" class="flex justify-between py-2 text-[13px] border-b border-gray-100 dark:border-zinc-800/60 last:border-0">
+        <div v-for="a in cashAccounts" :key="a.id" class="flex justify-between items-center py-2 text-[13px] border-b border-gray-100 dark:border-zinc-800/60 last:border-0">
           <span class="dark:text-zinc-200">
             {{ a.name }} <span class="num text-[11px] text-gray-400 dark:text-zinc-600">{{ a.gl_code }}</span>
           </span>
           <span class="num font-medium">{{ money(a.balance) }}</span>
+          <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" class="ml-2" @click="removeAccount(a)" />
         </div>
       </UCard>
     </div>

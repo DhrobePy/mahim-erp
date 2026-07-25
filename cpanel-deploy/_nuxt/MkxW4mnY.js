@@ -1,0 +1,1 @@
+const u=()=>{const o=(n,t=2)=>Number(n||0).toLocaleString("en-IN",{maximumFractionDigits:t}),c=n=>"৳"+o(n,2),m={BDT:"৳",USD:"$",EUR:"€",GBP:"£"};return{num:o,money:c,moneyIn:(n,t="BDT")=>{const e=(t||"BDT").toUpperCase(),s=m[e];return s?s+o(n,2):e+" "+o(n,2)}}};export{u};

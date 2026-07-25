@@ -15,7 +15,7 @@ const load = async () => {
     client.from('journals')
       .select('*, journal_lines(id, debit, credit, note, accounts(code, name))')
       .order('created_at', { ascending: false }).limit(50),
-    client.from('accounts').select('code, name').eq('is_postable', true).order('code')
+    client.from('accounts').select('code, name').eq('is_postable', true).is('deleted_at', null).order('code')
   ])
   tb.value = t.data ?? []
   journals.value = j.data ?? []

@@ -4,6 +4,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { money, num } = useFmt()
+const { deleteRecord } = useRecycleBin()
 
 const id = route.params.id as string
 const emp = ref<any>(null)
@@ -26,12 +27,12 @@ const load = async () => {
   const [e, a, l, p, si, acr, asst, cba] = await Promise.all([
     client.from('employees').select('*').eq('id', id).single(),
     client.from('attendance').select('att_date, status, ot_hours, is_late').eq('employee_id', id).gte('att_date', monthStart()).order('att_date', { ascending: false }),
-    client.from('employee_loans').select('*').eq('employee_id', id).order('created_at', { ascending: false }),
+    client.from('employee_loans').select('*').eq('employee_id', id).is('deleted_at', null).order('created_at', { ascending: false }),
     client.from('payroll_lines').select('*, payroll_runs(run_no, label, status, run_type)').eq('employee_id', id).order('id', { ascending: false }).limit(12),
     client.from('stationery_issues').select('*, items(sku, name)').eq('employee_id', id).order('issue_date', { ascending: false }),
-    client.from('employee_acr').select('*').eq('employee_id', id).order('review_year', { ascending: false }),
-    client.from('employee_assistance').select('*').eq('employee_id', id).order('created_at', { ascending: false }),
-    client.from('cash_bank_accounts').select('id, name').eq('is_active', true).order('name')
+    client.from('employee_acr').select('*').eq('employee_id', id).is('deleted_at', null).order('review_year', { ascending: false }),
+    client.from('employee_assistance').select('*').eq('employee_id', id).is('deleted_at', null).order('created_at', { ascending: false }),
+    client.from('cash_bank_accounts').select('id, name').eq('is_active', true).is('deleted_at', null).order('name')
   ])
   emp.value = e.data
   att.value = a.data ?? []
@@ -124,6 +125,16 @@ const confirmPay = async () => {
   else { toast.add({ title: 'Paid — posted to GL' }); payOpen.value = false; await load() }
 }
 const assistStatusColor: Record<string, string> = { requested: 'gray', approved: 'blue', paid: 'green', rejected: 'red' }
+
+const removeLoan = async (row: any) => {
+  if (await deleteRecord('employee_loans', row.id, row.loan_no)) await load()
+}
+const removeAcr = async (row: any) => {
+  if (await deleteRecord('employee_acr', row.id, String(row.id))) await load()
+}
+const removeAssist = async (row: any) => {
+  if (await deleteRecord('employee_assistance', row.id, row.request_no)) await load()
+}
 </script>
 
 <template>
@@ -187,6 +198,7 @@ const assistStatusColor: Record<string, string> = { requested: 'gray', approved:
             <span class="flex items-center gap-2">
               <span class="num">bal <span class="text-amber-600 dark:text-amber-400 font-medium">{{ money(l.balance) }}</span> / {{ money(l.principal) }} @ {{ money(l.monthly_installment) }}/mo</span>
               <UButton icon="i-heroicons-printer" size="2xs" color="gray" variant="ghost" :to="`/print/loanagreement/${l.id}`" target="_blank" aria-label="Print loan agreement" />
+              <UButton v-if="canWrite" icon="i-heroicons-trash" size="2xs" color="red" variant="ghost" @click="removeLoan(l)" />
             </span>
           </div>
         </UCard>
@@ -232,7 +244,10 @@ const assistStatusColor: Record<string, string> = { requested: 'gray', approved:
               <UBadge size="xs" variant="subtle" :color="gradeColor[a.overall_grade]" class="ml-2">{{ gradeLabel[a.overall_grade] }}</UBadge>
               <UBadge v-if="a.status === 'draft'" size="xs" variant="subtle" color="gray" class="ml-1">draft</UBadge>
             </span>
-            <UButton icon="i-heroicons-printer" size="2xs" color="gray" variant="ghost" :to="`/print/acr/${a.id}`" target="_blank" aria-label="Print ACR" />
+            <span class="flex items-center gap-1">
+              <UButton icon="i-heroicons-printer" size="2xs" color="gray" variant="ghost" :to="`/print/acr/${a.id}`" target="_blank" aria-label="Print ACR" />
+              <UButton v-if="canWrite" icon="i-heroicons-trash" size="2xs" color="red" variant="ghost" @click="removeAcr(a)" />
+            </span>
           </div>
         </UCard>
 
@@ -259,6 +274,7 @@ const assistStatusColor: Record<string, string> = { requested: 'gray', approved:
                 <UButton v-if="a.status === 'requested'" size="2xs" variant="soft" color="green" @click="approveAssist(a)">Approve</UButton>
                 <UButton v-if="a.status === 'requested'" size="2xs" variant="soft" color="red" @click="rejectAssist(a)">Reject</UButton>
                 <UButton v-if="a.status === 'approved'" size="2xs" variant="soft" color="amber" @click="openPay(a)">Pay</UButton>
+                <UButton icon="i-heroicons-trash" size="2xs" color="red" variant="ghost" @click="removeAssist(a)" />
               </div>
             </div>
           </div>

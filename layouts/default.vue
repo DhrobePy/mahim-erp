@@ -69,6 +69,7 @@ const sections = [
     title: 'Admin',
     links: [
       { label: 'Audit trail', to: '/audit', icon: 'i-heroicons-shield-check', module: 'audit' },
+      { label: 'Recycle bin', to: '/recycle-bin', icon: 'i-heroicons-trash', module: 'recycle_bin' },
       { label: 'Company & structure', to: '/admin/company', icon: 'i-heroicons-building-office-2', module: 'company' },
       { label: 'Directors & partners', to: '/admin/directors', icon: 'i-heroicons-user-group', module: 'directors' },
       { label: 'Board resolutions', to: '/admin/resolutions', icon: 'i-heroicons-clipboard-document-check', module: 'resolutions' },

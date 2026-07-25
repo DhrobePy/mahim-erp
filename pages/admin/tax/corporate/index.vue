@@ -3,6 +3,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { money } = useFmt()
+const { deleteRecord } = useRecycleBin()
 
 const computations = ref<any[]>([])
 const totalsByComp = ref<Record<string, any>>({})
@@ -12,6 +13,7 @@ const load = async () => {
   loading.value = true
   const { data } = await client.from('company_tax_computations')
     .select('*, company_tax_adjustment_lines(id, adj_type, description, amount)')
+    .is('deleted_at', null)
     .order('assessment_year', { ascending: false })
   computations.value = data ?? []
   const { data: totals } = await client.from('v_tax_computation_totals').select('*')
@@ -75,6 +77,10 @@ const removeLine = async (id: string) => {
   if (error) toast.add({ title: 'Failed', description: error.message, color: 'red' })
   else await load()
 }
+
+const remove = async (row: any) => {
+  if (await deleteRecord('company_tax_computations', row.id, `AY ${row.assessment_year}`)) await load()
+}
 </script>
 
 <template>
@@ -96,7 +102,10 @@ const removeLine = async (id: string) => {
                 <span class="num font-semibold" :class="netPayable(row) >= 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'">{{ money(netPayable(row)) }}</span>
               </span>
             </button>
-            <UButton icon="i-heroicons-printer" size="xs" color="gray" variant="ghost" :to="`/print/taxcomputation/${row.id}`" target="_blank" aria-label="Print" />
+            <div class="flex gap-1">
+              <UButton icon="i-heroicons-printer" size="xs" color="gray" variant="ghost" :to="`/print/taxcomputation/${row.id}`" target="_blank" aria-label="Print" />
+              <UButton v-if="canWrite" icon="i-heroicons-trash" size="xs" color="red" variant="ghost" @click="remove(row)" />
+            </div>
           </div>
 
           <div v-if="expanded === row.id" class="mt-3 space-y-3">

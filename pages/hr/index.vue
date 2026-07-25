@@ -2,6 +2,7 @@
 const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
+const { deleteRecord } = useRecycleBin()
 
 const employees = ref<any[]>([])
 const loans = ref<any[]>([])
@@ -22,9 +23,9 @@ const columns = [
 const load = async () => {
   loading.value = true
   const [e, l, cba] = await Promise.all([
-    client.from('employees').select('*').order('emp_no'),
+    client.from('employees').select('*').is('deleted_at', null).order('emp_no'),
     client.from('employee_loans').select('*, employees(full_name)').order('created_at', { ascending: false }),
-    client.from('cash_bank_accounts').select('id, name').eq('is_active', true).order('name')
+    client.from('cash_bank_accounts').select('id, name').eq('is_active', true).is('deleted_at', null).order('name')
   ])
   employees.value = e.data ?? []
   loans.value = l.data ?? []
@@ -48,6 +49,10 @@ const blank = () => ({
 const form = reactive(blank())
 const openNew = () => { Object.assign(form, blank()); open.value = true }
 const openEdit = (row: any) => { Object.assign(form, blank(), row); open.value = true }
+const removeEmployee = async (row: any) => {
+  const ok = await deleteRecord('employees', row.id, row.full_name)
+  if (ok) await load()
+}
 const save = async () => {
   saving.value = true
   const payload: any = { ...form }
@@ -105,6 +110,7 @@ const saveLoan = async () => {
         <template #ot_rate-data="{ row }"><span class="num text-amber-600 dark:text-amber-400">৳{{ otRate(row) }}</span></template>
         <template #actions-data="{ row }">
           <UButton v-if="canWrite" icon="i-heroicons-pencil-square" color="gray" variant="ghost" size="xs" @click="openEdit(row)" />
+          <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="removeEmployee(row)" />
         </template>
         <template #empty-state><div class="text-center py-6 text-sm text-gray-400">No employees yet.</div></template>
       </UTable>

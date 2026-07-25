@@ -2,6 +2,7 @@
 const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
+const { deleteRecord } = useRecycleBin()
 
 const items = ref<any[]>([])
 const uoms = ref<any[]>([])
@@ -32,9 +33,10 @@ const load = async () => {
   const [{ data: it }, { data: u }, { data: c }] = await Promise.all([
     client.from('items')
       .select('*, uoms(code), item_categories(name)')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false }),
-    client.from('uoms').select('id, code, name').order('code'),
-    client.from('item_categories').select('id, name').order('name')
+    client.from('uoms').select('id, code, name').is('deleted_at', null).order('code'),
+    client.from('item_categories').select('id, name').is('deleted_at', null).order('name')
   ])
   items.value = it ?? []
   uoms.value = u ?? []
@@ -82,6 +84,11 @@ const openEdit = (row: any) => {
   open.value = true
 }
 
+const removeItem = async (row: any) => {
+  const ok = await deleteRecord('items', row.id, `${row.sku} — ${row.name}`)
+  if (ok) await load()
+}
+
 const save = async () => {
   saving.value = true
   const payload = { ...form }
@@ -124,6 +131,11 @@ const save = async () => {
             v-if="canWrite"
             icon="i-heroicons-pencil-square" color="gray" variant="ghost" size="xs"
             @click="openEdit(row)"
+          />
+          <UButton
+            v-if="canWrite"
+            icon="i-heroicons-trash" color="red" variant="ghost" size="xs"
+            @click="removeItem(row)"
           />
         </template>
         <template #empty-state>

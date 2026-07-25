@@ -3,6 +3,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite, activeCompanyId } = useProfile()
 const { toMm, plyLayout, recipeSummary } = useCartonMath()
+const { deleteRecord } = useRecycleBin()
 
 const boms = ref<any[]>([])
 const items = ref<any[]>([])
@@ -20,8 +21,9 @@ const load = async () => {
   const [{ data: b }, { data: it }, { data: tpl }] = await Promise.all([
     client.from('boms')
       .select('*, items:finished_item_id(name, sku), bom_lines(id, qty_per, wastage_pct, note, component:component_item_id(name, sku))')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false }),
-    client.from('items').select('id, sku, name, item_type').eq('is_active', true).order('name'),
+    client.from('items').select('id, sku, name, item_type').eq('is_active', true).is('deleted_at', null).order('name'),
     client.from('carton_recipe_templates').select('*').order('ply_count').order('name')
   ])
   boms.value = b ?? []
@@ -47,6 +49,11 @@ const openNew = () => {
   form.output_qty = 1
   form.lines = [{ component_item_id: null, qty_per: 1, wastage_pct: 0 }]
   open.value = true
+}
+
+const removeBom = async (b: any) => {
+  const ok = await deleteRecord('boms', b.id, b.name)
+  if (ok) await load()
 }
 const addLine = () => form.lines.push({ component_item_id: null, qty_per: 1, wastage_pct: 0 })
 const removeLine = (i: number) => form.lines.splice(i, 1)
@@ -329,6 +336,10 @@ const deleteTemplate = async (t: any) => {
                 v-if="canWrite && b.is_auto_generated"
                 size="2xs" variant="soft" icon="i-heroicons-pencil-square" @click="openRecipeEdit(b)"
               >Recipe</UButton>
+              <UButton
+                v-if="canWrite"
+                size="2xs" variant="ghost" color="red" icon="i-heroicons-trash" @click="removeBom(b)"
+              />
             </div>
           </div>
         </template>

@@ -3,6 +3,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite, activeCompanyId, memberships } = useProfile()
 const { extractLc } = usePdfExtract()
+const { deleteRecord } = useRecycleBin()
 const ownCompanyName = computed(() => memberships.value.find((m) => m.company_id === activeCompanyId.value)?.company?.name)
 
 const lcs = ref<any[]>([])
@@ -37,11 +38,12 @@ const load = async () => {
   const [l, cp, sp, b, cba] = await Promise.all([
     client.from('lcs')
       .select('*, counterparty:counterparty_party_id(name, is_foreign, country), bank:bank_party_id(name), lc_amendments(version, amount, quantity, tolerance_pct, expiry_date, bank_fee, note)')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false }),
-    client.from('parties').select('id, name').eq('is_customer', true).order('name'),
-    client.from('parties').select('id, name').eq('is_supplier', true).order('name'),
-    client.from('parties').select('id, name').eq('is_bank', true).order('name'),
-    client.from('cash_bank_accounts').select('id, name').eq('is_active', true).order('name')
+    client.from('parties').select('id, name').eq('is_customer', true).is('deleted_at', null).order('name'),
+    client.from('parties').select('id, name').eq('is_supplier', true).is('deleted_at', null).order('name'),
+    client.from('parties').select('id, name').eq('is_bank', true).is('deleted_at', null).order('name'),
+    client.from('cash_bank_accounts').select('id, name').eq('is_active', true).is('deleted_at', null).order('name')
   ])
   lcs.value = (l.data ?? []).map((row: any) => ({
     ...row,
@@ -219,6 +221,10 @@ const saveAmend = async () => {
     await load()
   }
 }
+
+const onDelete = async (row: any) => {
+  if (await deleteRecord('lcs', row.id, row.lc_no)) await load()
+}
 </script>
 
 <template>
@@ -264,6 +270,7 @@ const saveAmend = async () => {
           <div class="flex gap-1 justify-end">
             <UButton v-if="canWrite" icon="i-heroicons-pencil-square" size="xs" color="gray" variant="ghost" @click="openEdit(row)" aria-label="Edit LC" />
             <UButton v-if="canWrite && row.status === 'active'" size="xs" variant="soft" @click="openAmend(row)">Amend</UButton>
+            <UButton v-if="canWrite" icon="i-heroicons-trash" size="xs" color="red" variant="ghost" aria-label="Delete" @click="onDelete(row)" />
           </div>
         </template>
         <template #empty-state>

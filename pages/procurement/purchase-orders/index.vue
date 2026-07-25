@@ -2,6 +2,7 @@
 const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
+const { deleteRecord } = useRecycleBin()
 
 const pos = ref<any[]>([])
 const suppliers = ref<any[]>([])
@@ -17,9 +18,10 @@ const load = async () => {
   const [{ data: p }, { data: sp }, { data: it }] = await Promise.all([
     client.from('purchase_orders')
       .select('*, parties(name), purchase_order_lines(id, qty, unit_price, received_qty)')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false }),
-    client.from('parties').select('id, name').eq('is_supplier', true).order('name'),
-    client.from('items').select('id, sku, name').eq('item_type', 'raw_material').eq('is_active', true).order('sku')
+    client.from('parties').select('id, name').eq('is_supplier', true).is('deleted_at', null).order('name'),
+    client.from('items').select('id, sku, name').eq('item_type', 'raw_material').eq('is_active', true).is('deleted_at', null).order('sku')
   ])
   pos.value = (p ?? []).map((row: any) => ({
     ...row,
@@ -96,10 +98,8 @@ const approve = async (row: any) => {
   else { toast.add({ title: `${row.po_no} approved` }); await load() }
 }
 const cancel = async (row: any) => {
-  if (!confirm(`Cancel ${row.po_no}?`)) return
-  const { error } = await client.rpc('cancel_purchase_order', { p_po_id: row.id } as any)
-  if (error) toast.add({ title: 'Cancel failed', description: error.message, color: 'red' })
-  else { toast.add({ title: `${row.po_no} cancelled` }); await load() }
+  const ok = await deleteRecord('purchase_orders', row.id, row.po_no)
+  if (ok) await load()
 }
 </script>
 

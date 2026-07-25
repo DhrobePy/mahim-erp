@@ -3,6 +3,7 @@ const client = useSupabaseClient()
 const user = useSupabaseUser()
 const toast = useToast()
 const { canWrite } = useProfile()
+const { deleteRecord } = useRecycleBin()
 
 const orders = ref<any[]>([])
 const items = ref<any[]>([])
@@ -34,10 +35,11 @@ const load = async () => {
   const [{ data: o }, { data: it }, { data: b }, { data: wh }] = await Promise.all([
     client.from('production_orders')
       .select('*, items:finished_item_id(name, sku)')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false }),
-    client.from('items').select('id, sku, name, item_type').eq('is_active', true).order('name'),
-    client.from('boms').select('id, name, finished_item_id, output_qty').eq('is_active', true),
-    client.from('warehouses').select('id, code, name')
+    client.from('items').select('id, sku, name, item_type').eq('is_active', true).is('deleted_at', null).order('name'),
+    client.from('boms').select('id, name, finished_item_id, output_qty').eq('is_active', true).is('deleted_at', null),
+    client.from('warehouses').select('id, code, name').is('deleted_at', null)
   ])
   orders.value = o ?? []
   items.value = it ?? []
@@ -117,6 +119,11 @@ const completeOrder = async (row: any) => {
     completing.value = null
   }
 }
+
+const deleteOrder = async (row: any) => {
+  const ok = await deleteRecord('production_orders', row.id, row.order_no)
+  if (ok) await load()
+}
 </script>
 
 <template>
@@ -135,12 +142,18 @@ const completeOrder = async (row: any) => {
           <UBadge size="xs" variant="subtle" :color="statusColor[row.status] || 'gray'">{{ row.status }}</UBadge>
         </template>
         <template #actions-data="{ row }">
-          <UButton
-            v-if="canWrite && row.status !== 'completed' && row.status !== 'cancelled'"
-            size="xs" color="green" variant="soft"
-            :loading="completing === row.id"
-            @click="completeOrder(row)"
-          >Complete</UButton>
+          <div class="flex items-center gap-1.5 justify-end">
+            <UButton
+              v-if="canWrite && row.status !== 'completed' && row.status !== 'cancelled'"
+              size="xs" color="green" variant="soft"
+              :loading="completing === row.id"
+              @click="completeOrder(row)"
+            >Complete</UButton>
+            <UButton
+              v-if="canWrite && row.status !== 'completed' && row.status !== 'cancelled'"
+              icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="deleteOrder(row)"
+            />
+          </div>
         </template>
         <template #empty-state>
           <div class="text-center py-6 text-sm text-gray-400">No production orders yet.</div>

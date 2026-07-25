@@ -3,6 +3,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { num } = useFmt()
+const { deleteRecord } = useRecycleBin()
 
 const rows = ref<any[]>([])
 const loading = ref(true)
@@ -28,7 +29,7 @@ const designationLabel: Record<string, string> = Object.fromEntries(designationO
 
 const load = async () => {
   loading.value = true
-  const { data } = await client.from('company_directors').select('*').order('appointment_date')
+  const { data } = await client.from('company_directors').select('*').is('deleted_at', null).order('appointment_date')
   rows.value = data ?? []
   loading.value = false
 }
@@ -68,6 +69,10 @@ const save = async () => {
     saving.value = false
   }
 }
+
+const remove = async (row: any) => {
+  if (await deleteRecord('company_directors', row.id, row.full_name)) await load()
+}
 </script>
 
 <template>
@@ -95,7 +100,10 @@ const save = async () => {
           <UBadge size="xs" variant="subtle" :color="row.is_active ? 'green' : 'gray'">{{ row.is_active ? 'active' : 'resigned' }}</UBadge>
         </template>
         <template #actions-data="{ row }">
-          <UButton v-if="canWrite" icon="i-heroicons-pencil-square" color="gray" variant="ghost" size="xs" @click="openEdit(row)" />
+          <div class="flex gap-1 justify-end">
+            <UButton v-if="canWrite" icon="i-heroicons-pencil-square" color="gray" variant="ghost" size="xs" @click="openEdit(row)" />
+            <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="remove(row)" />
+          </div>
         </template>
         <template #empty-state>
           <div class="text-center py-6 text-sm text-gray-400">No directors or partners recorded yet.</div>

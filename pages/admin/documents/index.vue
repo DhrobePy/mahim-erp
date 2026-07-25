@@ -2,6 +2,7 @@
 const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
+const { deleteRecord } = useRecycleBin()
 
 const docs = ref<any[]>([])
 const loading = ref(true)
@@ -37,7 +38,7 @@ const docTypeLabel: Record<string, string> = Object.fromEntries(docTypeOptions.m
 
 const load = async () => {
   loading.value = true
-  const { data } = await client.from('company_documents').select('*').order('expiry_date', { nullsFirst: false })
+  const { data } = await client.from('company_documents').select('*').is('deleted_at', null).order('expiry_date', { nullsFirst: false })
   docs.value = data ?? []
   loading.value = false
 }
@@ -93,6 +94,10 @@ const openFile = async (row: any) => {
   const { data } = client.storage.from('company-assets').getPublicUrl(row.file_path)
   if (data?.publicUrl) window.open(data.publicUrl, '_blank')
 }
+
+const remove = async (row: any) => {
+  if (await deleteRecord('company_documents', row.id, row.title)) await load()
+}
 </script>
 
 <template>
@@ -117,6 +122,7 @@ const openFile = async (row: any) => {
                 </UBadge>
               </span>
               <UButton v-if="d.file_path" size="2xs" variant="ghost" icon="i-heroicons-arrow-top-right-on-square" @click="openFile(d)" />
+              <UButton v-if="canWrite" size="2xs" color="red" variant="ghost" icon="i-heroicons-trash" @click="remove(d)" />
             </div>
           </div>
           <div v-if="expanded === d.id" class="mt-2.5 pl-5 grid grid-cols-2 gap-4">

@@ -2,6 +2,7 @@
 const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
+const { deleteRecord } = useRecycleBin()
 
 const day = ref(new Date().toISOString().slice(0, 10))
 const employees = ref<any[]>([])
@@ -14,14 +15,15 @@ const statusOptions = ['present', 'absent', 'leave', 'holiday', 'weekend']
 const load = async () => {
   loading.value = true
   const [e, a] = await Promise.all([
-    client.from('employees').select('id, emp_no, full_name').eq('is_active', true).order('emp_no'),
-    client.from('attendance').select('*').eq('att_date', day.value)
+    client.from('employees').select('id, emp_no, full_name').eq('is_active', true).is('deleted_at', null).order('emp_no'),
+    client.from('attendance').select('*').eq('att_date', day.value).is('deleted_at', null)
   ])
   employees.value = e.data ?? []
   const existing = new Map((a.data ?? []).map((r: any) => [r.employee_id, r]))
   rows.value = employees.value.map((emp) => {
     const ex: any = existing.get(emp.id)
     return {
+      id: ex?.id ?? null,
       employee_id: emp.id,
       emp_no: emp.emp_no,
       full_name: emp.full_name,
@@ -55,6 +57,10 @@ const saveAll = async () => {
     saving.value = false
   }
 }
+
+const remove = async (row: any) => {
+  if (await deleteRecord('attendance', row.id, `${row.full_name} — ${day.value}`)) await load()
+}
 </script>
 
 <template>
@@ -70,7 +76,7 @@ const saveAll = async () => {
         :columns="[
           { key: 'emp_no', label: 'ID' }, { key: 'full_name', label: 'Employee' },
           { key: 'status', label: 'Status' }, { key: 'ot_hours', label: 'OT hours' },
-          { key: 'is_late', label: 'Late' }
+          { key: 'is_late', label: 'Late' }, { key: 'actions', label: '' }
         ]"
       >
         <template #status-data="{ row }">
@@ -81,6 +87,11 @@ const saveAll = async () => {
         </template>
         <template #is_late-data="{ row }">
           <UCheckbox v-model="row.is_late" :disabled="!canWrite" />
+        </template>
+        <template #actions-data="{ row }">
+          <div class="flex gap-1 justify-end">
+            <UButton v-if="canWrite && row.id" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="remove(row)" />
+          </div>
         </template>
         <template #empty-state>
           <div class="text-center py-6 text-sm text-gray-400">No active employees — add them in HR → Employees.</div>

@@ -4,5 +4,13 @@ export const useFmt = () => {
   const num = (n: any, dp = 2) =>
     Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: dp })
   const money = (n: any) => '৳' + num(n, 2)
-  return { num, money }
+  // Currency-aware version for trade documents that may be denominated
+  // in a foreign LC currency (falls back to ৳ for BDT/unspecified).
+  const CURRENCY_SYMBOLS: Record<string, string> = { BDT: '৳', USD: '$', EUR: '€', GBP: '£' }
+  const moneyIn = (n: any, currency = 'BDT') => {
+    const code = (currency || 'BDT').toUpperCase()
+    const symbol = CURRENCY_SYMBOLS[code]
+    return symbol ? symbol + num(n, 2) : code + ' ' + num(n, 2)
+  }
+  return { num, money, moneyIn }
 }

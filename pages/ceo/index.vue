@@ -31,9 +31,9 @@ const load = async () => {
     client.from('v_lc_alerts').select('*'),
     client.from('invoices').select('customer_party_id, total, parties(name)'),
     client.from('current_stock').select('stock_value'),
-    client.from('employees').select('id', { count: 'exact', head: true }).eq('is_active', true),
+    client.from('employees').select('id', { count: 'exact', head: true }).eq('is_active', true).is('deleted_at', null),
     client.from('payroll_runs').select('run_no, label, total_net, status').eq('run_type', 'monthly').order('created_at', { ascending: false }).limit(1),
-    client.from('bank_facilities').select('id, name, limit_amount'),
+    client.from('bank_facilities').select('id, name, limit_amount').is('deleted_at', null),
     client.from('lbpd_disbursements').select('facility_id, principal, status')
   ])
 
