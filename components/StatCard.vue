@@ -5,6 +5,7 @@ const props = defineProps<{
   sub?: string
   tone?: 'default' | 'amber' | 'green' | 'red'
   to?: string
+  delay?: number
 }>()
 
 const toneClass = computed(() => ({
@@ -23,18 +24,22 @@ const ringClass = computed(() => ({
   red: 'ring-red-300/70 dark:ring-red-800/60'
 })[props.tone ?? 'default'])
 
-const cardClass = 'block rounded-md ring-1 bg-white dark:bg-zinc-900/60 px-4 py-3 transition-colors'
+const cardClass = 'animate-fade-in-up block rounded-md ring-1 bg-white dark:bg-zinc-900/60 px-4 py-3 transition-[color,background-color,border-color,box-shadow,transform] duration-200 ease-out will-change-transform'
+const cardStyle = computed(() => ({ animationDelay: `${props.delay ?? 0}ms` }))
 </script>
 
 <template>
-  <NuxtLink v-if="to" :to="to" :class="[cardClass, ringClass, 'hover:ring-amber-400/70 dark:hover:ring-amber-500/50 cursor-pointer']">
+  <NuxtLink
+    v-if="to" :to="to" :style="cardStyle"
+    :class="[cardClass, ringClass, 'hover:ring-amber-400/70 dark:hover:ring-amber-500/50 hover:-translate-y-0.5 hover:shadow-md dark:hover:shadow-black/30 cursor-pointer']"
+  >
     <dl>
       <dt class="microlabel text-gray-400 dark:text-zinc-500">{{ label }}</dt>
       <dd class="num text-[22px] leading-8 font-semibold" :class="toneClass">{{ value }}</dd>
       <dd v-if="sub" class="text-[11px] text-gray-400 dark:text-zinc-500">{{ sub }}</dd>
     </dl>
   </NuxtLink>
-  <dl v-else :class="[cardClass, ringClass]">
+  <dl v-else :class="[cardClass, ringClass]" :style="cardStyle">
     <dt class="microlabel text-gray-400 dark:text-zinc-500">{{ label }}</dt>
     <dd class="num text-[22px] leading-8 font-semibold" :class="toneClass">{{ value }}</dd>
     <dd v-if="sub" class="text-[11px] text-gray-400 dark:text-zinc-500">{{ sub }}</dd>

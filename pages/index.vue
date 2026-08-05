@@ -8,6 +8,20 @@ const stats = reactive({
   bank: 0, receivables: 0, lbpd: 0, stockValue: 0,
   items: 0, lowStock: 0, openOrders: 0, unbilled: 0
 })
+
+// Tween each figure from its previous value to the newly-loaded one on
+// every fetch (initial load and the 60s auto-refresh alike) instead of
+// snapping — the numbers are the whole point of this page, they should
+// feel alive when they move, not just appear.
+const animBank = useAnimatedNumber(() => stats.bank)
+const animReceivables = useAnimatedNumber(() => stats.receivables)
+const animLbpd = useAnimatedNumber(() => stats.lbpd)
+const animStockValue = useAnimatedNumber(() => stats.stockValue)
+const animItems = useAnimatedNumber(() => stats.items)
+const animLowStock = useAnimatedNumber(() => stats.lowStock)
+const animOpenOrders = useAnimatedNumber(() => stats.openOrders)
+const animUnbilled = useAnimatedNumber(() => stats.unbilled)
+
 const recent = ref<any[]>([])
 const journals = ref<any[]>([])
 const loading = ref(true)
@@ -27,11 +41,15 @@ const load = async () => {
   try {
     const results = await Promise.allSettled([
       client.from('account_balances').select('code, balance'),
-      client.from('items').select('id', { count: 'exact', head: true }).eq('is_active', true).is('deleted_at', null),
+      // count: 'exact' without head: true — a HEAD-only count request is
+      // liable to get silently aborted in some environments (observed in
+      // local dev); a normal GET with a Prefer: count header is just as
+      // cheap for a handful of id-only rows and doesn't have that failure mode.
+      client.from('items').select('id', { count: 'exact' }).eq('is_active', true).is('deleted_at', null),
       client.from('current_stock').select('item_id, qty, stock_value'),
-      client.from('production_orders').select('id', { count: 'exact', head: true })
+      client.from('production_orders').select('id', { count: 'exact' })
         .in('status', ['planned', 'released', 'in_progress']),
-      client.from('delivery_challans').select('id', { count: 'exact', head: true })
+      client.from('delivery_challans').select('id', { count: 'exact' })
         .eq('status', 'delivered_unbilled'),
       client.from('stock_movements')
         .select('id, movement_type, quantity, moved_at, ref_no, items(name, reorder_level)')
@@ -108,27 +126,32 @@ const updatedLabel = computed(() => lastUpdated.value
     </div>
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
-      <StatCard :label="t('dashboard.stats.bank')" :value="money(stats.bank)" :tone="stats.bank < 0 ? 'red' : 'default'" to="/banking" />
-      <StatCard :label="t('dashboard.stats.receivables')" :value="money(stats.receivables)" to="/invoices" />
-      <StatCard :label="t('dashboard.stats.lbpd')" :value="money(stats.lbpd)" :tone="stats.lbpd > 0 ? 'amber' : 'default'" to="/banking" />
-      <StatCard :label="t('dashboard.stats.stock_value')" :value="money(stats.stockValue)" to="/stock" />
+      <StatCard :label="t('dashboard.stats.bank')" :value="money(animBank)" :tone="stats.bank < 0 ? 'red' : 'default'" to="/banking" :delay="0" />
+      <StatCard :label="t('dashboard.stats.receivables')" :value="money(animReceivables)" to="/invoices" :delay="40" />
+      <StatCard :label="t('dashboard.stats.lbpd')" :value="money(animLbpd)" :tone="stats.lbpd > 0 ? 'amber' : 'default'" to="/banking" :delay="80" />
+      <StatCard :label="t('dashboard.stats.stock_value')" :value="money(animStockValue)" to="/stock" :delay="120" />
     </div>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-      <StatCard :label="t('dashboard.stats.active_items')" :value="num(stats.items, 0)" to="/items" />
-      <StatCard :label="t('dashboard.stats.low_stock')" :value="num(stats.lowStock, 0)" :tone="stats.lowStock ? 'red' : 'green'" to="/stock" />
-      <StatCard :label="t('dashboard.stats.open_production')" :value="num(stats.openOrders, 0)" to="/production" />
-      <StatCard :label="t('dashboard.stats.unbilled')" :value="num(stats.unbilled, 0)" :tone="stats.unbilled ? 'amber' : 'default'" to="/challans" />
+      <StatCard :label="t('dashboard.stats.active_items')" :value="num(animItems, 0)" to="/items" :delay="160" />
+      <StatCard :label="t('dashboard.stats.low_stock')" :value="num(animLowStock, 0)" :tone="stats.lowStock ? 'red' : 'green'" to="/stock" :delay="200" />
+      <StatCard :label="t('dashboard.stats.open_production')" :value="num(animOpenOrders, 0)" to="/production" :delay="240" />
+      <StatCard :label="t('dashboard.stats.unbilled')" :value="num(animUnbilled, 0)" :tone="stats.unbilled ? 'amber' : 'default'" to="/challans" :delay="280" />
     </div>
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-3">
-      <UCard class="xl:col-span-2">
+      <UCard class="xl:col-span-2 animate-fade-in-up" style="animation-delay: 320ms">
         <template #header>
           <h2 class="microlabel flex items-center gap-1.5 text-gray-400 dark:text-zinc-500">
             <UIcon name="i-heroicons-archive-box" class="text-[13px]" />
             {{ t('dashboard.stock_movements') }}
           </h2>
         </template>
-        <div v-if="loading && !recent.length" class="text-sm text-gray-400 py-6 text-center">{{ t('common.loading') }}</div>
+        <div v-if="loading && !recent.length" class="space-y-2.5 py-1">
+          <div v-for="i in 4" :key="i" class="flex items-center justify-between gap-3">
+            <USkeleton class="h-3.5 w-40" />
+            <USkeleton class="h-3.5 w-14" />
+          </div>
+        </div>
         <div v-else-if="!recent.length" class="text-sm text-gray-400 py-6 text-center">{{ t('dashboard.no_movements') }}</div>
         <ul v-else class="divide-y divide-gray-100 dark:divide-zinc-800/60 -my-1">
           <li v-for="m in recent" :key="m.id" class="py-[7px] flex items-center justify-between gap-3 text-[13px]">
@@ -146,14 +169,22 @@ const updatedLabel = computed(() => lastUpdated.value
         </ul>
       </UCard>
 
-      <UCard>
+      <UCard class="animate-fade-in-up" style="animation-delay: 360ms">
         <template #header>
           <h2 class="microlabel flex items-center gap-1.5 text-gray-400 dark:text-zinc-500">
             <UIcon name="i-heroicons-calculator" class="text-[13px]" />
             {{ t('dashboard.latest_journals') }}
           </h2>
         </template>
-        <div v-if="loading && !journals.length" class="text-sm text-gray-400 py-6 text-center">{{ t('common.loading') }}</div>
+        <div v-if="loading && !journals.length" class="space-y-2.5 py-1">
+          <div v-for="i in 3" :key="i" class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <USkeleton class="h-3 w-16" />
+              <USkeleton class="h-3 w-20" />
+            </div>
+            <USkeleton class="h-2.5 w-full" />
+          </div>
+        </div>
         <ul v-else class="divide-y divide-gray-100 dark:divide-zinc-800/60 -my-1">
           <li v-for="j in journals" :key="j.id" class="py-[7px] text-[12px]">
             <div class="flex items-center justify-between">
