@@ -1,0 +1,58 @@
+{
+  "invoices": {
+    "list": {
+      "kicker": "বিক্রয় ও লোকাল এলসি",
+      "title": "ইনভয়েস",
+      "subtitle": "ইস্যুকৃত চালান থেকে তৈরি; এলসি ইনভয়েসের বিপরীতে এলবিপিডির জন্য বিল জমা দিন",
+      "columns": {
+        "invoice": "ইনভয়েস",
+        "buyer": "ক্রেতা",
+        "challan": "চালান",
+        "lc": "এলসি",
+        "total": "মোট (৳)"
+      },
+      "covering": "কভারিং",
+      "print_aria": "ব্যাংক ডকুমেন্ট সেট প্রিন্ট করুন",
+      "submit_bill": "বিল জমা দিন",
+      "bill_submitted": "{invoice}-এর জন্য বিল জমা হয়েছে — ব্যাংকিং দেখুন",
+      "bill_failed": "বিল জমা ব্যর্থ হয়েছে",
+      "return": "ফেরত",
+      "empty": "কোনো ইনভয়েস নেই — প্রথমে একটি চালান ইস্যু ও ইনভয়েস করুন।",
+      "return_dialog": {
+        "title": "{invoice}-এর বিপরীতে বিক্রয় ফেরত",
+        "item": "পণ্য",
+        "returned_qty": "ফেরত পরিমাণ",
+        "scrap_unit_value": "স্ক্র্যাপ ইউনিট মূল্য (৳)",
+        "scrap_unit_value_hint": "ব্র্যান্ডেড স্টক এই মূল্যে স্ক্র্যাপে রূপান্তরিত হবে",
+        "reason": "কারণ",
+        "issue_credit_note": "ক্রেডিট নোট ইস্যু করুন",
+        "return_failed": "ফেরত ব্যর্থ হয়েছে",
+        "credit_note_issued": "ক্রেডিট নোট ইস্যু হয়েছে — স্টক স্ক্র্যাপে অবনমিত হয়েছে"
+      }
+    },
+    "detail": {
+      "kicker": "বিক্রয় ও লোকাল এলসি",
+      "domestic": "দেশীয়",
+      "deemed_export": "ডিমড এক্সপোর্ট (০% ভ্যাট, মুশক ৬.৩)",
+      "print_bank_set": "ব্যাংক সেট প্রিন্ট করুন",
+      "stat_cogs": "সিওজিএস",
+      "stat_margin": "মার্জিন",
+      "stat_buyer": "ক্রেতা",
+      "link_buyer": "→ ক্রেতা",
+      "link_order": "→ আদেশ {no}",
+      "link_lc": "→ এলসি {no}",
+      "link_bill": "→ বিল {no} ({status})",
+      "lines_header": "লাইন — চালান {no}",
+      "covering_set": "(কভারিং সেট)",
+      "document_date_note": "ডকুমেন্ট তারিখ {doc} · প্রকৃত ডেলিভারি {actual}",
+      "bill_financing": "বিল ও অর্থায়ন",
+      "bill": "বিল",
+      "maturity": "মেয়াদপূর্তি",
+      "lbpd_line": "এলবিপিডি {pct}% ({status})",
+      "returns_credit_notes": "ফেরত / ক্রেডিট নোট",
+      "postings": "পোস্টিং",
+      "no_journals": "এই ইনভয়েস সম্পর্কিত কোনো জার্নাল নেই।",
+      "not_found": "ইনভয়েস পাওয়া যায়নি।"
+    }
+  }
+}

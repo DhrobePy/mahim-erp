@@ -6,6 +6,7 @@ definePageMeta({ layout: false })
 
 const client = useSupabaseClient()
 const { activeCompanyId, load: loadProfile } = useProfile()
+const { locale: printLocale, t, toggle: toggleLang } = usePrintLocale()
 
 const company = ref<any>(null)
 const directors = ref<any[]>([])
@@ -24,10 +25,13 @@ const load = async () => {
 }
 onMounted(load)
 
-const designationLabel: Record<string, string> = {
-  chairman: 'Chairman', managing_director: 'Managing Director', director: 'Director',
-  partner: 'Partner', company_secretary: 'Company Secretary'
-}
+const designationLabel = computed<Record<string, string>>(() => ({
+  chairman: t('printGov.rjscForm12.designations.chairman'),
+  managing_director: t('printGov.rjscForm12.designations.managing_director'),
+  director: t('printGov.rjscForm12.designations.director'),
+  partner: t('printGov.rjscForm12.designations.partner'),
+  company_secretary: t('printGov.rjscForm12.designations.company_secretary')
+}))
 const fmtDate = (d?: string) => d
   ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
   : '—'
@@ -36,26 +40,27 @@ const fmtDate = (d?: string) => d
 <template>
   <div class="print-root">
     <div class="no-print toolbar">
-      <NuxtLink to="/admin/directors" class="back">← back</NuxtLink>
-      <button class="print-btn" @click="() => window.print()">🖨 Print</button>
+      <NuxtLink to="/admin/directors" class="back">{{ t('printGov.rjscForm12.back') }}</NuxtLink>
+      <button class="lang-btn" @click="toggleLang">{{ t('print.toolbar.lang_toggle') }}</button>
+      <button class="print-btn" @click="() => window.print()">{{ t('print.toolbar.print_btn') }}</button>
     </div>
 
-    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">Loading…</div>
+    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">{{ t('print.toolbar.loading') }}</div>
 
-    <div v-else-if="company" class="sheet">
-      <p class="form-tag">FORM XII</p>
-      <p class="form-tag small">[The Companies Act, 1994 — Section 115(1)]</p>
-      <div class="doc-title">PARTICULARS OF DIRECTORS, MANAGER AND MANAGING AGENTS<br>AND OF ANY CHANGE THEREIN</div>
+    <div v-else-if="company" class="sheet" :lang="printLocale">
+      <p class="form-tag">{{ t('printGov.rjscForm12.form_tag') }}</p>
+      <p class="form-tag small">{{ t('printGov.rjscForm12.act_section') }}</p>
+      <div class="doc-title">{{ t('printGov.rjscForm12.doc_title_l1') }}<br>{{ t('printGov.rjscForm12.doc_title_l2') }}</div>
 
       <table class="meta">
         <tbody>
           <tr>
             <td>
-              <div class="small">Name of the Company</div>
+              <div class="small">{{ t('printGov.rjscForm12.name_of_company') }}</div>
               <b>{{ company.legal_name || company.name }}</b>
             </td>
             <td>
-              <div class="small">Registered Address</div>
+              <div class="small">{{ t('printGov.rjscForm12.registered_address') }}</div>
               {{ company.address || '—' }}
             </td>
           </tr>
@@ -65,9 +70,9 @@ const fmtDate = (d?: string) => d
       <table class="lines">
         <thead>
           <tr>
-            <th style="width: 24px;">SL</th><th>Present Name</th><th>Father's / Spouse's Name</th>
-            <th>Designation</th><th>Nationality</th><th>NID No.</th><th>Address</th>
-            <th>Date of Appointment</th>
+            <th style="width: 24px;">{{ t('printGov.rjscForm12.col_sl') }}</th><th>{{ t('printGov.rjscForm12.col_present_name') }}</th><th>{{ t('printGov.rjscForm12.col_father_spouse') }}</th>
+            <th>{{ t('printGov.rjscForm12.col_designation') }}</th><th>{{ t('printGov.rjscForm12.col_nationality') }}</th><th>{{ t('printGov.rjscForm12.col_nid') }}</th><th>{{ t('printGov.rjscForm12.col_address') }}</th>
+            <th>{{ t('printGov.rjscForm12.col_appointment_date') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -81,18 +86,17 @@ const fmtDate = (d?: string) => d
             <td>{{ d.address || '—' }}</td>
             <td class="mono">{{ fmtDate(d.appointment_date) }}</td>
           </tr>
-          <tr v-if="!directors.length"><td colspan="8" class="small" style="text-align:center;">No active directors recorded.</td></tr>
+          <tr v-if="!directors.length"><td colspan="8" class="small" style="text-align:center;">{{ t('printGov.rjscForm12.no_directors') }}</td></tr>
         </tbody>
       </table>
 
       <p class="disclaimer">
-        Draft prepared from the company's internal register for reference in filing preparation only.
-        Verify against the current RJSC-prescribed Form XII and supporting documents before submission.
+        {{ t('printGov.rjscForm12.disclaimer') }}
       </p>
 
       <div class="row spread sig-block">
-        <div class="sig"><div class="sig-line" /><div class="small">Signature of Managing Director / Director</div></div>
-        <div class="sig"><div class="sig-line" /><div class="small">Signature of Company Secretary</div></div>
+        <div class="sig"><div class="sig-line" /><div class="small">{{ t('printGov.rjscForm12.sig_director') }}</div></div>
+        <div class="sig"><div class="sig-line" /><div class="small">{{ t('printGov.rjscForm12.sig_secretary') }}</div></div>
       </div>
     </div>
   </div>
@@ -106,6 +110,7 @@ const fmtDate = (d?: string) => d
 }
 .toolbar .back { color: #fbbf24; text-decoration: none; }
 .print-btn { background: #f59e0b; color: #000; border: 0; border-radius: 4px; padding: 6px 16px; font-weight: 600; cursor: pointer; }
+.lang-btn { background: transparent; color: #e4e4e7; border: 1px solid #52525b; border-radius: 4px; padding: 5px 14px; font-weight: 500; cursor: pointer; }
 .sheet {
   width: 297mm; min-height: 200mm; margin: 0 auto 20px; background: #fff; color: #111;
   padding: 16mm; box-shadow: 0 2px 12px rgba(0,0,0,.4); font-size: 12px; line-height: 1.5;

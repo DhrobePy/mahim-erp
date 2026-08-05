@@ -1,0 +1,193 @@
+{
+  "lcs": {
+    "kicker": "Sales & Trade Finance",
+    "roles": {
+      "export_local": "Export — Local LC (back-to-back)",
+      "export_direct": "Export — Direct (foreign)",
+      "import": "Import (foreign)"
+    },
+    "roles_short": {
+      "export_local": "Local export",
+      "export_direct": "Direct export",
+      "import": "Import"
+    },
+    "lc_types": {
+      "sight": "Sight",
+      "usance": "Usance"
+    },
+    "usance_days_suffix": "{days}d",
+    "statuses": {
+      "active": "Active",
+      "closed": "Closed",
+      "cancelled": "Cancelled"
+    },
+    "event_types": {
+      "opened": "Opened",
+      "amendment": "Amendment",
+      "docs_submitted": "Documents submitted to bank",
+      "discrepancy": "Discrepancy raised",
+      "discrepancy_resolved": "Discrepancy resolved",
+      "acceptance": "Acceptance",
+      "discounted": "Discounted",
+      "matured": "Matured",
+      "realized": "Realized",
+      "overdue": "Overdue",
+      "forced_pad": "Forced PAD",
+      "note": "Note",
+      "closed": "Closed"
+    },
+    "bill_statuses": {
+      "submitted": "Submitted",
+      "accepted": "Accepted",
+      "discounted": "Discounted",
+      "realized": "Realized",
+      "overdue": "Overdue"
+    },
+    "index": {
+      "title": "Letters of Credit",
+      "subtitle": "Local export (back-to-back), direct foreign export, and import LCs — master-child versioning per contract",
+      "register_from_pdf": "Register from PDF",
+      "extracting": "Extracting…",
+      "register_lc": "Register LC",
+      "columns": {
+        "lc_no": "LC no.",
+        "role": "Role",
+        "counterparty": "Counterparty",
+        "bank": "Issuing bank",
+        "terms": "Active terms",
+        "type": "Type",
+        "status": "Status"
+      },
+      "foreign_fallback": "foreign",
+      "exp_label": "exp {date}",
+      "edit_aria": "Edit LC",
+      "amend": "Amend",
+      "delete_aria": "Delete",
+      "empty": "No LCs registered.",
+      "supplier_label": "Supplier",
+      "buyer_label": "Buyer",
+      "modal": {
+        "edit_title": "Edit LC",
+        "register_title": "Register LC (v1 terms)",
+        "role_label": "Role",
+        "lc_no_label": "LC number",
+        "bank_label": "Issuing bank",
+        "bank_placeholder": "—",
+        "currency_label": "Currency",
+        "type_label": "Type",
+        "usance_days_label": "Usance days",
+        "opened_label": "Opened",
+        "amount_label": "Amount ({currency})",
+        "quantity_label": "Quantity",
+        "tolerance_label": "Tolerance %",
+        "expiry_label": "Expiry",
+        "amend_hint": "Amount, quantity, tolerance and expiry are versioned terms — use \"Amend\" on the list to change those.",
+        "shipment_terms_header": "Shipment & foreign trade terms",
+        "incoterm_label": "Incoterm",
+        "incoterm_hint": "e.g. CFR, FOB, CIF, EXW",
+        "latest_shipment_label": "Latest shipment date",
+        "port_loading_label": "Port of loading",
+        "port_discharge_label": "Port of discharge",
+        "presentation_period_label": "Presentation period (days)",
+        "available_with_by_label": "Available with / by",
+        "available_with_by_hint": "e.g. Any bank in China, by negotiation",
+        "register": "Register"
+      },
+      "amend_modal": {
+        "title": "Amend {no} → v{version}",
+        "amount_label": "Amount",
+        "quantity_label": "Quantity",
+        "tolerance_label": "Tolerance %",
+        "expiry_label": "Expiry",
+        "fee_label": "MT707 fee on us (৳)",
+        "fee_hint": "posts to 5400 if > 0",
+        "fee_paid_from_label": "Fee paid from",
+        "fee_paid_from_hint": "which account the fee is debited from",
+        "fee_default_option": "— default bank account —",
+        "note_label": "Note",
+        "record": "Record amendment"
+      },
+      "toast": {
+        "lc_no_required": "LC number and {label} are required",
+        "lc_updated": "LC updated",
+        "lc_registered": "LC registered (v1 terms)",
+        "lc_failed": "LC failed",
+        "extracted": "Extracted {count} field(s) as {role} — review before saving",
+        "none_recognised": "No fields recognised",
+        "applicant_on_doc": "Applicant on document: {name}",
+        "beneficiary_on_doc": "Beneficiary on document: {name}",
+        "extraction_failed": "Extraction failed",
+        "amendment_failed": "Amendment failed",
+        "amendment_recorded": "Amendment v{version} recorded",
+        "amendment_fee_note": " — MT707 fee posted"
+      }
+    },
+    "detail": {
+      "title": "LC {no}",
+      "subtitle": "{type} · opened {date}",
+      "close_out": "Close out",
+      "buyer_prefix": "buyer",
+      "supplier_prefix": "supplier",
+      "counterparty_link": "→ {label}: {name}",
+      "bank_link": "→ issuing bank: {name}",
+      "alerts": {
+        "overdue": "Bill {bill} is OVERDUE (maturity {date}) — settle or convert to forced PAD",
+        "maturity_soon": "Bill {bill} matures in {days} day(s) — {date}",
+        "discrepancy": "Open discrepancy — resolve it on the timeline below"
+      },
+      "stat_cards": {
+        "active_terms": "Active terms",
+        "revenue": "Revenue",
+        "returns": "Returns",
+        "cogs_net": "COGS (net)",
+        "bank_fees_interest": "Bank fees + interest",
+        "contract_profit": "Contract profit",
+        "incoterm": "Incoterm",
+        "latest_shipment": "Latest shipment",
+        "presentation_period": "Presentation period",
+        "presentation_period_days": "{n} days",
+        "port_loading": "Port of loading",
+        "port_discharge": "Port of discharge"
+      },
+      "manual_journal_note": "Money movement for this LC (GRN/payable, bill retirement, realization) is posted via a manual journal on the Accounting page for now.",
+      "timeline": {
+        "header": "Lifecycle timeline",
+        "detail_placeholder": "Detail…",
+        "add": "Add",
+        "empty": "No events yet."
+      },
+      "bills": {
+        "header": "Bills under this LC",
+        "columns": {
+          "bill": "Bill",
+          "invoice": "Invoice",
+          "amount": "Amount (৳)",
+          "maturity": "Maturity",
+          "status": "Status"
+        },
+        "empty": "No bills yet — submit one from Invoices."
+      },
+      "documents": {
+        "header": "Documents",
+        "upload": "Upload PDF",
+        "uploading": "Extracting…",
+        "empty": "No documents. Upload the bank's LC advice PDF — fields are extracted automatically.",
+        "doc_type_options": {
+          "lc": "LC",
+          "amendment": "Amendment",
+          "bill": "Bill",
+          "other": "Other"
+        }
+      },
+      "toast": {
+        "event_failed": "Event failed",
+        "upload_failed": "Upload failed",
+        "stored": "Document stored",
+        "stored_extracted": "Fields extracted — review below",
+        "close_blocked": "Close-out blocked",
+        "closed": "LC closed — final P&L recorded on the timeline"
+      },
+      "not_found": "LC not found."
+    }
+  }
+}

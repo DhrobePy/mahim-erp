@@ -4,6 +4,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { money } = useFmt()
+const { t } = useI18n()
 
 const accountId = route.params.accountId as string
 const account = ref<any>(null)
@@ -59,14 +60,14 @@ const doMatch = async () => {
   if (!selectedStmt.value || !selectedJournal.value) return
   matching.value = true
   const { error } = await client.rpc('match_statement_line', { p_line_id: selectedStmt.value, p_journal_line_id: selectedJournal.value } as any)
-  if (error) toast.add({ title: 'Match failed', description: error.message, color: 'red' })
-  else { toast.add({ title: 'Matched' }); selectedStmt.value = null; selectedJournal.value = null; await load() }
+  if (error) toast.add({ title: t('accounting.reconcile.toasts.match_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('accounting.reconcile.toasts.matched') }); selectedStmt.value = null; selectedJournal.value = null; await load() }
   matching.value = false
 }
 const unmatch = async (stmtLineId: string) => {
   const { error } = await client.rpc('match_statement_line', { p_line_id: stmtLineId, p_journal_line_id: null } as any)
-  if (error) toast.add({ title: 'Unmatch failed', description: error.message, color: 'red' })
-  else { toast.add({ title: 'Unmatched' }); await load() }
+  if (error) toast.add({ title: t('accounting.reconcile.toasts.unmatch_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('accounting.reconcile.toasts.unmatched') }); await load() }
 }
 
 // --- Add statement line(s) ---
@@ -78,12 +79,12 @@ const openAdd = () => {
 }
 const saving = ref(false)
 const saveLine = async () => {
-  if (!addForm.debit && !addForm.credit) { toast.add({ title: 'Enter a debit or credit amount', color: 'red' }); return }
-  if (addForm.debit && addForm.credit) { toast.add({ title: 'Enter debit OR credit, not both', color: 'red' }); return }
+  if (!addForm.debit && !addForm.credit) { toast.add({ title: t('accounting.reconcile.toasts.enter_amount'), color: 'red' }); return }
+  if (addForm.debit && addForm.credit) { toast.add({ title: t('accounting.reconcile.toasts.enter_one'), color: 'red' }); return }
   saving.value = true
   const { error } = await client.from('bank_statement_lines').insert({ cash_bank_account_id: accountId, ...addForm } as any)
-  if (error) toast.add({ title: 'Save failed', description: error.message, color: 'red' })
-  else { toast.add({ title: 'Statement line added' }); await load() }
+  if (error) toast.add({ title: t('common.save_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('accounting.reconcile.toasts.added') }); await load() }
   saving.value = false
 }
 
@@ -92,20 +93,20 @@ const stmtBalance = computed(() => stmtLines.value.reduce((s, l) => s + Number(l
 
 <template>
   <div>
-    <PageHeader kicker="Finance" :title="`Reconcile — ${account?.name ?? ''}`" subtitle="Enter statement lines, then match each against the corresponding GL journal line">
-      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openAdd">Add statement line</UButton>
+    <PageHeader :kicker="t('accounting.kicker')" :title="t('accounting.reconcile.title', { account: account?.name ?? '' })" :subtitle="t('accounting.reconcile.subtitle')">
+      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openAdd">{{ t('accounting.reconcile.add_line') }}</UButton>
     </PageHeader>
 
     <div v-if="account" class="grid grid-cols-3 gap-4 mb-6">
-      <StatCard label="Ledger balance (GL)" :value="money(account.balance)" />
-      <StatCard label="Statement balance (entered)" :value="money(stmtBalance)" />
-      <StatCard label="Unreconciled lines" :value="String(unmatchedStmtLines.length)" />
+      <StatCard :label="t('accounting.reconcile.stats.ledger_balance')" :value="money(account.balance)" />
+      <StatCard :label="t('accounting.reconcile.stats.statement_balance')" :value="money(stmtBalance)" />
+      <StatCard :label="t('accounting.reconcile.stats.unreconciled')" :value="String(unmatchedStmtLines.length)" />
     </div>
 
     <div class="grid grid-cols-2 gap-4">
       <UCard>
-        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Bank statement — unmatched</p></template>
-        <div v-if="!unmatchedStmtLines.length" class="text-sm text-gray-400 py-3 text-center">All statement lines matched.</div>
+        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('accounting.reconcile.statement_header') }}</p></template>
+        <div v-if="!unmatchedStmtLines.length" class="text-sm text-gray-400 py-3 text-center">{{ t('accounting.reconcile.statement_empty') }}</div>
         <label
           v-for="l in unmatchedStmtLines" :key="l.id"
           class="flex items-center gap-2 py-2 text-[13px] border-b border-gray-100 dark:border-zinc-800/60 last:border-0 cursor-pointer"
@@ -121,8 +122,8 @@ const stmtBalance = computed(() => stmtLines.value.reduce((s, l) => s + Number(l
       </UCard>
 
       <UCard>
-        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">GL journal lines — unmatched</p></template>
-        <div v-if="!unmatchedJournalLines.length" class="text-sm text-gray-400 py-3 text-center">All journal lines matched.</div>
+        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('accounting.reconcile.gl_header') }}</p></template>
+        <div v-if="!unmatchedJournalLines.length" class="text-sm text-gray-400 py-3 text-center">{{ t('accounting.reconcile.gl_empty') }}</div>
         <label
           v-for="l in unmatchedJournalLines" :key="l.id"
           class="flex items-center gap-2 py-2 text-[13px] border-b border-gray-100 dark:border-zinc-800/60 last:border-0 cursor-pointer"
@@ -142,16 +143,16 @@ const stmtBalance = computed(() => stmtLines.value.reduce((s, l) => s + Number(l
     <div v-if="canWrite && selectedStmt && selectedJournal" class="sticky bottom-4 mt-4 flex justify-center">
       <UCard :ui="{ body: { padding: 'px-4 py-2' } }" class="shadow-lg">
         <div class="flex items-center gap-3">
-          <UBadge v-if="amountsAlign === false" size="xs" color="amber" variant="subtle">amounts differ</UBadge>
-          <UBadge v-else-if="amountsAlign" size="xs" color="green" variant="subtle">amounts match</UBadge>
-          <UButton :loading="matching" @click="doMatch">Match selected pair</UButton>
+          <UBadge v-if="amountsAlign === false" size="xs" color="amber" variant="subtle">{{ t('accounting.reconcile.amounts_differ') }}</UBadge>
+          <UBadge v-else-if="amountsAlign" size="xs" color="green" variant="subtle">{{ t('accounting.reconcile.amounts_match') }}</UBadge>
+          <UButton :loading="matching" @click="doMatch">{{ t('accounting.reconcile.match_pair') }}</UButton>
         </div>
       </UCard>
     </div>
 
     <UCard class="mt-6">
-      <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Reconciled</p></template>
-      <div v-if="!matchedStmtLines.length" class="text-sm text-gray-400 py-3 text-center">Nothing reconciled yet.</div>
+      <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('accounting.reconcile.reconciled_header') }}</p></template>
+      <div v-if="!matchedStmtLines.length" class="text-sm text-gray-400 py-3 text-center">{{ t('accounting.reconcile.reconciled_empty') }}</div>
       <div v-for="l in matchedStmtLines" :key="l.id" class="flex items-center justify-between py-2 text-[13px] border-b border-gray-100 dark:border-zinc-800/60 last:border-0">
         <span>
           <span class="num text-xs text-gray-400">{{ l.txn_date }}</span> — {{ l.description || '—' }}
@@ -160,26 +161,26 @@ const stmtBalance = computed(() => stmtLines.value.reduce((s, l) => s + Number(l
         </span>
         <div class="flex items-center gap-2">
           <span class="num">{{ money(l.credit > 0 ? l.credit : l.debit) }}</span>
-          <UButton v-if="canWrite" size="2xs" variant="ghost" color="gray" @click="unmatch(l.id)">Unmatch</UButton>
+          <UButton v-if="canWrite" size="2xs" variant="ghost" color="gray" @click="unmatch(l.id)">{{ t('accounting.reconcile.unmatch') }}</UButton>
         </div>
       </div>
     </UCard>
 
     <USlideover v-model="addOpen">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">Add statement line</p></template>
+        <template #header><p class="font-medium">{{ t('accounting.reconcile.dialog.title') }}</p></template>
         <div class="space-y-3">
-          <UFormGroup label="Date"><UInput v-model="addForm.txn_date" type="date" /></UFormGroup>
-          <UFormGroup label="Description"><UInput v-model="addForm.description" placeholder="as shown on the bank statement" /></UFormGroup>
+          <UFormGroup :label="t('common.date')"><UInput v-model="addForm.txn_date" type="date" /></UFormGroup>
+          <UFormGroup :label="t('accounting.reconcile.dialog.description')"><UInput v-model="addForm.description" :placeholder="t('accounting.reconcile.dialog.description_placeholder')" /></UFormGroup>
           <div class="grid grid-cols-2 gap-3">
-            <UFormGroup label="Debit (৳)" hint="money out"><UInput v-model.number="addForm.debit" type="number" /></UFormGroup>
-            <UFormGroup label="Credit (৳)" hint="money in"><UInput v-model.number="addForm.credit" type="number" /></UFormGroup>
+            <UFormGroup :label="t('accounting.reconcile.dialog.debit_label')" :hint="t('accounting.reconcile.dialog.debit_hint')"><UInput v-model.number="addForm.debit" type="number" /></UFormGroup>
+            <UFormGroup :label="t('accounting.reconcile.dialog.credit_label')" :hint="t('accounting.reconcile.dialog.credit_hint')"><UInput v-model.number="addForm.credit" type="number" /></UFormGroup>
           </div>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="addOpen = false">Close</UButton>
-            <UButton :loading="saving" @click="saveLine">Add &amp; continue</UButton>
+            <UButton color="gray" variant="ghost" @click="addOpen = false">{{ t('common.close') }}</UButton>
+            <UButton :loading="saving" @click="saveLine">{{ t('accounting.reconcile.dialog.add_continue') }}</UButton>
           </div>
         </template>
       </UCard>

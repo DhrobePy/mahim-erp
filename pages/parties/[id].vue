@@ -2,6 +2,7 @@
 const route = useRoute()
 const client = useSupabaseClient()
 const { money } = useFmt()
+const { t } = useI18n()
 
 const id = route.params.id as string
 const party = ref<any>(null)
@@ -56,10 +57,10 @@ const payable = computed(() =>
   -balances.value.filter((b) => b.account_type === 'liability').reduce((s, b) => s + b.net, 0))
 const roles = computed(() => {
   const r: string[] = []
-  if (party.value?.is_customer) r.push('customer')
-  if (party.value?.is_supplier) r.push('supplier')
-  if (party.value?.is_transporter) r.push('transporter')
-  if (party.value?.is_bank) r.push('bank')
+  if (party.value?.is_customer) r.push(t('parties.roles.customer'))
+  if (party.value?.is_supplier) r.push(t('parties.roles.supplier'))
+  if (party.value?.is_transporter) r.push(t('parties.roles.transporter'))
+  if (party.value?.is_bank) r.push(t('parties.roles.bank'))
   return r
 })
 </script>
@@ -67,34 +68,34 @@ const roles = computed(() => {
 <template>
   <div v-if="party">
     <PageHeader
-      kicker="Parties"
+      :kicker="t('parties.detail.kicker')"
       :title="party.name"
-      :subtitle="`${party.code}${party.phone ? ' · ' + party.phone : ''}${party.address ? ' · ' + party.address : ''}${party.bin_no ? ' · BIN ' + party.bin_no : ''}`"
+      :subtitle="`${party.code}${party.phone ? ' · ' + party.phone : ''}${party.address ? ' · ' + party.address : ''}${party.bin_no ? ' · ' + t('parties.detail.bin_label') + ' ' + party.bin_no : ''}`"
     >
       <UBadge v-for="r in roles" :key="r" variant="subtle">{{ r }}</UBadge>
     </PageHeader>
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-      <StatCard label="Receivable from them" :value="money(receivable)" :tone="receivable > 0 ? 'amber' : 'default'" />
-      <StatCard label="Payable to them" :value="money(payable)" :tone="payable > 0 ? 'red' : 'default'" />
-      <StatCard label="Invoices" :value="invoices.length" :sub="money(invoices.reduce((s, i) => s + Number(i.total), 0)) + ' lifetime'" />
-      <StatCard label="Open orders" :value="sos.filter(s => ['open','partially_delivered'].includes(s.status)).length" />
+      <StatCard :label="t('parties.detail.receivable')" :value="money(receivable)" :tone="receivable > 0 ? 'amber' : 'default'" />
+      <StatCard :label="t('parties.detail.payable')" :value="money(payable)" :tone="payable > 0 ? 'red' : 'default'" />
+      <StatCard :label="t('parties.detail.invoices')" :value="invoices.length" :sub="money(invoices.reduce((s, i) => s + Number(i.total), 0)) + ' ' + t('parties.detail.lifetime')" />
+      <StatCard :label="t('parties.detail.open_orders')" :value="sos.filter(s => ['open','partially_delivered'].includes(s.status)).length" />
     </div>
 
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
       <div class="space-y-4">
         <UCard v-if="balances.length">
-          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Ledger position by account</p></template>
+          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('parties.detail.ledger_position') }}</p></template>
           <div v-for="b in balances" :key="b.code" class="flex justify-between py-1 text-[13px]">
             <span><span class="num text-gray-400 dark:text-zinc-600 mr-2">{{ b.code }}</span>{{ b.name }}</span>
             <span class="num font-medium" :class="b.net >= 0 ? 'dark:text-zinc-100' : 'text-red-500 dark:text-red-400'">
-              {{ money(Math.abs(b.net)) }} {{ b.net >= 0 ? 'Dr' : 'Cr' }}
+              {{ money(Math.abs(b.net)) }} {{ b.net >= 0 ? t('parties.detail.dr') : t('parties.detail.cr') }}
             </span>
           </div>
         </UCard>
 
         <UCard v-if="sos.length">
-          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Sales orders</p></template>
+          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('parties.detail.sales_orders') }}</p></template>
           <div v-for="s in sos" :key="s.id" class="flex justify-between py-1 text-[13px]">
             <NuxtLink :to="`/sales/${s.id}`" class="num text-amber-600 dark:text-amber-400 hover:underline">{{ s.so_no }}</NuxtLink>
             <span class="text-gray-500 dark:text-zinc-500">{{ s.order_date }} · {{ s.status }}{{ s.lcs ? ' · ' + s.lcs.lc_no : '' }}</span>
@@ -102,7 +103,7 @@ const roles = computed(() => {
         </UCard>
 
         <UCard v-if="lcs.length">
-          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">LCs</p></template>
+          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('parties.detail.lcs') }}</p></template>
           <div v-for="l in lcs" :key="l.id" class="flex justify-between py-1 text-[13px]">
             <NuxtLink :to="`/lcs/${l.id}`" class="num text-amber-600 dark:text-amber-400 hover:underline">{{ l.lc_no }}</NuxtLink>
             <span class="text-gray-500 dark:text-zinc-500">{{ l.opened_at }} · {{ l.status }}</span>
@@ -110,21 +111,21 @@ const roles = computed(() => {
         </UCard>
 
         <UCard v-if="grns.length || debitNotes.length">
-          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Supplier history</p></template>
+          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('parties.detail.supplier_history') }}</p></template>
           <div v-for="g in grns" :key="g.id" class="flex justify-between py-1 text-[13px]">
             <NuxtLink to="/procurement" class="num text-amber-600 dark:text-amber-400 hover:underline">{{ g.grn_no }}</NuxtLink>
-            <span class="text-gray-500 dark:text-zinc-500">{{ g.grn_date }} · {{ g.status }}{{ g.mushak_61_no ? ' · 6.1 ' + g.mushak_61_no : '' }}</span>
+            <span class="text-gray-500 dark:text-zinc-500">{{ g.grn_date }} · {{ g.status }}{{ g.mushak_61_no ? ' · ' + t('parties.detail.mushak_short') + ' ' + g.mushak_61_no : '' }}</span>
           </div>
           <div v-for="d in debitNotes" :key="d.dn_no" class="flex justify-between py-1 text-[13px]">
             <span class="num text-red-500 dark:text-red-400">{{ d.dn_no }}</span>
-            <span class="num text-gray-500 dark:text-zinc-500">gap {{ d.qty }} · {{ money(d.amount) }}</span>
+            <span class="num text-gray-500 dark:text-zinc-500">{{ t('parties.detail.gap') }} {{ d.qty }} · {{ money(d.amount) }}</span>
           </div>
         </UCard>
       </div>
 
       <div class="space-y-4">
         <UCard v-if="invoices.length">
-          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Invoices</p></template>
+          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('parties.detail.invoices') }}</p></template>
           <div v-for="i in invoices" :key="i.id" class="flex justify-between py-1 text-[13px]">
             <NuxtLink :to="`/invoices/${i.id}`" class="num text-amber-600 dark:text-amber-400 hover:underline">{{ i.invoice_no }}</NuxtLink>
             <span class="num text-gray-500 dark:text-zinc-500">{{ i.invoice_date }} · {{ money(i.total) }} · {{ i.status }}</span>
@@ -132,15 +133,15 @@ const roles = computed(() => {
         </UCard>
 
         <UCard>
-          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Recent ledger entries</p></template>
-          <div v-if="!recentLines.length" class="text-sm text-gray-400 py-3 text-center">No postings yet.</div>
+          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('parties.detail.recent_ledger_entries') }}</p></template>
+          <div v-if="!recentLines.length" class="text-sm text-gray-400 py-3 text-center">{{ t('parties.detail.no_postings') }}</div>
           <div v-for="(l, i) in recentLines" :key="i" class="py-1.5 border-b border-gray-100 dark:border-zinc-800/60 last:border-0 text-[12.5px]">
             <div class="flex justify-between">
               <NuxtLink :to="`/accounting/journal/${l.journal_id}`" class="num text-amber-600 dark:text-amber-400 hover:underline">
                 {{ l.journals?.journal_no }}
               </NuxtLink>
               <span class="num" :class="Number(l.debit) ? 'dark:text-zinc-100' : 'text-gray-500 dark:text-zinc-500'">
-                {{ Number(l.debit) ? 'Dr ' + money(l.debit) : 'Cr ' + money(l.credit) }}
+                {{ Number(l.debit) ? t('parties.detail.dr') + ' ' + money(l.debit) : t('parties.detail.cr') + ' ' + money(l.credit) }}
               </span>
             </div>
             <p class="text-gray-500 dark:text-zinc-500">{{ l.accounts?.code }} {{ l.accounts?.name }} — {{ l.journals?.memo }}</p>
@@ -149,5 +150,5 @@ const roles = computed(() => {
       </div>
     </div>
   </div>
-  <div v-else-if="!loading" class="text-sm text-gray-400 py-10 text-center">Party not found.</div>
+  <div v-else-if="!loading" class="text-sm text-gray-400 py-10 text-center">{{ t('parties.detail.not_found') }}</div>
 </template>

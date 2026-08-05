@@ -1,0 +1,34 @@
+{
+  "items": {
+    "kicker": "Operations",
+    "title": "Items",
+    "subtitle": "Raw materials, finished goods & consumables",
+    "new_item": "New item",
+    "edit_item": "Edit item",
+    "search_placeholder": "Search SKU or name…",
+    "columns": {
+      "sku": "SKU",
+      "category": "Category",
+      "uom": "UOM",
+      "reorder": "Reorder"
+    },
+    "no_items": "No items found.",
+    "fields": {
+      "sku": "SKU",
+      "uom": "Unit of measure",
+      "gsm": "GSM",
+      "size_spec": "Size / spec",
+      "reorder_level": "Reorder level",
+      "standard_cost": "Standard cost (৳)"
+    },
+    "types": {
+      "raw_material": "Raw material",
+      "wip": "WIP",
+      "finished_good": "Finished good",
+      "consumable": "Consumable",
+      "packaging": "Packaging"
+    },
+    "item_updated": "Item updated",
+    "item_created": "Item created"
+  }
+}

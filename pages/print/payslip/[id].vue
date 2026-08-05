@@ -6,6 +6,7 @@ const client = useSupabaseClient()
 const { money } = useFmt()
 const { takaWords } = useTakaWords()
 const { logoUrl } = useCompanyLogo()
+const { locale: printLocale, t, toggle: toggleLang } = usePrintLocale()
 
 const id = route.params.id as string
 const line = ref<any>(null)
@@ -29,13 +30,13 @@ onMounted(load)
 
 const monthName = (m: number) => new Date(2000, m - 1, 1).toLocaleDateString('en-GB', { month: 'long' })
 const earnings = computed(() => [
-  { label: `Gross salary (incl. basic ৳${Number(line.value?.basic ?? 0).toLocaleString('en-IN')})`, amount: Number(line.value?.gross ?? 0) },
-  { label: 'Attendance allowance', amount: Number(line.value?.attendance_allowance ?? 0) },
-  { label: `Overtime (${line.value?.ot_hours ?? 0}h @ ৳${line.value?.ot_rate ?? 0}/h)`, amount: Number(line.value?.ot_amount ?? 0) }
+  { label: t('printHr.payslip.gross_salary_line', { basic: Number(line.value?.basic ?? 0).toLocaleString('en-IN') }), amount: Number(line.value?.gross ?? 0) },
+  { label: t('printHr.payslip.attendance_allowance'), amount: Number(line.value?.attendance_allowance ?? 0) },
+  { label: t('printHr.payslip.overtime_line', { hours: line.value?.ot_hours ?? 0, rate: line.value?.ot_rate ?? 0 }), amount: Number(line.value?.ot_amount ?? 0) }
 ])
 const deductions = computed(() => [
-  { label: 'Absence deduction', amount: Number(line.value?.absence_deduction ?? 0) },
-  { label: 'Loan recovery', amount: Number(line.value?.loan_recovery ?? 0) }
+  { label: t('printHr.payslip.absence_deduction'), amount: Number(line.value?.absence_deduction ?? 0) },
+  { label: t('printHr.payslip.loan_recovery'), amount: Number(line.value?.loan_recovery ?? 0) }
 ])
 const grossEarnings = computed(() => earnings.value.reduce((s, e) => s + e.amount, 0))
 const totalDeductions = computed(() => deductions.value.reduce((s, d) => s + d.amount, 0))

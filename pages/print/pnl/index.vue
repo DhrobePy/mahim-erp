@@ -5,6 +5,7 @@ const route = useRoute()
 const client = useSupabaseClient()
 const { money } = useFmt()
 const { logoUrl } = useCompanyLogo()
+const { locale: printLocale, t, toggle: toggleLang } = usePrintLocale()
 
 const from = (route.query.from as string) || ''
 const to = (route.query.to as string) || ''
@@ -79,41 +80,42 @@ const fmtDate = (d?: string) => d
 <template>
   <div class="print-root">
     <div class="no-print toolbar">
-      <NuxtLink to="/accounting/pnl" class="back">← back</NuxtLink>
-      <button class="print-btn" @click="() => window.print()">🖨 Print</button>
+      <NuxtLink to="/accounting/pnl" class="back">{{ t('printGov.pnl.back') }}</NuxtLink>
+      <button class="lang-btn" @click="toggleLang">{{ t('print.toolbar.lang_toggle') }}</button>
+      <button class="print-btn" @click="() => window.print()">{{ t('print.toolbar.print_btn') }}</button>
     </div>
 
-    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">Loading…</div>
+    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">{{ t('print.toolbar.loading') }}</div>
 
-    <div v-else class="sheet">
+    <div v-else class="sheet" :lang="printLocale">
       <div class="letterhead">
         <img v-if="company && logoUrl(company)" :src="logoUrl(company)" class="co-logo" alt="Company logo">
         <div class="co-name">{{ company?.legal_name || company?.name }}</div>
-        <div class="title">PROFIT &amp; LOSS STATEMENT</div>
-        <div class="small">{{ from ? `${fmtDate(from)} to ${fmtDate(to)}` : 'All-time (since inception)' }}</div>
+        <div class="title">{{ t('printGov.pnl.title') }}</div>
+        <div class="small">{{ from ? t('printGov.pnl.period_range', { from: fmtDate(from), to: fmtDate(to) }) : t('printGov.pnl.period_all_time') }}</div>
       </div>
 
       <table class="pnl-table">
         <tbody>
-          <tr class="section"><td>Revenue</td><td class="num">{{ money(revenue) }}</td></tr>
+          <tr class="section"><td>{{ t('printGov.pnl.revenue') }}</td><td class="num">{{ money(revenue) }}</td></tr>
           <tr v-for="a in section('revenue')" :key="a.code" class="detail"><td>{{ a.code }} — {{ a.name }}</td><td class="num">{{ money(a.amount) }}</td></tr>
 
-          <tr class="section"><td>Cost of goods sold</td><td class="num">({{ money(cogs) }})</td></tr>
+          <tr class="section"><td>{{ t('printGov.pnl.cogs') }}</td><td class="num">({{ money(cogs) }})</td></tr>
           <tr v-for="a in section('cogs')" :key="a.code" class="detail"><td>{{ a.code }} — {{ a.name }}</td><td class="num">({{ money(a.amount) }})</td></tr>
 
-          <tr class="subtotal"><td>Gross profit</td><td class="num">{{ money(grossProfit) }}</td></tr>
+          <tr class="subtotal"><td>{{ t('printGov.pnl.gross_profit') }}</td><td class="num">{{ money(grossProfit) }}</td></tr>
 
-          <tr class="section"><td>Operating expenses</td><td class="num">({{ money(opex) }})</td></tr>
+          <tr class="section"><td>{{ t('printGov.pnl.operating_expenses') }}</td><td class="num">({{ money(opex) }})</td></tr>
           <tr v-for="a in section('operating_expense')" :key="a.code" class="detail"><td>{{ a.code }} — {{ a.name }}</td><td class="num">({{ money(a.amount) }})</td></tr>
 
-          <tr class="section"><td>Financial expenses</td><td class="num">({{ money(finExpense) }})</td></tr>
+          <tr class="section"><td>{{ t('printGov.pnl.financial_expenses') }}</td><td class="num">({{ money(finExpense) }})</td></tr>
           <tr v-for="a in section('financial_expense')" :key="a.code" class="detail"><td>{{ a.code }} — {{ a.name }}</td><td class="num">({{ money(a.amount) }})</td></tr>
 
-          <tr class="total"><td>Net profit</td><td class="num">{{ money(netProfit) }}</td></tr>
+          <tr class="total"><td>{{ t('printGov.pnl.net_profit') }}</td><td class="num">{{ money(netProfit) }}</td></tr>
         </tbody>
       </table>
 
-      <p class="small disclaimer">This is a management working paper generated from posted GL entries. It is not an audited financial statement.</p>
+      <p class="small disclaimer">{{ t('printGov.pnl.disclaimer') }}</p>
     </div>
   </div>
 </template>
@@ -126,6 +128,7 @@ const fmtDate = (d?: string) => d
 }
 .toolbar .back { color: #fbbf24; text-decoration: none; }
 .print-btn { background: #f59e0b; color: #000; border: 0; border-radius: 4px; padding: 6px 16px; font-weight: 600; cursor: pointer; }
+.lang-btn { background: transparent; color: #e4e4e7; border: 1px solid #52525b; border-radius: 4px; padding: 5px 14px; font-weight: 500; cursor: pointer; }
 .sheet {
   width: 210mm; min-height: 200mm; margin: 0 auto 20px; background: #fff; color: #111;
   padding: 20mm 18mm; box-shadow: 0 2px 12px rgba(0,0,0,.4); font-size: 13px; line-height: 1.6;

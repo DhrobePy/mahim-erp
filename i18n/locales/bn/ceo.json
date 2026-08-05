@@ -1,0 +1,55 @@
+{
+  "ceo": {
+    "kicker": "নির্বাহী",
+    "title": "সিইও ওভারভিউ",
+    "subtitle": "ব্যবসার সার্বিক চিত্র এক নজরে — প্রতিটি সংখ্যা তার উৎসে ক্লিক করা যায়",
+    "alerts": {
+      "overdue": "⚠ মেয়াদোত্তীর্ণ — বিল {bill}, {lc}-তে (মেয়াদ {date})",
+      "maturity_soon": "বিল {bill}, {lc}-তে {days} দিনের মধ্যে পরিপক্ব হবে",
+      "discrepancy": "{lc}-তে অমীমাংসিত গরমিল"
+    },
+    "sections": {
+      "money": "টাকা কোথায় আছে",
+      "earning_pipeline": "আয় ও পাইপলাইন",
+      "lc_book": "এলসি চুক্তি বই — প্রতি চুক্তিতে মুনাফা",
+      "top_buyers": "লাইফটাইম বিলিং অনুযায়ী শীর্ষ ক্রেতা",
+      "facility_headroom": "ফ্যাসিলিটি হেডরুম",
+      "people": "জনবল",
+      "pre_lc": "বিশ্বাসে পাঠানো পণ্য (এলসি এখনো হয়নি)"
+    },
+    "stats": {
+      "bank": "ব্যাংক + নগদ",
+      "bills_receivable_lc": "প্রাপ্য বিল (এলসি)",
+      "delivered_not_invoiced": "ডেলিভারি হয়েছে, ইনভয়েস হয়নি",
+      "pre_lc_risk": "প্রি-এলসি ঝুঁকি",
+      "stock": "স্টক",
+      "payable": "আমাদের দেনা (এপি + মজুরি)",
+      "bank_debt": "ব্যাংক ঋণ",
+      "net_position": "নিট অবস্থান",
+      "revenue": "রাজস্ব (এ পর্যন্ত)",
+      "expenses": "খরচ",
+      "net_profit": "নিট মুনাফা",
+      "undelivered_orders": "অসম্পন্ন অর্ডার",
+      "awaiting_lc_cover": "এলসি কভারের অপেক্ষায়",
+      "bills_awaiting_maturity": "পরিপক্বতার অপেক্ষায় বিল"
+    },
+    "orders_suffix": "টি অর্ডার",
+    "deliveries_suffix": "টি ডেলিভারি",
+    "bills_suffix": "টি বিল",
+    "table": {
+      "lc": "এলসি",
+      "revenue": "রাজস্ব (৳)",
+      "cogs": "COGS (৳)",
+      "fees_interest": "ফি + সুদ (৳)",
+      "profit": "মুনাফা (৳)"
+    },
+    "empty": {
+      "lc_contracts": "এখনো কোনো এলসি চুক্তি নেই।",
+      "invoices": "এখনো কোনো ইনভয়েস নেই।",
+      "facilities": "কোনো ফ্যাসিলিটি নেই।"
+    },
+    "headcount": "কর্মী সংখ্যা",
+    "last_payroll": "সর্বশেষ পেরোল ({label})",
+    "since": "{date} থেকে"
+  }
+}

@@ -3,6 +3,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { deleteRecord } = useRecycleBin()
+const { t } = useI18n()
 
 const grns = ref<any[]>([])
 const debitNotes = ref<any[]>([])
@@ -13,11 +14,11 @@ const openPOs = ref<any[]>([])
 const loading = ref(true)
 
 const columns = [
-  { key: 'grn_no', label: 'GRN' },
-  { key: 'supplier', label: 'Supplier' },
-  { key: 'grn_date', label: 'Date' },
-  { key: 'mushak_61_no', label: 'Mushak 6.1' },
-  { key: 'status', label: 'Status' },
+  { key: 'grn_no', label: t('procurement.grn.columns.grn_no') },
+  { key: 'supplier', label: t('procurement.grn.columns.supplier') },
+  { key: 'grn_date', label: t('procurement.grn.columns.date') },
+  { key: 'mushak_61_no', label: t('procurement.grn.columns.mushak_61') },
+  { key: 'status', label: t('procurement.grn.columns.status') },
   { key: 'actions', label: '' }
 ]
 
@@ -52,7 +53,7 @@ const applyPO = (poId: string | null) => {
   const po = openPOs.value.find((p) => p.id === poId)
   if (!po) return
   const remaining = po.v_purchase_order_lines.filter((l: any) => l.received_qty < l.qty)
-  if (!remaining.length) { toast.add({ title: 'This PO has nothing left to receive', color: 'amber' }); return }
+  if (!remaining.length) { toast.add({ title: t('procurement.grn.toast.po_nothing_left'), color: 'amber' }); return }
   lines.value = remaining.map((l: any) => ({
     ...blankLine(),
     item_id: l.item_id,
@@ -92,7 +93,7 @@ const trueNet = (l: any) =>
 
 const save = async (complete: boolean) => {
   if (!form.supplier_party_id) {
-    toast.add({ title: 'Pick a supplier', color: 'red' }); return
+    toast.add({ title: t('procurement.grn.toast.pick_supplier'), color: 'red' }); return
   }
   saving.value = true
   try {
@@ -102,18 +103,18 @@ const save = async (complete: boolean) => {
     const payload = lines.value
       .filter((l) => l.item_id)
       .map((l) => ({ ...l, grn_id: (grn as any).id, batch_no: l.batch_no || null }))
-    if (!payload.length) throw new Error('Add at least one line')
+    if (!payload.length) throw new Error(t('procurement.grn.toast.add_line_required'))
     const res = await client.from('grn_lines').insert(payload as any)
     if (res.error) throw res.error
     if (complete) {
       const rpc = await client.rpc('complete_grn', { p_grn_id: (grn as any).id } as any)
       if (rpc.error) throw rpc.error
     }
-    toast.add({ title: complete ? 'GRN completed & posted' : 'GRN saved as draft' })
+    toast.add({ title: complete ? t('procurement.grn.toast.completed_and_posted') : t('procurement.grn.toast.saved_draft') })
     open.value = false
     await load()
   } catch (e: any) {
-    toast.add({ title: 'GRN failed', description: e.message, color: 'red' })
+    toast.add({ title: t('procurement.grn.toast.grn_failed'), description: e.message, color: 'red' })
   } finally {
     saving.value = false
   }
@@ -121,8 +122,8 @@ const save = async (complete: boolean) => {
 
 const completeDraft = async (row: any) => {
   const { error } = await client.rpc('complete_grn', { p_grn_id: row.id } as any)
-  if (error) toast.add({ title: 'Completion failed', description: error.message, color: 'red' })
-  else { toast.add({ title: `${row.grn_no} completed & posted` }); await load() }
+  if (error) toast.add({ title: t('procurement.grn.toast.completion_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('procurement.grn.toast.named_completed', { grn: row.grn_no }) }); await load() }
 }
 
 const deleteGrn = async (row: any) => {
@@ -136,8 +137,8 @@ const statusColor = (s: string) =>
 
 <template>
   <div>
-    <PageHeader kicker="Procurement" title="Goods receipt (GRN)" subtitle="QA-adjusted true net weight — liability posts on acceptance only">
-      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">New GRN</UButton>
+    <PageHeader :kicker="t('procurement.grn.kicker')" :title="t('procurement.grn.title')" :subtitle="t('procurement.grn.subtitle')">
+      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">{{ t('procurement.grn.new_grn') }}</UButton>
     </PageHeader>
 
     <UCard class="mb-6">
@@ -150,14 +151,14 @@ const statusColor = (s: string) =>
         </template>
         <template #mushak_61_no-data="{ row }">{{ row.mushak_61_no || '—' }}</template>
         <template #status-data="{ row }">
-          <UBadge size="xs" variant="subtle" :color="statusColor(row.status)">{{ row.status }}</UBadge>
+          <UBadge size="xs" variant="subtle" :color="statusColor(row.status)">{{ t(`procurement.statuses.${row.status}`) }}</UBadge>
         </template>
         <template #actions-data="{ row }">
           <div class="flex items-center gap-1.5 justify-end">
             <UButton
               v-if="canWrite && row.status === 'draft'"
               size="xs" variant="soft" @click="completeDraft(row)"
-            >Complete &amp; post</UButton>
+            >{{ t('procurement.grn.complete_and_post') }}</UButton>
             <UButton
               v-if="canWrite && row.status === 'draft'"
               icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="deleteGrn(row)"
@@ -165,21 +166,21 @@ const statusColor = (s: string) =>
           </div>
         </template>
         <template #empty-state>
-          <div class="text-center py-6 text-sm text-gray-400">No GRNs yet.</div>
+          <div class="text-center py-6 text-sm text-gray-400">{{ t('procurement.grn.empty') }}</div>
         </template>
       </UTable>
     </UCard>
 
     <UCard>
-      <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Debit notes — QA gaps issued to suppliers</p></template>
+      <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('procurement.grn.debit_notes_header') }}</p></template>
       <UTable
         :rows="debitNotes"
         :columns="[
-          { key: 'dn_no', label: 'DN' },
-          { key: 'supplier', label: 'Supplier' },
-          { key: 'qty', label: 'Qty gap' },
-          { key: 'amount', label: 'Amount (৳)' },
-          { key: 'reason', label: 'Reason' }
+          { key: 'dn_no', label: t('procurement.grn.dn_columns.dn_no') },
+          { key: 'supplier', label: t('procurement.grn.dn_columns.supplier') },
+          { key: 'qty', label: t('procurement.grn.dn_columns.qty_gap') },
+          { key: 'amount', label: t('procurement.grn.dn_columns.amount') },
+          { key: 'reason', label: t('procurement.grn.dn_columns.reason') }
         ]"
       >
         <template #supplier-data="{ row }">
@@ -188,61 +189,61 @@ const statusColor = (s: string) =>
         <template #qty-data="{ row }"><span class="num">{{ row.qty }}</span></template>
         <template #amount-data="{ row }"><span class="num text-red-600 dark:text-red-400">{{ row.amount }}</span></template>
         <template #empty-state>
-          <div class="text-center py-4 text-sm text-gray-400">No debit notes.</div>
+          <div class="text-center py-4 text-sm text-gray-400">{{ t('procurement.grn.no_debit_notes') }}</div>
         </template>
       </UTable>
     </UCard>
 
     <USlideover v-model="open" :ui="{ width: 'w-screen max-w-3xl' }">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">New GRN</p></template>
+        <template #header><p class="font-medium">{{ t('procurement.grn.form.title') }}</p></template>
         <div class="grid grid-cols-3 gap-3 mb-4">
-          <UFormGroup label="Supplier" required>
-            <USelect v-model="form.supplier_party_id" :options="suppliers" option-attribute="name" value-attribute="id" placeholder="—" />
+          <UFormGroup :label="t('procurement.grn.form.supplier')" required>
+            <USelect v-model="form.supplier_party_id" :options="suppliers" option-attribute="name" value-attribute="id" :placeholder="t('procurement.grn.form.supplier_placeholder')" />
           </UFormGroup>
-          <UFormGroup label="Warehouse">
-            <USelect v-model="form.warehouse_id" :options="warehouses" option-attribute="name" value-attribute="id" placeholder="Default" />
+          <UFormGroup :label="t('procurement.grn.form.warehouse')">
+            <USelect v-model="form.warehouse_id" :options="warehouses" option-attribute="name" value-attribute="id" :placeholder="t('procurement.grn.form.warehouse_placeholder')" />
           </UFormGroup>
-          <UFormGroup label="Supplier Mushak 6.1 no.">
+          <UFormGroup :label="t('procurement.grn.form.mushak_61_no')">
             <UInput v-model="form.mushak_61_no" />
           </UFormGroup>
-          <UFormGroup v-if="supplierPOs.length" label="Receive against purchase order" class="col-span-3" hint="Prefills lines with remaining qty and landed unit cost">
+          <UFormGroup v-if="supplierPOs.length" :label="t('procurement.grn.form.receive_against_po')" class="col-span-3" :hint="t('procurement.grn.form.receive_against_po_hint')">
             <USelect
               v-model="selectedPOId" :options="supplierPOs" option-attribute="po_no" value-attribute="id"
-              placeholder="Standalone receipt — no PO" @update:model-value="applyPO"
+              :placeholder="t('procurement.grn.form.standalone_receipt')" @update:model-value="applyPO"
             />
           </UFormGroup>
         </div>
 
         <div class="space-y-3">
           <div v-for="(l, idx) in lines" :key="idx" class="grid grid-cols-4 gap-2 items-end border-b border-gray-100 dark:border-zinc-800/60 pb-3">
-            <UFormGroup label="Item" class="col-span-2">
-              <USelect v-model="l.item_id" :options="items" option-attribute="sku" value-attribute="id" placeholder="—" />
+            <UFormGroup :label="t('procurement.grn.form.item')" class="col-span-2">
+              <USelect v-model="l.item_id" :options="items" option-attribute="sku" value-attribute="id" :placeholder="t('procurement.grn.form.item_placeholder')" />
             </UFormGroup>
-            <UFormGroup label="Invoice qty"><UInput v-model.number="l.invoice_qty" type="number" /></UFormGroup>
-            <UFormGroup label="Unit price"><UInput v-model.number="l.unit_price" type="number" /></UFormGroup>
-            <UFormGroup label="Gross wt."><UInput v-model.number="l.gross_weight" type="number" /></UFormGroup>
-            <UFormGroup label="Core/tare"><UInput v-model.number="l.core_tare_weight" type="number" /></UFormGroup>
-            <UFormGroup label="Moisture %"><UInput v-model.number="l.moisture_pct" type="number" step="0.1" /></UFormGroup>
-            <UFormGroup label="Batch / roll"><UInput v-model="l.batch_no" placeholder="optional" /></UFormGroup>
+            <UFormGroup :label="t('procurement.grn.form.invoice_qty')"><UInput v-model.number="l.invoice_qty" type="number" /></UFormGroup>
+            <UFormGroup :label="t('procurement.grn.form.unit_price')"><UInput v-model.number="l.unit_price" type="number" /></UFormGroup>
+            <UFormGroup :label="t('procurement.grn.form.gross_weight')"><UInput v-model.number="l.gross_weight" type="number" /></UFormGroup>
+            <UFormGroup :label="t('procurement.grn.form.core_tare')"><UInput v-model.number="l.core_tare_weight" type="number" /></UFormGroup>
+            <UFormGroup :label="t('procurement.grn.form.moisture_pct')"><UInput v-model.number="l.moisture_pct" type="number" step="0.1" /></UFormGroup>
+            <UFormGroup :label="t('procurement.grn.form.batch_no')"><UInput v-model="l.batch_no" :placeholder="t('procurement.grn.form.batch_no_placeholder')" /></UFormGroup>
             <div class="col-span-4 flex items-center justify-between text-xs text-gray-500">
-              <UCheckbox v-model="l.is_fsc" label="FSC certified roll" />
+              <UCheckbox v-model="l.is_fsc" :label="t('procurement.grn.form.fsc_certified')" />
               <span>
-                True net: <span class="num font-semibold text-emerald-600 dark:text-emerald-400">{{ trueNet(l) }}</span>
+                {{ t('procurement.grn.form.true_net') }} <span class="num font-semibold text-emerald-600 dark:text-emerald-400">{{ trueNet(l) }}</span>
                 <span v-if="l.invoice_qty && trueNet(l) < l.invoice_qty" class="num text-amber-600 dark:text-amber-400 ml-1">
-                  (gap {{ Math.round((l.invoice_qty - trueNet(l)) * 1000) / 1000 }} → debit note)
+                  {{ t('procurement.grn.form.gap_note', { gap: Math.round((l.invoice_qty - trueNet(l)) * 1000) / 1000 }) }}
                 </span>
               </span>
             </div>
           </div>
-          <UButton size="xs" variant="soft" icon="i-heroicons-plus" @click="lines.push(blankLine())">Add line</UButton>
+          <UButton size="xs" variant="soft" icon="i-heroicons-plus" @click="lines.push(blankLine())">{{ t('procurement.grn.form.add_line') }}</UButton>
         </div>
 
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="open = false">Cancel</UButton>
-            <UButton color="gray" variant="soft" :loading="saving" @click="save(false)">Save draft</UButton>
-            <UButton :loading="saving" @click="save(true)">Complete &amp; post</UButton>
+            <UButton color="gray" variant="ghost" @click="open = false">{{ t('common.cancel') }}</UButton>
+            <UButton color="gray" variant="soft" :loading="saving" @click="save(false)">{{ t('procurement.grn.form.save_draft') }}</UButton>
+            <UButton :loading="saving" @click="save(true)">{{ t('procurement.grn.complete_and_post') }}</UButton>
           </div>
         </template>
       </UCard>

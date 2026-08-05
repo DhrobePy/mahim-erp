@@ -5,6 +5,7 @@ const toast = useToast()
 const { canWrite } = useProfile()
 const { money } = useFmt()
 const { extractLc } = usePdfExtract()
+const { t } = useI18n()
 
 const lcId = route.params.id as string
 const lc = ref<any>(null)
@@ -42,19 +43,19 @@ const active = computed(() => lc.value?.amendments?.[0])
 
 // --- Manual timeline events ---
 const eventForm = reactive({ event_type: 'note', detail: '' })
-const eventOptions = [
-  { value: 'docs_submitted', label: 'Documents submitted to bank' },
-  { value: 'discrepancy', label: 'Discrepancy raised' },
-  { value: 'discrepancy_resolved', label: 'Discrepancy resolved' },
-  { value: 'matured', label: 'Matured' },
-  { value: 'note', label: 'Note' }
-]
+const eventOptions = computed(() => [
+  { value: 'docs_submitted', label: t('lcs.event_types.docs_submitted') },
+  { value: 'discrepancy', label: t('lcs.event_types.discrepancy') },
+  { value: 'discrepancy_resolved', label: t('lcs.event_types.discrepancy_resolved') },
+  { value: 'matured', label: t('lcs.event_types.matured') },
+  { value: 'note', label: t('lcs.event_types.note') }
+])
 const addEvent = async () => {
   const { error } = await client.from('lc_events').insert({
     company_id: lc.value.company_id, lc_id: lcId,
     event_type: eventForm.event_type, detail: eventForm.detail || null
   } as any)
-  if (error) toast.add({ title: 'Event failed', description: error.message, color: 'red' })
+  if (error) toast.add({ title: t('lcs.detail.toast.event_failed'), description: error.message, color: 'red' })
   else { eventForm.detail = ''; await load() }
 }
 
@@ -79,10 +80,10 @@ const onFile = async (ev: Event) => {
       original_name: file.name, file_path: path, extracted: fields
     } as any)
     if (ins.error) throw ins.error
-    toast.add({ title: 'Document stored', description: Object.keys(fields).length ? 'Fields extracted — review below' : undefined })
+    toast.add({ title: t('lcs.detail.toast.stored'), description: Object.keys(fields).length ? t('lcs.detail.toast.stored_extracted') : undefined })
     await load()
   } catch (e: any) {
-    toast.add({ title: 'Upload failed', description: e.message, color: 'red' })
+    toast.add({ title: t('lcs.detail.toast.upload_failed'), description: e.message, color: 'red' })
   } finally {
     uploading.value = false
     ;(ev.target as HTMLInputElement).value = ''
@@ -96,8 +97,8 @@ const openDoc = async (doc: any) => {
 
 const closeOut = async () => {
   const { error } = await client.rpc('close_lc', { p_lc_id: lcId } as any)
-  if (error) toast.add({ title: 'Close-out blocked', description: error.message, color: 'amber' })
-  else { toast.add({ title: 'LC closed — final P&L recorded on the timeline' }); await load() }
+  if (error) toast.add({ title: t('lcs.detail.toast.close_blocked'), description: error.message, color: 'amber' })
+  else { toast.add({ title: t('lcs.detail.toast.closed') }); await load() }
 }
 
 const eventIcon = (t: string) => ({
@@ -117,35 +118,64 @@ const eventColor = (t: string) => ({
 
 const billColor = (s: string) =>
   ({ submitted: 'gray', accepted: 'blue', discounted: 'purple', realized: 'green', overdue: 'red' } as any)[s] || 'gray'
+const billStatusLabel = computed<Record<string, string>>(() => ({
+  submitted: t('lcs.bill_statuses.submitted'), accepted: t('lcs.bill_statuses.accepted'), discounted: t('lcs.bill_statuses.discounted'),
+  realized: t('lcs.bill_statuses.realized'), overdue: t('lcs.bill_statuses.overdue')
+}))
 
-const roleLabel: Record<string, string> = {
-  export_local: 'Export — Local LC (back-to-back)', export_direct: 'Export — Direct (foreign)', import: 'Import (foreign)'
-}
+const roleLabel = computed<Record<string, string>>(() => ({
+  export_local: t('lcs.roles.export_local'), export_direct: t('lcs.roles.export_direct'), import: t('lcs.roles.import')
+}))
 const roleColor: Record<string, string> = { export_local: 'green', export_direct: 'blue', import: 'amber' }
-const counterpartyLabel = computed(() => lc.value?.lc_role === 'import' ? 'supplier' : 'buyer')
+const statusLabel = computed<Record<string, string>>(() => ({
+  active: t('lcs.statuses.active'), closed: t('lcs.statuses.closed'), cancelled: t('lcs.statuses.cancelled')
+}))
+const lcTypeLabel = computed<Record<string, string>>(() => ({ sight: t('lcs.lc_types.sight'), usance: t('lcs.lc_types.usance') }))
+const eventTypeLabel = computed<Record<string, string>>(() => ({
+  opened: t('lcs.event_types.opened'), amendment: t('lcs.event_types.amendment'), docs_submitted: t('lcs.event_types.docs_submitted'),
+  discrepancy: t('lcs.event_types.discrepancy'), discrepancy_resolved: t('lcs.event_types.discrepancy_resolved'),
+  acceptance: t('lcs.event_types.acceptance'), discounted: t('lcs.event_types.discounted'), matured: t('lcs.event_types.matured'),
+  realized: t('lcs.event_types.realized'), overdue: t('lcs.event_types.overdue'), forced_pad: t('lcs.event_types.forced_pad'),
+  note: t('lcs.event_types.note'), closed: t('lcs.event_types.closed')
+}))
+const docTypeLabel = computed<Record<string, string>>(() => ({
+  lc: t('lcs.detail.documents.doc_type_options.lc'), amendment: t('lcs.detail.documents.doc_type_options.amendment'),
+  bill: t('lcs.detail.documents.doc_type_options.bill'), other: t('lcs.detail.documents.doc_type_options.other')
+}))
+const docTypeOptions = computed(() => [
+  { value: 'lc', label: docTypeLabel.value.lc }, { value: 'amendment', label: docTypeLabel.value.amendment },
+  { value: 'bill', label: docTypeLabel.value.bill }, { value: 'other', label: docTypeLabel.value.other }
+])
+const counterpartyLabel = computed(() => lc.value?.lc_role === 'import' ? t('lcs.detail.supplier_prefix') : t('lcs.detail.buyer_prefix'))
+const pageTitle = computed(() => t('lcs.detail.title', { no: lc.value?.lc_no }))
+const pageSubtitle = computed(() => {
+  if (!lc.value) return ''
+  const typeText = lcTypeLabel.value[lc.value.lc_type] + (lc.value.lc_type === 'usance' ? ' ' + t('lcs.usance_days_suffix', { days: lc.value.usance_days }) : '')
+  return t('lcs.detail.subtitle', { type: typeText, date: lc.value.opened_at })
+})
 </script>
 
 <template>
   <div v-if="lc">
     <PageHeader
-      kicker="Sales &amp; Trade Finance"
-      :title="`LC ${lc.lc_no}`"
-      :subtitle="`${lc.lc_type}${lc.lc_type === 'usance' ? ' ' + lc.usance_days + 'd' : ''} · opened ${lc.opened_at}`"
+      :kicker="t('lcs.kicker')"
+      :title="pageTitle"
+      :subtitle="pageSubtitle"
     >
       <UBadge variant="subtle" :color="roleColor[lc.lc_role]">{{ roleLabel[lc.lc_role] }}</UBadge>
-      <UBadge variant="subtle" :color="lc.status === 'active' ? 'green' : 'gray'">{{ lc.status }}</UBadge>
+      <UBadge variant="subtle" :color="lc.status === 'active' ? 'green' : 'gray'">{{ statusLabel[lc.status] }}</UBadge>
       <UButton v-if="canWrite && lc.status === 'active'" color="gray" variant="soft" icon="i-heroicons-lock-closed" @click="closeOut">
-        Close out
+        {{ t('lcs.detail.close_out') }}
       </UButton>
     </PageHeader>
 
     <div class="flex flex-wrap gap-3 mb-4 text-[12.5px]">
       <NuxtLink :to="`/parties/${lc.counterparty_party_id}`" class="text-amber-600 dark:text-amber-400 hover:underline">
-        → {{ counterpartyLabel }}: {{ lc.counterparty?.name }}
-        <span v-if="lc.counterparty?.is_foreign" class="text-gray-400">({{ lc.counterparty?.country || 'foreign' }})</span>
+        {{ t('lcs.detail.counterparty_link', { label: counterpartyLabel, name: lc.counterparty?.name }) }}
+        <span v-if="lc.counterparty?.is_foreign" class="text-gray-400">({{ lc.counterparty?.country || t('lcs.index.foreign_fallback') }})</span>
       </NuxtLink>
       <NuxtLink v-if="lc.bank_party_id" :to="`/parties/${lc.bank_party_id}`" class="text-amber-600 dark:text-amber-400 hover:underline">
-        → issuing bank: {{ lc.bank?.name }}
+        {{ t('lcs.detail.bank_link', { name: lc.bank?.name }) }}
       </NuxtLink>
       <span v-if="lc.incoterm" class="text-gray-500 dark:text-zinc-500">{{ lc.incoterm }}{{ lc.port_of_loading ? ' · ' + lc.port_of_loading : '' }}{{ lc.port_of_discharge ? ' → ' + lc.port_of_discharge : '' }}</span>
     </div>
@@ -160,41 +190,41 @@ const counterpartyLabel = computed(() => lc.value?.lc_role === 'import' ? 'suppl
             ? 'ring-amber-500/40 bg-amber-500/5 text-amber-600 dark:text-amber-400'
             : 'ring-purple-500/40 bg-purple-500/5 text-purple-500 dark:text-purple-400'"
       >
-        <template v-if="a.alert_type === 'overdue'">Bill {{ a.bill_no }} is OVERDUE (maturity {{ a.maturity_date }}) — settle or convert to forced PAD</template>
-        <template v-else-if="a.alert_type === 'maturity_soon'">Bill {{ a.bill_no }} matures in {{ a.days }} day(s) — {{ a.maturity_date }}</template>
-        <template v-else>Open discrepancy — resolve it on the timeline below</template>
+        <template v-if="a.alert_type === 'overdue'">{{ t('lcs.detail.alerts.overdue', { bill: a.bill_no, date: a.maturity_date }) }}</template>
+        <template v-else-if="a.alert_type === 'maturity_soon'">{{ t('lcs.detail.alerts.maturity_soon', { bill: a.bill_no, days: a.days, date: a.maturity_date }) }}</template>
+        <template v-else>{{ t('lcs.detail.alerts.discrepancy') }}</template>
       </div>
     </div>
 
     <div v-if="lc.lc_role === 'export_local'" class="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
-      <StatCard label="Active terms" :value="active ? 'v' + active.version : '—'" :sub="active ? money(active.amount) + ' · ±' + active.tolerance_pct + '%' : ''" />
-      <StatCard label="Revenue" :value="money(pnl?.revenue ?? 0)" />
-      <StatCard label="Returns" :value="money(pnl?.returns ?? 0)" :tone="Number(pnl?.returns) > 0 ? 'red' : 'default'" />
-      <StatCard label="COGS (net)" :value="money(pnl?.cogs_net ?? 0)" />
-      <StatCard label="Bank fees + interest" :value="money(Number(pnl?.bank_fees ?? 0) + Number(pnl?.interest ?? 0))" />
-      <StatCard label="Contract profit" :value="money(pnl?.contract_profit ?? 0)" :tone="Number(pnl?.contract_profit) >= 0 ? 'green' : 'red'" />
+      <StatCard :label="t('lcs.detail.stat_cards.active_terms')" :value="active ? 'v' + active.version : '—'" :sub="active ? money(active.amount) + ' · ±' + active.tolerance_pct + '%' : ''" />
+      <StatCard :label="t('lcs.detail.stat_cards.revenue')" :value="money(pnl?.revenue ?? 0)" />
+      <StatCard :label="t('lcs.detail.stat_cards.returns')" :value="money(pnl?.returns ?? 0)" :tone="Number(pnl?.returns) > 0 ? 'red' : 'default'" />
+      <StatCard :label="t('lcs.detail.stat_cards.cogs_net')" :value="money(pnl?.cogs_net ?? 0)" />
+      <StatCard :label="t('lcs.detail.stat_cards.bank_fees_interest')" :value="money(Number(pnl?.bank_fees ?? 0) + Number(pnl?.interest ?? 0))" />
+      <StatCard :label="t('lcs.detail.stat_cards.contract_profit')" :value="money(pnl?.contract_profit ?? 0)" :tone="Number(pnl?.contract_profit) >= 0 ? 'green' : 'red'" />
     </div>
 
     <div v-else class="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
-      <StatCard label="Active terms" :value="active ? 'v' + active.version : '—'" :sub="active ? lc.currency + ' ' + money(active.amount).replace('৳','') + ' · ±' + active.tolerance_pct + '%' : ''" />
-      <StatCard label="Incoterm" :value="lc.incoterm || '—'" />
-      <StatCard label="Latest shipment" :value="lc.latest_shipment_date || '—'" />
-      <StatCard label="Presentation period" :value="lc.presentation_period_days ? lc.presentation_period_days + ' days' : '—'" />
-      <StatCard label="Port of loading" :value="lc.port_of_loading || '—'" />
-      <StatCard label="Port of discharge" :value="lc.port_of_discharge || '—'" />
+      <StatCard :label="t('lcs.detail.stat_cards.active_terms')" :value="active ? 'v' + active.version : '—'" :sub="active ? lc.currency + ' ' + money(active.amount).replace('৳','') + ' · ±' + active.tolerance_pct + '%' : ''" />
+      <StatCard :label="t('lcs.detail.stat_cards.incoterm')" :value="lc.incoterm || '—'" />
+      <StatCard :label="t('lcs.detail.stat_cards.latest_shipment')" :value="lc.latest_shipment_date || '—'" />
+      <StatCard :label="t('lcs.detail.stat_cards.presentation_period')" :value="lc.presentation_period_days ? t('lcs.detail.stat_cards.presentation_period_days', { n: lc.presentation_period_days }) : '—'" />
+      <StatCard :label="t('lcs.detail.stat_cards.port_loading')" :value="lc.port_of_loading || '—'" />
+      <StatCard :label="t('lcs.detail.stat_cards.port_discharge')" :value="lc.port_of_discharge || '—'" />
     </div>
     <p v-if="lc.lc_role !== 'export_local'" class="text-xs text-gray-400 dark:text-zinc-500 -mt-2 mb-4">
-      Money movement for this LC (GRN/payable, bill retirement, realization) is posted via a manual journal on the Accounting page for now.
+      {{ t('lcs.detail.manual_journal_note') }}
     </p>
 
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
       <!-- Timeline -->
       <UCard>
-        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Lifecycle timeline</p></template>
+        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('lcs.detail.timeline.header') }}</p></template>
         <div v-if="canWrite && lc.status === 'active'" class="flex gap-2 mb-4">
           <USelect v-model="eventForm.event_type" :options="eventOptions" option-attribute="label" value-attribute="value" size="xs" class="w-56" />
-          <UInput v-model="eventForm.detail" placeholder="Detail…" size="xs" class="flex-1" />
-          <UButton size="xs" @click="addEvent">Add</UButton>
+          <UInput v-model="eventForm.detail" :placeholder="t('lcs.detail.timeline.detail_placeholder')" size="xs" class="flex-1" />
+          <UButton size="xs" @click="addEvent">{{ t('lcs.detail.timeline.add') }}</UButton>
         </div>
         <div class="space-y-0">
           <div v-for="e in events" :key="e.id" class="flex gap-3 pb-4 relative">
@@ -204,26 +234,26 @@ const counterpartyLabel = computed(() => lc.value?.lc_role === 'import' ? 'suppl
             </div>
             <div class="min-w-0 -mt-0.5">
               <p class="text-[13px] font-medium dark:text-zinc-200">
-                {{ e.event_type.replace(/_/g, ' ') }}
+                {{ eventTypeLabel[e.event_type] }}
                 <span class="num text-[11px] text-gray-400 dark:text-zinc-600 ml-2">{{ e.event_date }}</span>
               </p>
               <p v-if="e.detail" class="text-[12px] text-gray-500 dark:text-zinc-500">{{ e.detail }}</p>
             </div>
           </div>
-          <p v-if="!events.length" class="text-sm text-gray-400 py-3 text-center">No events yet.</p>
+          <p v-if="!events.length" class="text-sm text-gray-400 py-3 text-center">{{ t('lcs.detail.timeline.empty') }}</p>
         </div>
       </UCard>
 
       <div class="space-y-4">
         <!-- Bills -->
         <UCard v-if="lc.lc_role === 'export_local'">
-          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Bills under this LC</p></template>
+          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('lcs.detail.bills.header') }}</p></template>
           <UTable
             :rows="bills"
             :columns="[
-              { key: 'bill_no', label: 'Bill' }, { key: 'invoice', label: 'Invoice' },
-              { key: 'amount', label: 'Amount (৳)' }, { key: 'maturity_date', label: 'Maturity' },
-              { key: 'status', label: 'Status' }
+              { key: 'bill_no', label: t('lcs.detail.bills.columns.bill') }, { key: 'invoice', label: t('lcs.detail.bills.columns.invoice') },
+              { key: 'amount', label: t('lcs.detail.bills.columns.amount') }, { key: 'maturity_date', label: t('lcs.detail.bills.columns.maturity') },
+              { key: 'status', label: t('lcs.detail.bills.columns.status') }
             ]"
           >
             <template #bill_no-data="{ row }"><span class="num">{{ row.bill_no }}</span></template>
@@ -233,9 +263,9 @@ const counterpartyLabel = computed(() => lc.value?.lc_role === 'import' ? 'suppl
             <template #amount-data="{ row }"><span class="num text-amber-600 dark:text-amber-400">{{ Number(row.amount).toLocaleString('en-IN') }}</span></template>
             <template #maturity_date-data="{ row }"><span class="num">{{ row.maturity_date || '—' }}</span></template>
             <template #status-data="{ row }">
-              <UBadge size="xs" variant="subtle" :color="billColor(row.status)">{{ row.status }}</UBadge>
+              <UBadge size="xs" variant="subtle" :color="billColor(row.status)">{{ billStatusLabel[row.status] }}</UBadge>
             </template>
-            <template #empty-state><div class="text-center py-3 text-sm text-gray-400">No bills yet — submit one from Invoices.</div></template>
+            <template #empty-state><div class="text-center py-3 text-sm text-gray-400">{{ t('lcs.detail.bills.empty') }}</div></template>
           </UTable>
         </UCard>
 
@@ -243,12 +273,12 @@ const counterpartyLabel = computed(() => lc.value?.lc_role === 'import' ? 'suppl
         <UCard>
           <template #header>
             <div class="flex items-center justify-between">
-              <p class="microlabel text-gray-400 dark:text-zinc-500">Documents</p>
+              <p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('lcs.detail.documents.header') }}</p>
               <div v-if="canWrite" class="flex items-center gap-2">
-                <USelect v-model="docType" :options="['lc', 'amendment', 'bill', 'other']" size="xs" class="w-28" />
+                <USelect v-model="docType" :options="docTypeOptions" option-attribute="label" value-attribute="value" size="xs" class="w-28" />
                 <label class="cursor-pointer">
                   <span class="text-xs px-2 py-1 rounded bg-amber-500 text-black font-medium">
-                    {{ uploading ? 'Extracting…' : 'Upload PDF' }}
+                    {{ uploading ? t('lcs.detail.documents.uploading') : t('lcs.detail.documents.upload') }}
                   </span>
                   <input type="file" accept="application/pdf" class="hidden" :disabled="uploading" @change="onFile">
                 </label>
@@ -256,7 +286,7 @@ const counterpartyLabel = computed(() => lc.value?.lc_role === 'import' ? 'suppl
             </div>
           </template>
           <div v-if="!docs.length" class="text-sm text-gray-400 py-3 text-center">
-            No documents. Upload the bank's LC advice PDF — fields are extracted automatically.
+            {{ t('lcs.detail.documents.empty') }}
           </div>
           <div v-for="d in docs" :key="d.id" class="py-2 border-b border-gray-100 dark:border-zinc-800/60 last:border-0">
             <div class="flex items-center justify-between gap-2">
@@ -264,7 +294,7 @@ const counterpartyLabel = computed(() => lc.value?.lc_role === 'import' ? 'suppl
                 {{ d.original_name }}
               </button>
               <div class="flex items-center gap-2 shrink-0">
-                <UBadge size="xs" variant="subtle">{{ d.doc_type }}</UBadge>
+                <UBadge size="xs" variant="subtle">{{ docTypeLabel[d.doc_type] || d.doc_type }}</UBadge>
                 <span class="num text-[10px] text-gray-400 dark:text-zinc-600">{{ new Date(d.created_at).toLocaleDateString() }}</span>
               </div>
             </div>
@@ -278,5 +308,5 @@ const counterpartyLabel = computed(() => lc.value?.lc_role === 'import' ? 'suppl
       </div>
     </div>
   </div>
-  <div v-else-if="!loading" class="text-sm text-gray-400 py-10 text-center">LC not found.</div>
+  <div v-else-if="!loading" class="text-sm text-gray-400 py-10 text-center">{{ t('lcs.detail.not_found') }}</div>
 </template>

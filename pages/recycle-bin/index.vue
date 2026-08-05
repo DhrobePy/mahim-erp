@@ -3,6 +3,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { activeCompanyId } = useProfile()
 const { modules, load: loadPermissions, canWriteModule } = usePermissions()
+const { t } = useI18n()
 
 const rows = ref<any[]>([])
 const loading = ref(true)
@@ -16,7 +17,7 @@ const load = async () => {
   loading.value = true
   await loadPermissions()
   const { data, error } = await client.rpc('list_deleted_records', { p_company: activeCompanyId.value } as any)
-  if (error) toast.add({ title: 'Failed to load recycle bin', description: error.message, color: 'red' })
+  if (error) toast.add({ title: t('system.recycle_bin.toast.load_failed'), description: error.message, color: 'red' })
   rows.value = (data ?? []).sort((a: any, b: any) => new Date(b.deleted_at).getTime() - new Date(a.deleted_at).getTime())
   loading.value = false
 }
@@ -32,10 +33,10 @@ const restore = async (row: any) => {
   try {
     const { error } = await client.rpc('restore_record', { p_table: row.table_name, p_id: row.record_id } as any)
     if (error) throw error
-    toast.add({ title: `Restored "${row.display_label}"` })
+    toast.add({ title: t('system.recycle_bin.toast.restored', { name: row.display_label }) })
     await load()
   } catch (e: any) {
-    toast.add({ title: 'Restore failed', description: e.message, color: 'red' })
+    toast.add({ title: t('system.recycle_bin.toast.restore_failed'), description: e.message, color: 'red' })
   } finally {
     restoringId.value = null
   }
@@ -45,8 +46,8 @@ const restore = async (row: any) => {
 <template>
   <div>
     <PageHeader
-      kicker="Admin" title="Recycle bin"
-      subtitle="Deleted records across every module — master data is restored as-is; posted documents are un-reversed (a new offsetting entry restores the original ledger effect)"
+      :kicker="t('nav.sections.admin')" :title="t('system.recycle_bin.title')"
+      :subtitle="t('system.recycle_bin.subtitle')"
     />
 
     <UCard>
@@ -54,20 +55,20 @@ const restore = async (row: any) => {
         <div class="flex gap-2 items-center">
           <USelect
             v-model="moduleFilter" :options="moduleOptions" option-attribute="label" value-attribute="value"
-            placeholder="All modules" size="xs" class="w-56"
+            :placeholder="t('system.recycle_bin.all_modules')" size="xs" class="w-56"
           />
           <UButton v-if="moduleFilter" size="xs" variant="ghost" icon="i-heroicons-x-mark" @click="moduleFilter = null" />
-          <span class="ml-auto text-xs text-gray-400 dark:text-zinc-500">{{ filtered.length }} deleted record(s)</span>
+          <span class="ml-auto text-xs text-gray-400 dark:text-zinc-500">{{ t('system.recycle_bin.deleted_count', { count: filtered.length }) }}</span>
         </div>
       </template>
 
       <UTable
         :rows="filtered" :loading="loading"
         :columns="[
-          { key: 'display_label', label: 'Record' },
-          { key: 'module_key', label: 'Module' },
-          { key: 'deleted_at', label: 'Deleted' },
-          { key: 'deleted_by_name', label: 'Deleted by' },
+          { key: 'display_label', label: t('system.recycle_bin.columns.record') },
+          { key: 'module_key', label: t('system.recycle_bin.columns.module') },
+          { key: 'deleted_at', label: t('system.recycle_bin.columns.deleted') },
+          { key: 'deleted_by_name', label: t('system.recycle_bin.columns.deleted_by') },
           { key: 'actions', label: '' }
         ]"
       >
@@ -89,10 +90,10 @@ const restore = async (row: any) => {
             v-if="canWriteModule(row.module_key)"
             size="xs" variant="soft" icon="i-heroicons-arrow-uturn-left"
             :loading="restoringId === row.record_id" @click="restore(row)"
-          >Restore</UButton>
+          >{{ t('common.restore') }}</UButton>
         </template>
         <template #empty-state>
-          <div class="text-center py-8 text-sm text-gray-400">Nothing in the recycle bin.</div>
+          <div class="text-center py-8 text-sm text-gray-400">{{ t('system.recycle_bin.empty') }}</div>
         </template>
       </UTable>
     </UCard>

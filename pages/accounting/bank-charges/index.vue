@@ -4,20 +4,21 @@ const toast = useToast()
 const { canWrite } = useProfile()
 const { money } = useFmt()
 const { deleteRecord } = useRecycleBin()
+const { t } = useI18n()
 
 const entries = ref<any[]>([])
 const accounts = ref<any[]>([])
 const loading = ref(true)
 
-const categories = [
-  { value: 'lc_fee', label: 'LC fee' },
-  { value: 'swift_fee', label: 'SWIFT fee' },
-  { value: 'service_charge', label: 'Service charge' },
-  { value: 'legal_fee', label: 'Legal & professional fee' },
-  { value: 'ait_deducted', label: 'AIT deducted at source' },
-  { value: 'other', label: 'Other' }
-]
-const categoryLabel: Record<string, string> = Object.fromEntries(categories.map((c) => [c.value, c.label]))
+const categories = computed(() => [
+  { value: 'lc_fee', label: t('accounting.bank_charges.categories.lc_fee') },
+  { value: 'swift_fee', label: t('accounting.bank_charges.categories.swift_fee') },
+  { value: 'service_charge', label: t('accounting.bank_charges.categories.service_charge') },
+  { value: 'legal_fee', label: t('accounting.bank_charges.categories.legal_fee') },
+  { value: 'ait_deducted', label: t('accounting.bank_charges.categories.ait_deducted') },
+  { value: 'other', label: t('accounting.bank_charges.categories.other') }
+])
+const categoryLabel = computed<Record<string, string>>(() => Object.fromEntries(categories.value.map((c) => [c.value, c.label])))
 const categoryColor: Record<string, string> = {
   lc_fee: 'blue', swift_fee: 'blue', service_charge: 'gray', legal_fee: 'purple', ait_deducted: 'amber', other: 'gray'
 }
@@ -49,13 +50,13 @@ const openNew = () => {
   open.value = true
 }
 const save = async () => {
-  if (!form.cash_bank_account_id) { toast.add({ title: 'Pick the account charged', color: 'red' }); return }
-  if (!form.amount || form.amount <= 0) { toast.add({ title: 'Amount must be positive', color: 'red' }); return }
+  if (!form.cash_bank_account_id) { toast.add({ title: t('accounting.bank_charges.toasts.pick_account'), color: 'red' }); return }
+  if (!form.amount || form.amount <= 0) { toast.add({ title: t('accounting.bank_charges.toasts.positive_amount'), color: 'red' }); return }
   saving.value = true
   const payload: any = { ...form, reference_no: form.reference_no || null }
   const { error } = await client.from('bank_charge_entries').insert(payload)
-  if (error) toast.add({ title: 'Entry failed', description: error.message, color: 'red' })
-  else { toast.add({ title: 'Charge posted' }); open.value = false; await load() }
+  if (error) toast.add({ title: t('accounting.bank_charges.toasts.failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('accounting.bank_charges.toasts.posted') }); open.value = false; await load() }
   saving.value = false
 }
 
@@ -68,18 +69,18 @@ const remove = async (row: any) => {
 
 <template>
   <div>
-    <PageHeader kicker="Finance" title="Bank charges, fees &amp; AIT" subtitle="LC fees, SWIFT charges, service charges, legal fees and AIT deducted at source — each posts against the right expense/asset account">
-      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">New entry</UButton>
+    <PageHeader :kicker="t('accounting.kicker')" :title="t('accounting.bank_charges.title')" :subtitle="t('accounting.bank_charges.subtitle')">
+      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">{{ t('accounting.bank_charges.new_entry') }}</UButton>
     </PageHeader>
 
     <UCard>
       <UTable
         :rows="entries" :loading="loading"
         :columns="[
-          { key: 'entry_no', label: 'No.' }, { key: 'entry_date', label: 'Date' },
-          { key: 'account', label: 'Account' }, { key: 'category', label: 'Category' },
-          { key: 'description', label: 'Description' }, { key: 'amount', label: 'Amount (৳)' },
-          { key: 'vat_amount', label: 'VAT (৳)' }, { key: 'actions', label: '' }
+          { key: 'entry_no', label: t('accounting.bank_charges.columns.no') }, { key: 'entry_date', label: t('common.date') },
+          { key: 'account', label: t('accounting.bank_charges.columns.account') }, { key: 'category', label: t('accounting.bank_charges.columns.category') },
+          { key: 'description', label: t('accounting.bank_charges.columns.description') }, { key: 'amount', label: t('accounting.bank_charges.columns.amount') },
+          { key: 'vat_amount', label: t('accounting.bank_charges.columns.vat') }, { key: 'actions', label: '' }
         ]"
       >
         <template #entry_no-data="{ row }"><span class="num font-medium text-amber-600 dark:text-amber-400">{{ row.entry_no }}</span></template>
@@ -93,35 +94,35 @@ const remove = async (row: any) => {
             <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="remove(row)" />
           </div>
         </template>
-        <template #empty-state><div class="text-center py-6 text-sm text-gray-400">No charge entries yet.</div></template>
+        <template #empty-state><div class="text-center py-6 text-sm text-gray-400">{{ t('accounting.bank_charges.empty') }}</div></template>
       </UTable>
     </UCard>
 
     <USlideover v-model="open">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">New bank charge / fee entry</p></template>
+        <template #header><p class="font-medium">{{ t('accounting.bank_charges.dialog.title') }}</p></template>
         <div class="space-y-3">
-          <UFormGroup label="Date"><UInput v-model="form.entry_date" type="date" /></UFormGroup>
-          <UFormGroup label="Account charged" required>
+          <UFormGroup :label="t('common.date')"><UInput v-model="form.entry_date" type="date" /></UFormGroup>
+          <UFormGroup :label="t('accounting.bank_charges.dialog.account_charged')" required>
             <USelect v-model="form.cash_bank_account_id" :options="accounts" option-attribute="name" value-attribute="id" placeholder="—" />
           </UFormGroup>
-          <UFormGroup label="Category">
+          <UFormGroup :label="t('accounting.bank_charges.dialog.category')">
             <USelect v-model="form.category" :options="categories" option-attribute="label" value-attribute="value" />
           </UFormGroup>
-          <p class="text-xs text-gray-400">Posts to {{ debitAccount(form.category) }}</p>
-          <UFormGroup label="Description"><UInput v-model="form.description" placeholder="e.g. LC issuance commission, court filing fee" /></UFormGroup>
-          <UFormGroup label="Reference no." hint="optional — debit advice / voucher no."><UInput v-model="form.reference_no" /></UFormGroup>
+          <p class="text-xs text-gray-400">{{ t('accounting.bank_charges.dialog.posts_to', { account: debitAccount(form.category) }) }}</p>
+          <UFormGroup :label="t('accounting.bank_charges.dialog.description')"><UInput v-model="form.description" :placeholder="t('accounting.bank_charges.dialog.description_placeholder')" /></UFormGroup>
+          <UFormGroup :label="t('accounting.bank_charges.dialog.reference_no')" :hint="t('accounting.bank_charges.dialog.reference_no_hint')"><UInput v-model="form.reference_no" /></UFormGroup>
           <div class="grid grid-cols-2 gap-3">
-            <UFormGroup label="Amount (৳)"><UInput v-model.number="form.amount" type="number" /></UFormGroup>
-            <UFormGroup label="Of which creditable VAT (৳)" hint="only if separately shown — confirm with accountant">
+            <UFormGroup :label="t('accounting.bank_charges.dialog.amount')"><UInput v-model.number="form.amount" type="number" /></UFormGroup>
+            <UFormGroup :label="t('accounting.bank_charges.dialog.vat_creditable')" :hint="t('accounting.bank_charges.dialog.vat_creditable_hint')">
               <UInput v-model.number="form.vat_amount" type="number" />
             </UFormGroup>
           </div>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="open = false">Cancel</UButton>
-            <UButton :loading="saving" @click="save">Post entry</UButton>
+            <UButton color="gray" variant="ghost" @click="open = false">{{ t('common.cancel') }}</UButton>
+            <UButton :loading="saving" @click="save">{{ t('accounting.bank_charges.dialog.post_entry') }}</UButton>
           </div>
         </template>
       </UCard>

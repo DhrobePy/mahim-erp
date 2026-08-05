@@ -3,38 +3,39 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { deleteRecord } = useRecycleBin()
+const { t } = useI18n()
 
 const docs = ref<any[]>([])
 const loading = ref(true)
 const expanded = ref<string | null>(null)
 
-const docTypeOptions = [
-  { value: 'trade_license', label: 'Trade License' },
-  { value: 'incorporation_certificate', label: 'Incorporation Certificate' },
-  { value: 'moa_aoa', label: 'Memorandum & Articles of Association' },
-  { value: 'tin_certificate', label: 'TIN Certificate' },
-  { value: 'vat_bin_certificate', label: 'VAT / BIN Certificate' },
-  { value: 'fire_license', label: 'Fire License' },
-  { value: 'environment_clearance', label: 'Environment Clearance' },
-  { value: 'factory_license', label: 'Factory License (DIFE)' },
-  { value: 'boiler_certificate', label: 'Boiler Certificate' },
-  { value: 'bsci_sedex_audit', label: 'BSCI / Sedex Audit Certificate' },
-  { value: 'fsc_coc_certificate', label: 'FSC Chain of Custody Certificate' },
-  { value: 'import_registration_certificate', label: 'Import Registration Certificate (IRC)' },
-  { value: 'export_registration_certificate', label: 'Export Registration Certificate (ERC)' },
-  { value: 'effluent_treatment_certificate', label: 'Effluent Treatment (ETP) Certificate' },
-  { value: 'electrical_installation_license', label: 'Electrical Installation License' },
-  { value: 'bsti_certification', label: 'BSTI Certification' },
-  { value: 'trademark_design_registration', label: 'Trademark / Design Registration' },
-  { value: 'labour_welfare_registration', label: 'Labour Welfare Fund Registration' },
-  { value: 'group_insurance_certificate', label: 'Group Insurance Certificate' },
-  { value: 'bank_charge_document', label: 'Bank Charge / Mortgage Document' },
-  { value: 'noc_certificate', label: 'No Objection Certificate (NOC)' },
-  { value: 'bank_account_doc', label: 'Bank Account Document' },
-  { value: 'membership_certificate', label: 'Membership Certificate' },
-  { value: 'other', label: 'Other' }
-]
-const docTypeLabel: Record<string, string> = Object.fromEntries(docTypeOptions.map((o) => [o.value, o.label]))
+const docTypeOptions = computed(() => [
+  { value: 'trade_license', label: t('admin.documents.doc_types.trade_license') },
+  { value: 'incorporation_certificate', label: t('admin.documents.doc_types.incorporation_certificate') },
+  { value: 'moa_aoa', label: t('admin.documents.doc_types.moa_aoa') },
+  { value: 'tin_certificate', label: t('admin.documents.doc_types.tin_certificate') },
+  { value: 'vat_bin_certificate', label: t('admin.documents.doc_types.vat_bin_certificate') },
+  { value: 'fire_license', label: t('admin.documents.doc_types.fire_license') },
+  { value: 'environment_clearance', label: t('admin.documents.doc_types.environment_clearance') },
+  { value: 'factory_license', label: t('admin.documents.doc_types.factory_license') },
+  { value: 'boiler_certificate', label: t('admin.documents.doc_types.boiler_certificate') },
+  { value: 'bsci_sedex_audit', label: t('admin.documents.doc_types.bsci_sedex_audit') },
+  { value: 'fsc_coc_certificate', label: t('admin.documents.doc_types.fsc_coc_certificate') },
+  { value: 'import_registration_certificate', label: t('admin.documents.doc_types.import_registration_certificate') },
+  { value: 'export_registration_certificate', label: t('admin.documents.doc_types.export_registration_certificate') },
+  { value: 'effluent_treatment_certificate', label: t('admin.documents.doc_types.effluent_treatment_certificate') },
+  { value: 'electrical_installation_license', label: t('admin.documents.doc_types.electrical_installation_license') },
+  { value: 'bsti_certification', label: t('admin.documents.doc_types.bsti_certification') },
+  { value: 'trademark_design_registration', label: t('admin.documents.doc_types.trademark_design_registration') },
+  { value: 'labour_welfare_registration', label: t('admin.documents.doc_types.labour_welfare_registration') },
+  { value: 'group_insurance_certificate', label: t('admin.documents.doc_types.group_insurance_certificate') },
+  { value: 'bank_charge_document', label: t('admin.documents.doc_types.bank_charge_document') },
+  { value: 'noc_certificate', label: t('admin.documents.doc_types.noc_certificate') },
+  { value: 'bank_account_doc', label: t('admin.documents.doc_types.bank_account_doc') },
+  { value: 'membership_certificate', label: t('admin.documents.doc_types.membership_certificate') },
+  { value: 'other', label: t('admin.documents.doc_types.other') }
+])
+const docTypeLabel = computed<Record<string, string>>(() => Object.fromEntries(docTypeOptions.value.map((o) => [o.value, o.label])))
 
 const load = async () => {
   loading.value = true
@@ -47,9 +48,9 @@ onMounted(load)
 const today = new Date().toISOString().slice(0, 10)
 const expiryStatus = (row: any) => {
   if (!row.expiry_date) return null
-  if (row.expiry_date < today) return { label: 'expired', color: 'red' }
-  if (row.expiry_date < new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)) return { label: 'expiring soon', color: 'amber' }
-  return { label: 'valid', color: 'green' }
+  if (row.expiry_date < today) return { label: t('admin.documents.expiry.expired'), color: 'red' }
+  if (row.expiry_date < new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)) return { label: t('admin.documents.expiry.expiring_soon'), color: 'amber' }
+  return { label: t('admin.documents.expiry.valid'), color: 'green' }
 }
 
 // --- Upload ---
@@ -67,7 +68,7 @@ const openNew = () => {
 const onFile = (ev: Event) => { file.value = (ev.target as HTMLInputElement).files?.[0] ?? null }
 
 const save = async () => {
-  if (!form.title) { toast.add({ title: 'Title is required', color: 'red' }); return }
+  if (!form.title) { toast.add({ title: t('admin.documents.validation.title_required'), color: 'red' }); return }
   saving.value = true
   try {
     let file_path: string | null = null
@@ -79,11 +80,11 @@ const save = async () => {
     }
     const { error } = await client.from('company_documents').insert({ ...form, file_path } as any)
     if (error) throw error
-    toast.add({ title: 'Document saved' })
+    toast.add({ title: t('admin.documents.toasts.document_saved') })
     open.value = false
     await load()
   } catch (e: any) {
-    toast.add({ title: 'Save failed', description: e.message, color: 'red' })
+    toast.add({ title: t('common.save_failed'), description: e.message, color: 'red' })
   } finally {
     saving.value = false
   }
@@ -102,8 +103,8 @@ const remove = async (row: any) => {
 
 <template>
   <div>
-    <PageHeader kicker="Admin" title="Company documents" subtitle="Trade license, incorporation papers, certificates — with expiry tracking and legal review">
-      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">Upload document</UButton>
+    <PageHeader :kicker="t('admin.documents.kicker')" :title="t('admin.documents.title')" :subtitle="t('admin.documents.subtitle')">
+      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">{{ t('admin.documents.upload_btn') }}</UButton>
     </PageHeader>
 
     <UCard>
@@ -127,39 +128,39 @@ const remove = async (row: any) => {
           </div>
           <div v-if="expanded === d.id" class="mt-2.5 pl-5 grid grid-cols-2 gap-4">
             <div class="text-[12.5px] space-y-1 text-gray-500 dark:text-zinc-400">
-              <div v-if="d.doc_no">Doc no: <span class="num dark:text-zinc-300">{{ d.doc_no }}</span></div>
-              <div v-if="d.issue_date">Issued: <span class="num dark:text-zinc-300">{{ d.issue_date }}</span></div>
+              <div v-if="d.doc_no">{{ t('admin.documents.doc_no_label') }} <span class="num dark:text-zinc-300">{{ d.doc_no }}</span></div>
+              <div v-if="d.issue_date">{{ t('admin.documents.issued_label') }} <span class="num dark:text-zinc-300">{{ d.issue_date }}</span></div>
               <div v-if="d.notes">{{ d.notes }}</div>
             </div>
             <AdminLegalReview ref-table="company_documents" :ref-id="d.id" />
           </div>
         </div>
-        <p v-if="!docs.length && !loading" class="text-center py-6 text-sm text-gray-400">No documents uploaded yet.</p>
+        <p v-if="!docs.length && !loading" class="text-center py-6 text-sm text-gray-400">{{ t('admin.documents.empty') }}</p>
       </div>
     </UCard>
 
     <USlideover v-model="open">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">Upload company document</p></template>
+        <template #header><p class="font-medium">{{ t('admin.documents.form.title') }}</p></template>
         <div class="space-y-3">
-          <UFormGroup label="Type">
+          <UFormGroup :label="t('admin.documents.form.type')">
             <USelect v-model="form.doc_type" :options="docTypeOptions" option-attribute="label" value-attribute="value" />
           </UFormGroup>
-          <UFormGroup label="Title" required><UInput v-model="form.title" placeholder="e.g. Trade License 2026-27" /></UFormGroup>
-          <UFormGroup label="Document no."><UInput v-model="form.doc_no" /></UFormGroup>
+          <UFormGroup :label="t('admin.documents.form.doc_title')" required><UInput v-model="form.title" :placeholder="t('admin.documents.form.doc_title_placeholder')" /></UFormGroup>
+          <UFormGroup :label="t('admin.documents.form.doc_no')"><UInput v-model="form.doc_no" /></UFormGroup>
           <div class="grid grid-cols-2 gap-3">
-            <UFormGroup label="Issue date"><UInput v-model="form.issue_date" type="date" /></UFormGroup>
-            <UFormGroup label="Expiry date"><UInput v-model="form.expiry_date" type="date" /></UFormGroup>
+            <UFormGroup :label="t('admin.documents.form.issue_date')"><UInput v-model="form.issue_date" type="date" /></UFormGroup>
+            <UFormGroup :label="t('admin.documents.form.expiry_date')"><UInput v-model="form.expiry_date" type="date" /></UFormGroup>
           </div>
-          <UFormGroup label="Notes"><UInput v-model="form.notes" /></UFormGroup>
-          <UFormGroup label="File">
+          <UFormGroup :label="t('admin.documents.form.notes')"><UInput v-model="form.notes" /></UFormGroup>
+          <UFormGroup :label="t('admin.documents.form.file')">
             <input type="file" @change="onFile">
           </UFormGroup>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="open = false">Cancel</UButton>
-            <UButton :loading="saving" @click="save">Save</UButton>
+            <UButton color="gray" variant="ghost" @click="open = false">{{ t('common.cancel') }}</UButton>
+            <UButton :loading="saving" @click="save">{{ t('admin.documents.form.save') }}</UButton>
           </div>
         </template>
       </UCard>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const client = useSupabaseClient()
 const { money } = useFmt()
+const { t } = useI18n()
 
 const summary = ref<any>(null)
 const entries = ref<any[]>([])
@@ -21,30 +22,30 @@ onMounted(load)
 
 <template>
   <div>
-    <PageHeader kicker="Finance" title="Advance Income Tax (AIT) summary" subtitle="Advance tax paid / deducted at source (adjustable against final liability) vs. TDS withheld from others (payable to NBR)">
-      <UButton icon="i-heroicons-printer" variant="soft" to="/print/ait-summary" target="_blank">Print</UButton>
+    <PageHeader :kicker="t('accounting.kicker')" :title="t('accounting.ait_summary.title')" :subtitle="t('accounting.ait_summary.subtitle')">
+      <UButton icon="i-heroicons-printer" variant="soft" to="/print/ait-summary" target="_blank">{{ t('common.print') }}</UButton>
     </PageHeader>
 
     <div class="grid grid-cols-2 gap-4 mb-6">
-      <StatCard label="Advance income tax paid (1250)" :value="money(summary?.advance_tax_paid ?? 0)" sub="Adjustable against final corporate tax liability" />
-      <StatCard label="TDS withheld payable (2500)" :value="money(summary?.tds_withheld_payable ?? 0)" tone="amber" sub="Owed to NBR from deductions made on others' payments" />
+      <StatCard :label="t('accounting.ait_summary.stats.advance_paid.label')" :value="money(summary?.advance_tax_paid ?? 0)" :sub="t('accounting.ait_summary.stats.advance_paid.sub')" />
+      <StatCard :label="t('accounting.ait_summary.stats.tds_payable.label')" :value="money(summary?.tds_withheld_payable ?? 0)" tone="amber" :sub="t('accounting.ait_summary.stats.tds_payable.sub')" />
     </div>
 
     <UCard :loading="loading">
-      <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">AIT deducted at source — detail</p></template>
+      <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('accounting.ait_summary.detail_header') }}</p></template>
       <UTable
         :rows="entries"
         :columns="[
-          { key: 'entry_no', label: 'No.' }, { key: 'entry_date', label: 'Date' },
-          { key: 'account', label: 'Account' }, { key: 'description', label: 'Description' },
-          { key: 'reference_no', label: 'Reference' }, { key: 'amount', label: 'Amount (৳)' }
+          { key: 'entry_no', label: t('accounting.ait_summary.columns.no') }, { key: 'entry_date', label: t('common.date') },
+          { key: 'account', label: t('accounting.ait_summary.columns.account') }, { key: 'description', label: t('accounting.ait_summary.columns.description') },
+          { key: 'reference_no', label: t('accounting.ait_summary.columns.reference') }, { key: 'amount', label: t('accounting.ait_summary.columns.amount') }
         ]"
       >
         <template #entry_no-data="{ row }"><span class="num text-amber-600 dark:text-amber-400 font-medium">{{ row.entry_no }}</span></template>
         <template #entry_date-data="{ row }"><span class="num">{{ row.entry_date }}</span></template>
         <template #account-data="{ row }">{{ row.cash_bank_accounts?.name }}</template>
         <template #amount-data="{ row }"><span class="num font-semibold">{{ money(row.amount) }}</span></template>
-        <template #empty-state><div class="text-center py-6 text-sm text-gray-400">No AIT deductions recorded yet.</div></template>
+        <template #empty-state><div class="text-center py-6 text-sm text-gray-400">{{ t('accounting.ait_summary.empty') }}</div></template>
       </UTable>
     </UCard>
   </div>

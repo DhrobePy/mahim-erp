@@ -1,0 +1,144 @@
+{
+  "procurement": {
+    "statuses": {
+      "draft": "Draft",
+      "approved": "Approved",
+      "partially_received": "Partially received",
+      "received": "Received",
+      "closed": "Closed",
+      "cancelled": "Cancelled",
+      "completed": "Completed"
+    },
+    "grn": {
+      "kicker": "Procurement",
+      "title": "Goods receipt (GRN)",
+      "subtitle": "QA-adjusted true net weight — liability posts on acceptance only",
+      "new_grn": "New GRN",
+      "columns": {
+        "grn_no": "GRN",
+        "supplier": "Supplier",
+        "date": "Date",
+        "mushak_61": "Mushak 6.1",
+        "status": "Status"
+      },
+      "empty": "No GRNs yet.",
+      "complete_and_post": "Complete & post",
+      "debit_notes_header": "Debit notes — QA gaps issued to suppliers",
+      "dn_columns": {
+        "dn_no": "DN",
+        "supplier": "Supplier",
+        "qty_gap": "Qty gap",
+        "amount": "Amount (৳)",
+        "reason": "Reason"
+      },
+      "no_debit_notes": "No debit notes.",
+      "form": {
+        "title": "New GRN",
+        "supplier": "Supplier",
+        "supplier_placeholder": "—",
+        "warehouse": "Warehouse",
+        "warehouse_placeholder": "Default",
+        "mushak_61_no": "Supplier Mushak 6.1 no.",
+        "receive_against_po": "Receive against purchase order",
+        "receive_against_po_hint": "Prefills lines with remaining qty and landed unit cost",
+        "standalone_receipt": "Standalone receipt — no PO",
+        "item": "Item",
+        "item_placeholder": "—",
+        "invoice_qty": "Invoice qty",
+        "unit_price": "Unit price",
+        "gross_weight": "Gross wt.",
+        "core_tare": "Core/tare",
+        "moisture_pct": "Moisture %",
+        "batch_no": "Batch / roll",
+        "batch_no_placeholder": "optional",
+        "fsc_certified": "FSC certified roll",
+        "true_net": "True net:",
+        "gap_note": "(gap {gap} → debit note)",
+        "add_line": "Add line",
+        "save_draft": "Save draft"
+      },
+      "toast": {
+        "po_nothing_left": "This PO has nothing left to receive",
+        "pick_supplier": "Pick a supplier",
+        "add_line_required": "Add at least one line",
+        "completed_and_posted": "GRN completed & posted",
+        "saved_draft": "GRN saved as draft",
+        "grn_failed": "GRN failed",
+        "completion_failed": "Completion failed",
+        "named_completed": "{grn} completed & posted"
+      }
+    },
+    "po": {
+      "kicker": "Procurement",
+      "title": "Purchase orders",
+      "subtitle": "Raise, approve, and receive raw-material orders — landed cost (freight/duty/clearing) allocated across lines",
+      "new_po": "New purchase order",
+      "empty": "No purchase orders yet.",
+      "columns": {
+        "po_no": "PO no.",
+        "supplier": "Supplier",
+        "order_date": "Order date",
+        "lines": "Lines",
+        "value": "Value",
+        "status": "Status"
+      },
+      "approve": "Approve",
+      "cancel": "Cancel",
+      "form": {
+        "title": "New purchase order",
+        "subtitle": "Created as draft — approve before receiving against it",
+        "supplier": "Supplier",
+        "supplier_placeholder": "Select supplier",
+        "order_date": "Order date",
+        "expected_delivery": "Expected delivery",
+        "currency": "Currency",
+        "line_items": "Line items",
+        "add": "Add",
+        "item_placeholder": "Raw material",
+        "qty_placeholder": "Qty",
+        "unit_price_placeholder": "Unit price",
+        "landed_per_unit": "landed: ৳{cost}/unit",
+        "landed_costs_header": "Landed costs (allocated across lines by value share)",
+        "freight": "Freight",
+        "customs_duty": "Customs duty",
+        "clearing_fee": "Clearing fee",
+        "other": "Other",
+        "note": "Note",
+        "ex_factory_value": "Ex-factory value",
+        "landed_costs": "Landed costs",
+        "save_as_draft": "Save as draft"
+      },
+      "toast": {
+        "pick_supplier": "Pick a supplier",
+        "add_line_required": "Add at least one line item",
+        "created_draft": "Purchase order created as draft",
+        "save_failed": "Save failed",
+        "approve_failed": "Approve failed",
+        "named_approved": "{po} approved"
+      },
+      "detail": {
+        "not_found": "Purchase order not found.",
+        "ordered_prefix": "ordered",
+        "ex_factory_value": "Ex-factory value",
+        "landed_costs": "Landed costs",
+        "total_landed_value": "Total landed value",
+        "line_items": "Line items",
+        "columns": {
+          "item": "Item",
+          "ordered": "Ordered",
+          "ex_factory_price": "Ex-factory price",
+          "landed_unit_cost": "Landed unit cost",
+          "received": "Received"
+        },
+        "note": "Note",
+        "received_via": "Received via",
+        "accepted": "accepted",
+        "cancel_confirm": "Cancel {po}?",
+        "approved_toast": "Approved",
+        "approve_failed": "Approve failed",
+        "cancelled_toast": "Cancelled",
+        "cancel_failed": "Cancel failed"
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "dashboard": {
+    "kicker": "Operations",
+    "title": "Dashboard",
+    "subtitle": "Live position across stock, receivables and bank exposure",
+    "stats": {
+      "bank": "Bank + cash",
+      "receivables": "Receivables (AR + LC + GDNI)",
+      "lbpd": "LBPD / PAD exposure",
+      "stock_value": "Stock value",
+      "active_items": "Active items",
+      "low_stock": "Low stock",
+      "open_production": "Open production",
+      "unbilled": "Delivered, unbilled (pre-LC)"
+    },
+    "stock_movements": "Stock movements",
+    "no_movements": "No movements yet.",
+    "latest_journals": "Latest journals",
+    "nothing_posted": "Nothing posted yet."
+  }
+}

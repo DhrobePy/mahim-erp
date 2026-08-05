@@ -6,6 +6,7 @@ const client = useSupabaseClient()
 const { money } = useFmt()
 const { takaWords } = useTakaWords()
 const { logoUrl } = useCompanyLogo()
+const { locale: printLocale, t, toggle: toggleLang } = usePrintLocale()
 
 const id = route.params.id as string
 const emp = ref<any>(null)
@@ -29,18 +30,36 @@ const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'l
 const fmtDate = (d?: string) => d
   ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
   : '—'
+
+const body1 = computed(() => emp.value ? t('printHr.salarycert.body1', {
+  name: emp.value.full_name,
+  fatherClause: emp.value.father_name ? t('printHr.salarycert.father_clause', { name: emp.value.father_name }) : '',
+  nid: emp.value.nid_no || '—',
+  empNo: emp.value.emp_no,
+  company: company.value?.legal_name || company.value?.name,
+  designation: emp.value.designation || '—',
+  deptClause: emp.value.department ? t('printHr.salarycert.department_clause', { dept: emp.value.department }) : '',
+  date: fmtDate(emp.value.joining_date)
+}) : '')
+const body2 = computed(() => emp.value ? t('printHr.salarycert.body2', {
+  name: emp.value.full_name,
+  gross: money(emp.value.gross_salary),
+  words: takaWords(emp.value.gross_salary),
+  basic: money(emp.value.basic_salary)
+}) : '')
 </script>
 
 <template>
   <div class="print-root">
     <div class="no-print toolbar">
-      <NuxtLink :to="`/hr/${id}`" class="back">← back</NuxtLink>
-      <button class="print-btn" @click="() => window.print()">🖨 Print</button>
+      <NuxtLink :to="`/hr/${id}`" class="back">{{ t('printHr.salarycert.back') }}</NuxtLink>
+      <button class="lang-btn" @click="toggleLang">{{ t('print.toolbar.lang_toggle') }}</button>
+      <button class="print-btn" @click="() => window.print()">{{ t('print.toolbar.print_btn') }}</button>
     </div>
 
-    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">Loading…</div>
+    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">{{ t('print.toolbar.loading') }}</div>
 
-    <div v-else-if="emp && company" class="sheet">
+    <div v-else-if="emp && company" class="sheet" :lang="printLocale">
       <div class="letterhead">
         <img v-if="logoUrl(company)" :src="logoUrl(company)" class="co-logo" alt="Company logo">
         <div class="co-name">{{ company.legal_name || company.name }}</div>
@@ -48,45 +67,36 @@ const fmtDate = (d?: string) => d
       </div>
 
       <div class="row spread ref-row">
-        <div>Ref: <b class="mono">SC/{{ emp.emp_no }}/{{ new Date().getFullYear() }}</b></div>
-        <div>Date: <b>{{ today }}</b></div>
+        <div>{{ t('printHr.salarycert.ref_label') }} <b class="mono">SC/{{ emp.emp_no }}/{{ new Date().getFullYear() }}</b></div>
+        <div>{{ t('printHr.salarycert.date_label') }} <b>{{ today }}</b></div>
       </div>
 
-      <p class="subject"><b>TO WHOM IT MAY CONCERN</b></p>
+      <p class="subject"><b>{{ t('printHr.salarycert.subject') }}</b></p>
+
+      <p class="body-text">{{ body1 }}</p>
+
+      <p class="body-text">{{ body2 }}</p>
 
       <p class="body-text">
-        This is to certify that <b>{{ emp.full_name }}</b>{{ emp.father_name ? ', son/daughter of ' + emp.father_name + ',' : '' }}
-        bearing National ID No. <b class="mono">{{ emp.nid_no || '—' }}</b> and Employee ID <b class="mono">{{ emp.emp_no }}</b>,
-        has been employed with {{ company.legal_name || company.name }} as
-        <b>{{ emp.designation || '—' }}</b>{{ emp.department ? ' in the ' + emp.department + ' department' : '' }}
-        since <b>{{ fmtDate(emp.joining_date) }}</b> and continues to serve in that capacity as of the date of issue of this certificate.
-      </p>
-
-      <p class="body-text">
-        {{ emp.full_name }} draws a monthly gross salary of <b>{{ money(emp.gross_salary) }}</b>
-        ({{ takaWords(emp.gross_salary) }}), comprising a basic salary of {{ money(emp.basic_salary) }} plus allowances.
-      </p>
-
-      <p class="body-text">
-        This certificate is issued at the request of the employee for whatever purpose it may serve.
+        {{ t('printHr.salarycert.body3') }}
       </p>
 
       <table class="meta">
         <tbody>
           <tr>
-            <td><div class="small">Designation</div><b>{{ emp.designation || '—' }}</b></td>
-            <td><div class="small">Department</div><b>{{ emp.department || '—' }}</b></td>
-            <td><div class="small">Joining date</div><b>{{ fmtDate(emp.joining_date) }}</b></td>
-            <td><div class="small">Monthly gross (৳)</div><b class="mono">{{ money(emp.gross_salary) }}</b></td>
+            <td><div class="small">{{ t('printHr.salarycert.designation_label') }}</div><b>{{ emp.designation || '—' }}</b></td>
+            <td><div class="small">{{ t('printHr.salarycert.department_label') }}</div><b>{{ emp.department || '—' }}</b></td>
+            <td><div class="small">{{ t('printHr.salarycert.joining_date_label') }}</div><b>{{ fmtDate(emp.joining_date) }}</b></td>
+            <td><div class="small">{{ t('printHr.salarycert.monthly_gross_label') }}</div><b class="mono">{{ money(emp.gross_salary) }}</b></td>
           </tr>
         </tbody>
       </table>
 
       <div class="sig-block">
-        <p>Yours faithfully,</p>
+        <p>{{ t('printHr.salarycert.yours_faithfully') }}</p>
         <div class="sig-line" />
-        <p><b>For {{ company.legal_name || company.name }}</b></p>
-        <p class="small">Authorised Signature — Human Resources</p>
+        <p><b>{{ t('printHr.salarycert.for_company', { company: company.legal_name || company.name }) }}</b></p>
+        <p class="small">{{ t('printHr.salarycert.authorised_signature_hr') }}</p>
       </div>
     </div>
   </div>
@@ -100,6 +110,7 @@ const fmtDate = (d?: string) => d
 }
 .toolbar .back { color: #fbbf24; text-decoration: none; }
 .print-btn { background: #f59e0b; color: #000; border: 0; border-radius: 4px; padding: 6px 16px; font-weight: 600; cursor: pointer; }
+.lang-btn { background: transparent; color: #e4e4e7; border: 1px solid #52525b; border-radius: 4px; padding: 5px 14px; font-weight: 500; cursor: pointer; }
 .sheet {
   width: 210mm; min-height: 280mm; margin: 0 auto 20px; background: #fff; color: #111;
   padding: 20mm 18mm; box-shadow: 0 2px 12px rgba(0,0,0,.4); font-size: 13px; line-height: 1.7;

@@ -4,6 +4,7 @@ const toast = useToast()
 const { canWrite } = useProfile()
 const { money } = useFmt()
 const { deleteRecord } = useRecycleBin()
+const { t } = useI18n()
 
 const transfers = ref<any[]>([])
 const accounts = ref<any[]>([])
@@ -36,13 +37,13 @@ const openNew = () => {
   open.value = true
 }
 const save = async () => {
-  if (!form.from_account_id || !form.to_account_id) { toast.add({ title: 'Pick both accounts', color: 'red' }); return }
-  if (form.from_account_id === form.to_account_id) { toast.add({ title: 'From and to must differ', color: 'red' }); return }
-  if (!form.amount || form.amount <= 0) { toast.add({ title: 'Amount must be positive', color: 'red' }); return }
+  if (!form.from_account_id || !form.to_account_id) { toast.add({ title: t('accounting.transfers.toasts.pick_both'), color: 'red' }); return }
+  if (form.from_account_id === form.to_account_id) { toast.add({ title: t('accounting.transfers.toasts.must_differ'), color: 'red' }); return }
+  if (!form.amount || form.amount <= 0) { toast.add({ title: t('accounting.transfers.toasts.positive_amount'), color: 'red' }); return }
   saving.value = true
   const { error } = await client.from('account_transfers').insert({ ...form } as any)
-  if (error) toast.add({ title: 'Transfer failed', description: error.message, color: 'red' })
-  else { toast.add({ title: 'Transfer posted' }); open.value = false; await load() }
+  if (error) toast.add({ title: t('accounting.transfers.toasts.failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('accounting.transfers.toasts.posted') }); open.value = false; await load() }
   saving.value = false
 }
 
@@ -53,17 +54,17 @@ const remove = async (row: any) => {
 
 <template>
   <div>
-    <PageHeader kicker="Finance" title="Inter-account transfers" subtitle="Move funds between bank accounts or bank ↔ cash — posts a contra journal instantly">
-      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">New transfer</UButton>
+    <PageHeader :kicker="t('accounting.kicker')" :title="t('accounting.transfers.title')" :subtitle="t('accounting.transfers.subtitle')">
+      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">{{ t('accounting.transfers.new_transfer') }}</UButton>
     </PageHeader>
 
     <UCard>
       <UTable
         :rows="transfers" :loading="loading"
         :columns="[
-          { key: 'transfer_no', label: 'No.' }, { key: 'transfer_date', label: 'Date' },
-          { key: 'from', label: 'From' }, { key: 'to', label: 'To' },
-          { key: 'amount', label: 'Amount (৳)' }, { key: 'note', label: 'Note' },
+          { key: 'transfer_no', label: t('accounting.transfers.columns.no') }, { key: 'transfer_date', label: t('common.date') },
+          { key: 'from', label: t('accounting.transfers.columns.from') }, { key: 'to', label: t('accounting.transfers.columns.to') },
+          { key: 'amount', label: t('accounting.transfers.columns.amount') }, { key: 'note', label: t('common.note') },
           { key: 'actions', label: '' }
         ]"
       >
@@ -77,28 +78,28 @@ const remove = async (row: any) => {
             <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="remove(row)" />
           </div>
         </template>
-        <template #empty-state><div class="text-center py-6 text-sm text-gray-400">No transfers yet.</div></template>
+        <template #empty-state><div class="text-center py-6 text-sm text-gray-400">{{ t('accounting.transfers.empty') }}</div></template>
       </UTable>
     </UCard>
 
     <USlideover v-model="open">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">New transfer</p></template>
+        <template #header><p class="font-medium">{{ t('accounting.transfers.dialog.title') }}</p></template>
         <div class="space-y-3">
-          <UFormGroup label="Date"><UInput v-model="form.transfer_date" type="date" /></UFormGroup>
-          <UFormGroup label="From" required>
+          <UFormGroup :label="t('common.date')"><UInput v-model="form.transfer_date" type="date" /></UFormGroup>
+          <UFormGroup :label="t('accounting.transfers.dialog.from')" required>
             <USelect v-model="form.from_account_id" :options="accounts" option-attribute="name" value-attribute="id" placeholder="—" />
           </UFormGroup>
-          <UFormGroup label="To" required>
+          <UFormGroup :label="t('accounting.transfers.dialog.to')" required>
             <USelect v-model="form.to_account_id" :options="accounts" option-attribute="name" value-attribute="id" placeholder="—" />
           </UFormGroup>
-          <UFormGroup label="Amount (৳)"><UInput v-model.number="form.amount" type="number" /></UFormGroup>
-          <UFormGroup label="Note"><UInput v-model="form.note" placeholder="e.g. moving float to factory till" /></UFormGroup>
+          <UFormGroup :label="t('accounting.transfers.dialog.amount')"><UInput v-model.number="form.amount" type="number" /></UFormGroup>
+          <UFormGroup :label="t('common.note')"><UInput v-model="form.note" :placeholder="t('accounting.transfers.dialog.note_placeholder')" /></UFormGroup>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="open = false">Cancel</UButton>
-            <UButton :loading="saving" @click="save">Transfer</UButton>
+            <UButton color="gray" variant="ghost" @click="open = false">{{ t('common.cancel') }}</UButton>
+            <UButton :loading="saving" @click="save">{{ t('accounting.transfers.dialog.transfer_btn') }}</UButton>
           </div>
         </template>
       </UCard>

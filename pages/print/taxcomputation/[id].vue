@@ -5,6 +5,7 @@ const route = useRoute()
 const client = useSupabaseClient()
 const { money } = useFmt()
 const { logoUrl } = useCompanyLogo()
+const { locale: printLocale, t, toggle: toggleLang } = usePrintLocale()
 
 const id = route.params.id as string
 const row = ref<any>(null)
@@ -19,8 +20,8 @@ const load = async () => {
     .eq('id', id).single()
   row.value = data
   if (data) {
-    const { data: t } = await client.from('v_tax_computation_totals').select('*').eq('computation_id', id).maybeSingle()
-    totals.value = t
+    const { data: tt } = await client.from('v_tax_computation_totals').select('*').eq('computation_id', id).maybeSingle()
+    totals.value = tt
     const { data: c } = await client.from('companies').select('*').eq('id', (data as any).company_id).single()
     company.value = c
   }
@@ -39,49 +40,50 @@ const deductions = computed(() => (row.value?.company_tax_adjustment_lines ?? []
 <template>
   <div class="print-root">
     <div class="no-print toolbar">
-      <NuxtLink to="/admin/tax/corporate" class="back">← back</NuxtLink>
-      <button class="print-btn" @click="() => window.print()">🖨 Print</button>
+      <NuxtLink to="/admin/tax/corporate" class="back">{{ t('printGov.taxComputation.back') }}</NuxtLink>
+      <button class="lang-btn" @click="toggleLang">{{ t('print.toolbar.lang_toggle') }}</button>
+      <button class="print-btn" @click="() => window.print()">{{ t('print.toolbar.print_btn') }}</button>
     </div>
 
-    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">Loading…</div>
+    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">{{ t('print.toolbar.loading') }}</div>
 
-    <div v-else-if="row && company" class="sheet">
+    <div v-else-if="row && company" class="sheet" :lang="printLocale">
       <div class="disclaimer-band">
-        DRAFT WORKING PAPER — NOT A FILED TAX RETURN. Review with a registered tax practitioner / chartered accountant before submission to NBR.
+        {{ t('printGov.taxComputation.disclaimer_band') }}
       </div>
 
       <div class="letterhead">
         <img v-if="logoUrl(company)" :src="logoUrl(company)" class="co-logo" alt="Company logo">
         <div class="co-name">{{ company.legal_name || company.name }}</div>
-        <div class="title">CORPORATE TAX COMPUTATION — ASSESSMENT YEAR {{ row.assessment_year }}</div>
+        <div class="title">{{ t('printGov.taxComputation.title', { year: row.assessment_year }) }}</div>
       </div>
 
       <table class="calc">
         <tbody>
-          <tr class="section"><td>Net profit per accounts</td><td class="num">{{ money(row.net_profit_per_accounts) }}</td></tr>
+          <tr class="section"><td>{{ t('printGov.taxComputation.net_profit_per_accounts') }}</td><td class="num">{{ money(row.net_profit_per_accounts) }}</td></tr>
 
-          <tr class="subsection"><td colspan="2">Add: Inadmissible expenses / addbacks</td></tr>
+          <tr class="subsection"><td colspan="2">{{ t('printGov.taxComputation.add_inadmissible') }}</td></tr>
           <tr v-for="l in addbacks" :key="l.id" class="detail"><td>{{ l.description }}</td><td class="num">{{ money(l.amount) }}</td></tr>
-          <tr v-if="!addbacks.length" class="detail"><td colspan="2">— none —</td></tr>
+          <tr v-if="!addbacks.length" class="detail"><td colspan="2">{{ t('printGov.taxComputation.none') }}</td></tr>
 
-          <tr class="subsection"><td colspan="2">Less: Allowable deductions</td></tr>
+          <tr class="subsection"><td colspan="2">{{ t('printGov.taxComputation.less_allowable_deductions') }}</td></tr>
           <tr v-for="l in deductions" :key="l.id" class="detail"><td>{{ l.description }}</td><td class="num">({{ money(l.amount) }})</td></tr>
-          <tr v-if="!deductions.length" class="detail"><td colspan="2">— none —</td></tr>
+          <tr v-if="!deductions.length" class="detail"><td colspan="2">{{ t('printGov.taxComputation.none') }}</td></tr>
 
-          <tr class="subtotal"><td>Taxable income</td><td class="num">{{ money(taxable) }}</td></tr>
-          <tr class="section"><td>Tax @ {{ row.tax_rate_pct }}%</td><td class="num">{{ money(taxPayable) }}</td></tr>
-          <tr class="detail"><td>Less: Advance income tax (AIT) paid</td><td class="num">({{ money(row.advance_tax_paid) }})</td></tr>
-          <tr class="detail"><td>Less: TDS credit</td><td class="num">({{ money(row.tds_credit) }})</td></tr>
-          <tr class="total"><td>Net tax payable / (refundable)</td><td class="num">{{ money(netPayable) }}</td></tr>
+          <tr class="subtotal"><td>{{ t('printGov.taxComputation.taxable_income') }}</td><td class="num">{{ money(taxable) }}</td></tr>
+          <tr class="section"><td>{{ t('printGov.taxComputation.tax_at_rate', { rate: row.tax_rate_pct }) }}</td><td class="num">{{ money(taxPayable) }}</td></tr>
+          <tr class="detail"><td>{{ t('printGov.taxComputation.less_advance_tax') }}</td><td class="num">({{ money(row.advance_tax_paid) }})</td></tr>
+          <tr class="detail"><td>{{ t('printGov.taxComputation.less_tds_credit') }}</td><td class="num">({{ money(row.tds_credit) }})</td></tr>
+          <tr class="total"><td>{{ t('printGov.taxComputation.net_tax_payable') }}</td><td class="num">{{ money(netPayable) }}</td></tr>
         </tbody>
       </table>
 
-      <p v-if="row.notes" class="small notes">Notes: {{ row.notes }}</p>
+      <p v-if="row.notes" class="small notes">{{ t('printGov.taxComputation.notes', { notes: row.notes }) }}</p>
 
       <div class="sig-block">
-        <p>Prepared by,</p>
+        <p>{{ t('printGov.taxComputation.prepared_by') }}</p>
         <div class="sig-line" />
-        <p class="small">Accounts Department — {{ company.legal_name || company.name }}</p>
+        <p class="small">{{ t('printGov.taxComputation.accounts_dept', { name: company.legal_name || company.name }) }}</p>
       </div>
     </div>
   </div>
@@ -95,6 +97,7 @@ const deductions = computed(() => (row.value?.company_tax_adjustment_lines ?? []
 }
 .toolbar .back { color: #fbbf24; text-decoration: none; }
 .print-btn { background: #f59e0b; color: #000; border: 0; border-radius: 4px; padding: 6px 16px; font-weight: 600; cursor: pointer; }
+.lang-btn { background: transparent; color: #e4e4e7; border: 1px solid #52525b; border-radius: 4px; padding: 5px 14px; font-weight: 500; cursor: pointer; }
 .sheet {
   width: 210mm; min-height: 200mm; margin: 0 auto 20px; background: #fff; color: #111;
   padding: 16mm 18mm 20mm; box-shadow: 0 2px 12px rgba(0,0,0,.4); font-size: 12px; line-height: 1.6;

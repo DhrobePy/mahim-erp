@@ -3,6 +3,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { deleteRecord } = useRecycleBin()
+const { t } = useI18n()
 
 const day = ref(new Date().toISOString().slice(0, 10))
 const employees = ref<any[]>([])
@@ -10,7 +11,8 @@ const rows = ref<any[]>([])
 const loading = ref(true)
 const saving = ref(false)
 
-const statusOptions = ['present', 'absent', 'leave', 'holiday', 'weekend']
+const statusKeys = ['present', 'absent', 'leave', 'holiday', 'weekend']
+const statusOptions = computed(() => statusKeys.map((value) => ({ value, label: t(`hr.attendance.status_options.${value}`) })))
 
 const load = async () => {
   loading.value = true

@@ -5,6 +5,7 @@ const route = useRoute()
 const client = useSupabaseClient()
 const { money } = useFmt()
 const { logoUrl } = useCompanyLogo()
+const { locale: printLocale, t, toggle: toggleLang } = usePrintLocale()
 
 const from = (route.query.from as string) || ''
 const to = (route.query.to as string) || ''
@@ -48,36 +49,37 @@ const fmtDate = (d?: string) => d
 <template>
   <div class="print-root">
     <div class="no-print toolbar">
-      <NuxtLink to="/accounting/vat-return" class="back">← back</NuxtLink>
-      <button class="print-btn" @click="() => window.print()">🖨 Print</button>
+      <NuxtLink to="/accounting/vat-return" class="back">{{ t('printGov.vatReturn.back') }}</NuxtLink>
+      <button class="lang-btn" @click="toggleLang">{{ t('print.toolbar.lang_toggle') }}</button>
+      <button class="print-btn" @click="() => window.print()">{{ t('print.toolbar.print_btn') }}</button>
     </div>
 
-    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">Loading…</div>
+    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">{{ t('print.toolbar.loading') }}</div>
 
-    <div v-else class="sheet">
+    <div v-else class="sheet" :lang="printLocale">
       <div class="letterhead">
         <img v-if="company && logoUrl(company)" :src="logoUrl(company)" class="co-logo" alt="Company logo">
         <div class="co-name">{{ company?.legal_name || company?.name }}</div>
-        <div class="title">VAT RETURN WORKING PAPER (MUSHAK 9.1 BASIS)</div>
-        <div class="small">{{ from ? `${fmtDate(from)} to ${fmtDate(to)}` : 'All-time' }}</div>
+        <div class="title">{{ t('printGov.vatReturn.title') }}</div>
+        <div class="small">{{ from ? t('printGov.vatReturn.period_range', { from: fmtDate(from), to: fmtDate(to) }) : t('printGov.vatReturn.period_all_time') }}</div>
       </div>
 
       <table class="lines">
-        <thead><tr><th>Date</th><th>Document</th><th class="num">VAT (৳)</th></tr></thead>
+        <thead><tr><th>{{ t('printGov.vatReturn.col_date') }}</th><th>{{ t('printGov.vatReturn.col_document') }}</th><th class="num">{{ t('printGov.vatReturn.col_vat') }}</th></tr></thead>
         <tbody>
-          <tr class="section-row"><td colspan="3">Output VAT — Mushak 6.3 (domestic cash sales)</td></tr>
+          <tr class="section-row"><td colspan="3">{{ t('printGov.vatReturn.section_output') }}</td></tr>
           <tr v-for="(r, i) in output" :key="'o'+i"><td>{{ fmtDate(r.txn_date) }}</td><td>{{ r.doc_no }}</td><td class="num">{{ Number(r.vat_amount).toLocaleString('en-IN') }}</td></tr>
-          <tr class="subtotal-row"><td colspan="2">Total output VAT</td><td class="num">{{ money(outputTotal) }}</td></tr>
+          <tr class="subtotal-row"><td colspan="2">{{ t('printGov.vatReturn.total_output_vat') }}</td><td class="num">{{ money(outputTotal) }}</td></tr>
 
-          <tr class="section-row"><td colspan="3">Input VAT credit — Mushak 6.1 (GRNs)</td></tr>
+          <tr class="section-row"><td colspan="3">{{ t('printGov.vatReturn.section_input') }}</td></tr>
           <tr v-for="(r, i) in input" :key="'i'+i"><td>{{ fmtDate(r.txn_date) }}</td><td>{{ r.doc_no }}</td><td class="num">{{ Number(r.vat_amount).toLocaleString('en-IN') }}</td></tr>
-          <tr class="subtotal-row"><td colspan="2">Total input VAT credit</td><td class="num">{{ money(inputTotal) }}</td></tr>
+          <tr class="subtotal-row"><td colspan="2">{{ t('printGov.vatReturn.total_input_vat') }}</td><td class="num">{{ money(inputTotal) }}</td></tr>
 
-          <tr class="total-row"><td colspan="2">Net VAT payable to NBR</td><td class="num">{{ money(netPayable) }}</td></tr>
+          <tr class="total-row"><td colspan="2">{{ t('printGov.vatReturn.net_vat_payable') }}</td><td class="num">{{ money(netPayable) }}</td></tr>
         </tbody>
       </table>
 
-      <p class="small disclaimer">Working paper only — reconcile against actual Mushak 6.1/6.3 registers before filing Mushak 9.1.</p>
+      <p class="small disclaimer">{{ t('printGov.vatReturn.disclaimer') }}</p>
     </div>
   </div>
 </template>
@@ -90,6 +92,7 @@ const fmtDate = (d?: string) => d
 }
 .toolbar .back { color: #fbbf24; text-decoration: none; }
 .print-btn { background: #f59e0b; color: #000; border: 0; border-radius: 4px; padding: 6px 16px; font-weight: 600; cursor: pointer; }
+.lang-btn { background: transparent; color: #e4e4e7; border: 1px solid #52525b; border-radius: 4px; padding: 5px 14px; font-weight: 500; cursor: pointer; }
 .sheet {
   width: 210mm; min-height: 200mm; margin: 0 auto 20px; background: #fff; color: #111;
   padding: 20mm 18mm; box-shadow: 0 2px 12px rgba(0,0,0,.4); font-size: 12px; line-height: 1.6;

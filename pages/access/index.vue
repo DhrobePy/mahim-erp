@@ -4,6 +4,7 @@ const toast = useToast()
 const { profile, activeCompanyId } = useProfile()
 const user = useSupabaseUser()
 const { groupedModules, load: loadPermissionCatalog, loadFor, saveFor } = usePermissions()
+const { t } = useI18n()
 
 const rows = ref<any[]>([])
 const loading = ref(true)
@@ -11,10 +12,10 @@ const loading = ref(true)
 // Only two tiers now: admin (everything, manages permissions) or member
 // (starts with nothing but the dashboard — exact capabilities are the
 // per-page grants below, not a predefined bundle).
-const roleOptions = [
-  { value: 'admin', label: 'Admin' },
-  { value: 'viewer', label: 'Member (custom permissions)' }
-]
+const roleOptions = computed(() => [
+  { value: 'admin', label: t('system.access.role_admin') },
+  { value: 'viewer', label: t('system.access.role_member') }
+])
 
 const load = async () => {
   loading.value = true
@@ -36,16 +37,16 @@ const setRole = async (row: any, role: string) => {
   const { error } = await client.from('company_members').upsert({
     user_id: row.id, company_id: activeCompanyId.value, role, is_active: true
   } as any, { onConflict: 'user_id,company_id' })
-  if (error) toast.add({ title: 'Update failed', description: error.message, color: 'red' })
-  else { toast.add({ title: `${row.full_name || 'User'} → ${role}` }); await load() }
+  if (error) toast.add({ title: t('system.access.toast.update_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('system.access.toast.role_changed', { name: row.full_name || t('system.access.user_fallback'), role }) }); await load() }
 }
 
 const revoke = async (row: any) => {
   const { error } = await client.from('company_members')
     .update({ is_active: false } as any)
     .eq('user_id', row.id).eq('company_id', activeCompanyId.value)
-  if (error) toast.add({ title: 'Revoke failed', description: error.message, color: 'red' })
-  else { toast.add({ title: 'Access revoked' }); await load() }
+  if (error) toast.add({ title: t('system.access.toast.revoke_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('system.access.toast.access_revoked') }); await load() }
 }
 
 // --- New user (admin-provisioned — public signup is disabled) ---
@@ -67,7 +68,7 @@ const openNew = () => {
 
 const createUser = async () => {
   if (!form.email || !form.password) {
-    toast.add({ title: 'Email and password are required', color: 'red' }); return
+    toast.add({ title: t('system.access.toast.email_password_required'), color: 'red' }); return
   }
   creating.value = true
   try {
@@ -82,10 +83,10 @@ const createUser = async () => {
     if (error) throw error
     if (data?.error) throw new Error(data.error)
     created.value = { email: form.email, password: form.password }
-    toast.add({ title: 'User created' })
+    toast.add({ title: t('system.access.toast.user_created') })
     await load()
   } catch (e: any) {
-    toast.add({ title: 'Create failed', description: e.message, color: 'red' })
+    toast.add({ title: t('system.access.toast.create_failed'), description: e.message, color: 'red' })
   } finally {
     creating.value = false
   }
@@ -93,8 +94,10 @@ const createUser = async () => {
 
 const copyCreds = async () => {
   if (!created.value) return
-  await navigator.clipboard.writeText(`Email: ${created.value.email}\nPassword: ${created.value.password}`)
-  toast.add({ title: 'Copied to clipboard' })
+  await navigator.clipboard.writeText(
+    `${t('system.access.new_user_slideover.email_label')} ${created.value.email}\n${t('system.access.new_user_slideover.password_label')} ${created.value.password}`
+  )
+  toast.add({ title: t('system.access.toast.copied') })
 }
 
 // --- Per-user permission editor (the actual "not predefined" access list) ---
@@ -121,10 +124,10 @@ const savePermissions = async () => {
   permSaving.value = true
   try {
     await saveFor(permTarget.value.id, activeCompanyId.value as string, permState.value)
-    toast.add({ title: `Permissions updated for ${permTarget.value.full_name || 'user'}` })
+    toast.add({ title: t('system.access.toast.permissions_updated', { name: permTarget.value.full_name || t('system.access.user_fallback') }) })
     permOpen.value = false
   } catch (e: any) {
-    toast.add({ title: 'Save failed', description: e.message, color: 'red' })
+    toast.add({ title: t('common.save_failed'), description: e.message, color: 'red' })
   } finally {
     permSaving.value = false
   }
@@ -159,11 +162,11 @@ const saveEdit = async () => {
     })
     if (error) throw error
     if (data?.error) throw new Error(data.error)
-    toast.add({ title: 'User updated' })
+    toast.add({ title: t('system.access.toast.user_updated') })
     editOpen.value = false
     await load()
   } catch (e: any) {
-    toast.add({ title: 'Update failed', description: e.message, color: 'red' })
+    toast.add({ title: t('system.access.toast.update_failed'), description: e.message, color: 'red' })
   } finally {
     editSaving.value = false
   }
@@ -172,12 +175,12 @@ const saveEdit = async () => {
 
 <template>
   <div>
-    <PageHeader kicker="Admin" title="Access &amp; roles" subtitle="Per-company memberships — enforced by database row-level security, not just the UI">
-      <UButton v-if="profile?.role === 'admin'" icon="i-heroicons-user-plus" @click="openNew">New user</UButton>
+    <PageHeader :kicker="t('nav.sections.admin')" :title="t('system.access.title')" :subtitle="t('system.access.subtitle')">
+      <UButton v-if="profile?.role === 'admin'" icon="i-heroicons-user-plus" @click="openNew">{{ t('system.access.new_user') }}</UButton>
     </PageHeader>
 
     <UCard v-if="profile?.role !== 'admin'">
-      <p class="text-sm text-gray-500 py-4 text-center">Only admins can manage access.</p>
+      <p class="text-sm text-gray-500 py-4 text-center">{{ t('system.access.admin_only') }}</p>
     </UCard>
 
     <template v-else>
@@ -185,8 +188,8 @@ const saveEdit = async () => {
         <UTable
           :rows="rows" :loading="loading"
           :columns="[
-            { key: 'full_name', label: 'User' },
-            { key: 'role', label: 'Tier' },
+            { key: 'full_name', label: t('system.access.columns.user') },
+            { key: 'role', label: t('system.access.columns.tier') },
             { key: 'actions', label: '' }
           ]"
         >
@@ -194,7 +197,7 @@ const saveEdit = async () => {
             <div class="flex items-center gap-2">
               <UAvatar :alt="row.full_name || '?'" size="2xs" :ui="{ background: 'bg-zinc-700' }" />
               <span class="dark:text-zinc-200">{{ row.full_name || row.id.slice(0, 8) }}</span>
-              <UBadge v-if="row.id === user?.id" size="xs" variant="subtle">you</UBadge>
+              <UBadge v-if="row.id === user?.id" size="xs" variant="subtle">{{ t('system.access.you_badge') }}</UBadge>
             </div>
           </template>
           <template #role-data="{ row }">
@@ -203,7 +206,7 @@ const saveEdit = async () => {
                 :model-value="row.pendingRole"
                 :options="roleOptions"
                 option-attribute="label" value-attribute="value"
-                placeholder="No access"
+                :placeholder="t('system.access.no_access_placeholder')"
                 size="xs"
                 class="w-52"
                 :disabled="row.id === user?.id"
@@ -212,7 +215,7 @@ const saveEdit = async () => {
               <UBadge
                 v-if="!row.membership || row.membership.is_active === false"
                 size="xs" variant="subtle" color="red"
-              >no access</UBadge>
+              >{{ t('system.access.no_access_badge') }}</UBadge>
             </div>
           </template>
           <template #actions-data="{ row }">
@@ -220,66 +223,63 @@ const saveEdit = async () => {
               <UButton
                 v-if="row.membership?.is_active"
                 size="xs" variant="soft" icon="i-heroicons-pencil-square" @click="openEdit(row)"
-              >Edit</UButton>
+              >{{ t('common.edit') }}</UButton>
               <UButton
                 v-if="row.membership?.is_active && row.membership.role !== 'admin'"
                 size="xs" variant="soft" icon="i-heroicons-adjustments-horizontal" @click="openPermissions(row)"
-              >Permissions</UButton>
+              >{{ t('system.access.permissions') }}</UButton>
               <UButton
                 v-if="row.membership?.is_active && row.id !== user?.id"
                 size="xs" variant="soft" color="red" @click="revoke(row)"
-              >Revoke</UButton>
+              >{{ t('system.access.revoke') }}</UButton>
             </div>
           </template>
         </UTable>
       </UCard>
 
       <p class="text-xs text-gray-400 dark:text-zinc-600">
-        Public sign-up is disabled — use "New user" above to provision access.
-        Admins have everything; every other member's access is exactly the
-        per-page checklist you set via "Permissions" — nothing predefined.
-        Changing your own tier is deliberately disabled.
+        {{ t('system.access.footer_note') }}
       </p>
     </template>
 
     <USlideover v-model="open" :ui="{ width: 'w-screen max-w-md' }">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">New user</p></template>
+        <template #header><p class="font-medium">{{ t('system.access.new_user') }}</p></template>
 
         <div v-if="created" class="space-y-4">
           <div class="rounded ring-1 ring-amber-500/30 bg-amber-50/40 dark:bg-amber-500/[0.04] p-3 space-y-2">
-            <p class="text-sm font-medium text-amber-600 dark:text-amber-400">Share these credentials with the user</p>
-            <p class="text-xs text-gray-500 dark:text-zinc-500">This password won't be shown again — copy it now.</p>
+            <p class="text-sm font-medium text-amber-600 dark:text-amber-400">{{ t('system.access.new_user_slideover.share_creds') }}</p>
+            <p class="text-xs text-gray-500 dark:text-zinc-500">{{ t('system.access.new_user_slideover.password_note') }}</p>
             <div class="text-sm space-y-1">
-              <p><span class="text-gray-500 dark:text-zinc-500">Email:</span> <span class="num">{{ created.email }}</span></p>
-              <p><span class="text-gray-500 dark:text-zinc-500">Password:</span> <span class="num">{{ created.password }}</span></p>
+              <p><span class="text-gray-500 dark:text-zinc-500">{{ t('system.access.new_user_slideover.email_label') }}</span> <span class="num">{{ created.email }}</span></p>
+              <p><span class="text-gray-500 dark:text-zinc-500">{{ t('system.access.new_user_slideover.password_label') }}</span> <span class="num">{{ created.password }}</span></p>
             </div>
-            <UButton size="xs" variant="soft" icon="i-heroicons-clipboard-document" @click="copyCreds">Copy</UButton>
+            <UButton size="xs" variant="soft" icon="i-heroicons-clipboard-document" @click="copyCreds">{{ t('system.access.new_user_slideover.copy') }}</UButton>
           </div>
         </div>
 
         <div v-else class="space-y-4">
-          <UFormGroup label="Full name">
-            <UInput v-model="form.full_name" placeholder="Their name" />
+          <UFormGroup :label="t('system.access.new_user_slideover.full_name')">
+            <UInput v-model="form.full_name" :placeholder="t('system.access.new_user_slideover.full_name_placeholder')" />
           </UFormGroup>
-          <UFormGroup label="Email" required>
-            <UInput v-model="form.email" type="email" placeholder="them@company.com" />
+          <UFormGroup :label="t('system.access.new_user_slideover.email')" required>
+            <UInput v-model="form.email" type="email" :placeholder="t('system.access.new_user_slideover.email_placeholder')" />
           </UFormGroup>
-          <UFormGroup label="Password" required hint="Auto-generated — editable">
+          <UFormGroup :label="t('system.access.new_user_slideover.password')" required :hint="t('system.access.new_user_slideover.password_hint')">
             <div class="flex gap-2">
               <UInput v-model="form.password" class="flex-1" />
               <UButton size="xs" variant="soft" icon="i-heroicons-arrow-path" @click="genPassword" />
             </div>
           </UFormGroup>
-          <UFormGroup label="Role in this company">
+          <UFormGroup :label="t('system.access.new_user_slideover.role')">
             <USelect v-model="form.role" :options="roleOptions" option-attribute="label" value-attribute="value" />
           </UFormGroup>
         </div>
 
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="open = false">{{ created ? 'Close' : 'Cancel' }}</UButton>
-            <UButton v-if="!created" :loading="creating" @click="createUser">Create user</UButton>
+            <UButton color="gray" variant="ghost" @click="open = false">{{ created ? t('common.close') : t('common.cancel') }}</UButton>
+            <UButton v-if="!created" :loading="creating" @click="createUser">{{ t('system.access.new_user_slideover.create_user') }}</UButton>
           </div>
         </template>
       </UCard>
@@ -288,8 +288,8 @@ const saveEdit = async () => {
     <USlideover v-model="permOpen" :ui="{ width: 'w-screen max-w-2xl' }">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
         <template #header>
-          <p class="font-medium">Permissions — {{ permTarget?.full_name || 'user' }}</p>
-          <p class="text-xs text-gray-500">Off = the page doesn't exist for them, not just uneditable</p>
+          <p class="font-medium">{{ t('system.access.permissions_slideover.title', { name: permTarget?.full_name || t('system.access.user_fallback') }) }}</p>
+          <p class="text-xs text-gray-500">{{ t('system.access.permissions_slideover.subtitle') }}</p>
         </template>
 
         <div class="space-y-5">
@@ -303,11 +303,11 @@ const saveEdit = async () => {
                 <span class="text-sm dark:text-zinc-200">{{ m.label }}</span>
                 <div class="flex items-center gap-4">
                   <UCheckbox
-                    :model-value="permState[m.key]?.view" label="View"
+                    :model-value="permState[m.key]?.view" :label="t('system.access.permissions_slideover.view')"
                     @update:model-value="(v: boolean) => toggleView(m.key, v)"
                   />
                   <UCheckbox
-                    :model-value="permState[m.key]?.write" label="Write"
+                    :model-value="permState[m.key]?.write" :label="t('system.access.permissions_slideover.write')"
                     @update:model-value="(v: boolean) => toggleWrite(m.key, v)"
                   />
                 </div>
@@ -318,8 +318,8 @@ const saveEdit = async () => {
 
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="permOpen = false">Cancel</UButton>
-            <UButton :loading="permSaving" @click="savePermissions">Save permissions</UButton>
+            <UButton color="gray" variant="ghost" @click="permOpen = false">{{ t('common.cancel') }}</UButton>
+            <UButton :loading="permSaving" @click="savePermissions">{{ t('system.access.permissions_slideover.save') }}</UButton>
           </div>
         </template>
       </UCard>
@@ -327,18 +327,18 @@ const saveEdit = async () => {
 
     <USlideover v-model="editOpen" :ui="{ width: 'w-screen max-w-md' }">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">Edit user</p></template>
+        <template #header><p class="font-medium">{{ t('system.access.edit_slideover.title') }}</p></template>
 
         <div class="space-y-4">
-          <UFormGroup label="Full name">
-            <UInput v-model="editForm.full_name" placeholder="Their name" />
+          <UFormGroup :label="t('system.access.edit_slideover.full_name')">
+            <UInput v-model="editForm.full_name" :placeholder="t('system.access.edit_slideover.full_name_placeholder')" />
           </UFormGroup>
-          <UFormGroup label="Email">
-            <UInput v-model="editForm.email" type="email" placeholder="them@company.com" />
+          <UFormGroup :label="t('system.access.edit_slideover.email')">
+            <UInput v-model="editForm.email" type="email" :placeholder="t('system.access.edit_slideover.email_placeholder')" />
           </UFormGroup>
-          <UFormGroup label="New password" hint="Leave blank to keep their current password">
+          <UFormGroup :label="t('system.access.edit_slideover.new_password')" :hint="t('system.access.edit_slideover.new_password_hint')">
             <div class="flex gap-2">
-              <UInput v-model="editForm.password" placeholder="•••••••• (unchanged)" class="flex-1" />
+              <UInput v-model="editForm.password" :placeholder="t('system.access.edit_slideover.new_password_placeholder')" class="flex-1" />
               <UButton size="xs" variant="soft" icon="i-heroicons-arrow-path" @click="genEditPassword" />
             </div>
           </UFormGroup>
@@ -346,8 +346,8 @@ const saveEdit = async () => {
 
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="editOpen = false">Cancel</UButton>
-            <UButton :loading="editSaving" @click="saveEdit">Save changes</UButton>
+            <UButton color="gray" variant="ghost" @click="editOpen = false">{{ t('common.cancel') }}</UButton>
+            <UButton :loading="editSaving" @click="saveEdit">{{ t('system.access.edit_slideover.save') }}</UButton>
           </div>
         </template>
       </UCard>

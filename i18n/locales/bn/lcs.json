@@ -1,0 +1,193 @@
+{
+  "lcs": {
+    "kicker": "বিক্রয় ও ট্রেড ফাইন্যান্স",
+    "roles": {
+      "export_local": "রপ্তানি — লোকাল এলসি (ব্যাক-টু-ব্যাক)",
+      "export_direct": "রপ্তানি — সরাসরি (বিদেশি)",
+      "import": "আমদানি (বিদেশি)"
+    },
+    "roles_short": {
+      "export_local": "লোকাল রপ্তানি",
+      "export_direct": "সরাসরি রপ্তানি",
+      "import": "আমদানি"
+    },
+    "lc_types": {
+      "sight": "সাইট",
+      "usance": "ইউজেন্স"
+    },
+    "usance_days_suffix": "{days} দিন",
+    "statuses": {
+      "active": "সক্রিয়",
+      "closed": "বন্ধ",
+      "cancelled": "বাতিল"
+    },
+    "event_types": {
+      "opened": "খোলা হয়েছে",
+      "amendment": "সংশোধনী",
+      "docs_submitted": "ব্যাংকে ডকুমেন্ট জমা দেওয়া হয়েছে",
+      "discrepancy": "ডিসক্রিপ্যান্সি উত্থাপিত",
+      "discrepancy_resolved": "ডিসক্রিপ্যান্সি সমাধান হয়েছে",
+      "acceptance": "অ্যাকসেপ্টেন্স",
+      "discounted": "ডিসকাউন্টকৃত",
+      "matured": "ম্যাচিউরড",
+      "realized": "রিয়েলাইজড",
+      "overdue": "মেয়াদোত্তীর্ণ",
+      "forced_pad": "ফোর্সড পিএডি",
+      "note": "নোট",
+      "closed": "বন্ধকৃত"
+    },
+    "bill_statuses": {
+      "submitted": "জমাকৃত",
+      "accepted": "গৃহীত",
+      "discounted": "ডিসকাউন্টকৃত",
+      "realized": "রিয়েলাইজড",
+      "overdue": "মেয়াদোত্তীর্ণ"
+    },
+    "index": {
+      "title": "ঋণপত্র (এলসি)",
+      "subtitle": "লোকাল রপ্তানি (ব্যাক-টু-ব্যাক), সরাসরি বিদেশি রপ্তানি, ও আমদানি এলসি — প্রতি চুক্তিতে মাস্টার-চাইল্ড ভার্সনিং",
+      "register_from_pdf": "পিডিএফ থেকে নিবন্ধন করুন",
+      "extracting": "এক্সট্র্যাক্ট করা হচ্ছে…",
+      "register_lc": "এলসি নিবন্ধন করুন",
+      "columns": {
+        "lc_no": "এলসি নং",
+        "role": "ভূমিকা",
+        "counterparty": "কাউন্টারপার্টি",
+        "bank": "ইস্যুকারী ব্যাংক",
+        "terms": "সক্রিয় শর্তাবলী",
+        "type": "ধরন",
+        "status": "অবস্থা"
+      },
+      "foreign_fallback": "বিদেশি",
+      "exp_label": "মেয়াদ {date}",
+      "edit_aria": "এলসি সম্পাদনা করুন",
+      "amend": "সংশোধন",
+      "delete_aria": "মুছুন",
+      "empty": "কোনো এলসি নিবন্ধিত নেই।",
+      "supplier_label": "সরবরাহকারী",
+      "buyer_label": "ক্রেতা",
+      "modal": {
+        "edit_title": "এলসি সম্পাদনা করুন",
+        "register_title": "এলসি নিবন্ধন করুন (ভি১ শর্তাবলী)",
+        "role_label": "ভূমিকা",
+        "lc_no_label": "এলসি নম্বর",
+        "bank_label": "ইস্যুকারী ব্যাংক",
+        "bank_placeholder": "—",
+        "currency_label": "মুদ্রা",
+        "type_label": "ধরন",
+        "usance_days_label": "ইউজেন্স দিন",
+        "opened_label": "খোলার তারিখ",
+        "amount_label": "পরিমাণ ({currency})",
+        "quantity_label": "পরিমাণ (কোয়ান্টিটি)",
+        "tolerance_label": "টলারেন্স %",
+        "expiry_label": "মেয়াদ শেষ",
+        "amend_hint": "পরিমাণ, কোয়ান্টিটি, টলারেন্স ও মেয়াদ — এগুলো ভার্সনকৃত শর্তাবলী, তালিকায় \"সংশোধন\" ব্যবহার করে পরিবর্তন করুন।",
+        "shipment_terms_header": "শিপমেন্ট ও বৈদেশিক বাণিজ্য শর্তাবলী",
+        "incoterm_label": "ইনকোটার্ম",
+        "incoterm_hint": "যেমন CFR, FOB, CIF, EXW",
+        "latest_shipment_label": "সর্বশেষ শিপমেন্ট তারিখ",
+        "port_loading_label": "লোডিং বন্দর",
+        "port_discharge_label": "ডিসচার্জ বন্দর",
+        "presentation_period_label": "প্রেজেন্টেশন সময়কাল (দিন)",
+        "available_with_by_label": "অ্যাভেইলেবল উইথ / বাই",
+        "available_with_by_hint": "যেমন চীনের যেকোনো ব্যাংক, নেগোসিয়েশন দ্বারা",
+        "register": "নিবন্ধন করুন"
+      },
+      "amend_modal": {
+        "title": "{no} সংশোধন → v{version}",
+        "amount_label": "পরিমাণ",
+        "quantity_label": "কোয়ান্টিটি",
+        "tolerance_label": "টলারেন্স %",
+        "expiry_label": "মেয়াদ শেষ",
+        "fee_label": "এমটি৭০৭ ফি (৳)",
+        "fee_hint": "০ এর বেশি হলে ৫৪০০-তে পোস্ট হয়",
+        "fee_paid_from_label": "ফি পরিশোধ হবে",
+        "fee_paid_from_hint": "কোন হিসাব থেকে ফি ডেবিট হবে",
+        "fee_default_option": "— ডিফল্ট ব্যাংক হিসাব —",
+        "note_label": "নোট",
+        "record": "সংশোধনী রেকর্ড করুন"
+      },
+      "toast": {
+        "lc_no_required": "এলসি নম্বর ও {label} আবশ্যক",
+        "lc_updated": "এলসি আপডেট হয়েছে",
+        "lc_registered": "এলসি নিবন্ধিত হয়েছে (ভি১ শর্তাবলী)",
+        "lc_failed": "এলসি ব্যর্থ হয়েছে",
+        "extracted": "{role} হিসেবে {count}টি ফিল্ড এক্সট্র্যাক্ট হয়েছে — সংরক্ষণের আগে পর্যালোচনা করুন",
+        "none_recognised": "কোনো ফিল্ড শনাক্ত হয়নি",
+        "applicant_on_doc": "ডকুমেন্টে আবেদনকারী: {name}",
+        "beneficiary_on_doc": "ডকুমেন্টে সুবিধাভোগী: {name}",
+        "extraction_failed": "এক্সট্র্যাকশন ব্যর্থ হয়েছে",
+        "amendment_failed": "সংশোধনী ব্যর্থ হয়েছে",
+        "amendment_recorded": "সংশোধনী v{version} রেকর্ড হয়েছে",
+        "amendment_fee_note": " — এমটি৭০৭ ফি পোস্ট হয়েছে"
+      }
+    },
+    "detail": {
+      "title": "এলসি {no}",
+      "subtitle": "{type} · {date} তারিখে খোলা",
+      "close_out": "বন্ধ করুন",
+      "buyer_prefix": "ক্রেতা",
+      "supplier_prefix": "সরবরাহকারী",
+      "counterparty_link": "→ {label}: {name}",
+      "bank_link": "→ ইস্যুকারী ব্যাংক: {name}",
+      "alerts": {
+        "overdue": "বিল {bill} মেয়াদোত্তীর্ণ (মেয়াদ {date}) — নিষ্পত্তি করুন বা ফোর্সড পিএডি-তে রূপান্তর করুন",
+        "maturity_soon": "বিল {bill}-এর মেয়াদ {days} দিনে — {date}",
+        "discrepancy": "খোলা ডিসক্রিপ্যান্সি — নিচের টাইমলাইনে সমাধান করুন"
+      },
+      "stat_cards": {
+        "active_terms": "সক্রিয় শর্তাবলী",
+        "revenue": "রাজস্ব",
+        "returns": "রিটার্ন",
+        "cogs_net": "সিওজিএস (নিট)",
+        "bank_fees_interest": "ব্যাংক ফি + সুদ",
+        "contract_profit": "চুক্তির মুনাফা",
+        "incoterm": "ইনকোটার্ম",
+        "latest_shipment": "সর্বশেষ শিপমেন্ট",
+        "presentation_period": "প্রেজেন্টেশন সময়কাল",
+        "presentation_period_days": "{n} দিন",
+        "port_loading": "লোডিং বন্দর",
+        "port_discharge": "ডিসচার্জ বন্দর"
+      },
+      "manual_journal_note": "এই এলসি-র অর্থ প্রবাহ (জিআরএন/পরিশোধযোগ্য, বিল অবসান, রিয়েলাইজেশন) আপাতত হিসাবরক্ষণ পাতায় ম্যানুয়াল জার্নালের মাধ্যমে পোস্ট করা হয়।",
+      "timeline": {
+        "header": "লাইফসাইকেল টাইমলাইন",
+        "detail_placeholder": "বিবরণ…",
+        "add": "যোগ করুন",
+        "empty": "এখনো কোনো ইভেন্ট নেই।"
+      },
+      "bills": {
+        "header": "এই এলসি-র অধীনে বিল",
+        "columns": {
+          "bill": "বিল",
+          "invoice": "ইনভয়েস",
+          "amount": "পরিমাণ (৳)",
+          "maturity": "মেয়াদপূর্তি",
+          "status": "অবস্থা"
+        },
+        "empty": "এখনো কোনো বিল নেই — ইনভয়েস থেকে একটি জমা দিন।"
+      },
+      "documents": {
+        "header": "ডকুমেন্ট",
+        "upload": "পিডিএফ আপলোড করুন",
+        "uploading": "এক্সট্র্যাক্ট করা হচ্ছে…",
+        "empty": "কোনো ডকুমেন্ট নেই। ব্যাংকের এলসি অ্যাডভাইস পিডিএফ আপলোড করুন — ফিল্ড স্বয়ংক্রিয়ভাবে এক্সট্র্যাক্ট হবে।",
+        "doc_type_options": {
+          "lc": "এলসি",
+          "amendment": "সংশোধনী",
+          "bill": "বিল",
+          "other": "অন্যান্য"
+        }
+      },
+      "toast": {
+        "event_failed": "ইভেন্ট ব্যর্থ হয়েছে",
+        "upload_failed": "আপলোড ব্যর্থ হয়েছে",
+        "stored": "ডকুমেন্ট সংরক্ষিত হয়েছে",
+        "stored_extracted": "ফিল্ড এক্সট্র্যাক্ট হয়েছে — নিচে পর্যালোচনা করুন",
+        "close_blocked": "ক্লোজ-আউট বাধাপ্রাপ্ত হয়েছে",
+        "closed": "এলসি বন্ধ হয়েছে — চূড়ান্ত লাভ-ক্ষতি টাইমলাইনে রেকর্ড করা হয়েছে"
+      },
+      "not_found": "এলসি পাওয়া যায়নি।"
+    }
+  }
+}

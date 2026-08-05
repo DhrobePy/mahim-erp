@@ -1,0 +1,55 @@
+{
+  "ceo": {
+    "kicker": "Executive",
+    "title": "CEO overview",
+    "subtitle": "The running business at a glance — every number clicks through to its source",
+    "alerts": {
+      "overdue": "⚠ OVERDUE — bill {bill} on {lc} (maturity {date})",
+      "maturity_soon": "Bill {bill} on {lc} matures in {days} day(s)",
+      "discrepancy": "Unresolved discrepancy on {lc}"
+    },
+    "sections": {
+      "money": "Where the money is",
+      "earning_pipeline": "Earning & pipeline",
+      "lc_book": "LC contract book — profit per contract",
+      "top_buyers": "Top buyers by lifetime billing",
+      "facility_headroom": "Facility headroom",
+      "people": "People",
+      "pre_lc": "Goods out on trust (no LC yet)"
+    },
+    "stats": {
+      "bank": "Bank + cash",
+      "bills_receivable_lc": "Bills receivable (LC)",
+      "delivered_not_invoiced": "Delivered, not invoiced",
+      "pre_lc_risk": "pre-LC risk",
+      "stock": "Stock",
+      "payable": "We owe (AP + wages)",
+      "bank_debt": "Bank debt",
+      "net_position": "Net position",
+      "revenue": "Revenue (to date)",
+      "expenses": "Expenses",
+      "net_profit": "Net profit",
+      "undelivered_orders": "Undelivered orders",
+      "awaiting_lc_cover": "Awaiting LC cover",
+      "bills_awaiting_maturity": "Bills awaiting maturity"
+    },
+    "orders_suffix": "order(s)",
+    "deliveries_suffix": "delivery(ies)",
+    "bills_suffix": "bill(s)",
+    "table": {
+      "lc": "LC",
+      "revenue": "Revenue (৳)",
+      "cogs": "COGS (৳)",
+      "fees_interest": "Fees + int (৳)",
+      "profit": "Profit (৳)"
+    },
+    "empty": {
+      "lc_contracts": "No LC contracts yet.",
+      "invoices": "No invoices yet.",
+      "facilities": "No facilities."
+    },
+    "headcount": "Headcount",
+    "last_payroll": "Last payroll ({label})",
+    "since": "since {date}"
+  }
+}

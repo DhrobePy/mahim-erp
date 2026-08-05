@@ -1,0 +1,115 @@
+{
+  "system": {
+    "login": {
+      "tagline": "Sign in to continue",
+      "email": "Email",
+      "email_placeholder": "you (at) company.com",
+      "password": "Password",
+      "password_placeholder": "••••••••",
+      "sign_in": "Sign in",
+      "no_account": "No account yet? Ask your admin to create one for you under Access & roles.",
+      "auth_failed": "Authentication failed"
+    },
+    "confirm": {
+      "signing_in": "Signing you in…"
+    },
+    "audit": {
+      "title": "Audit trail",
+      "subtitle": "Every insert, update and delete on business tables — who, when, what changed",
+      "admin_only": "Only admins can view the audit trail.",
+      "all_tables": "All tables",
+      "all_actions": "All actions",
+      "columns": {
+        "when": "When",
+        "who": "Who",
+        "action": "Action",
+        "table": "Table",
+        "what_changed": "What changed"
+      },
+      "system_actor": "system",
+      "no_entries": "No audit entries yet."
+    },
+    "access": {
+      "title": "Access & roles",
+      "subtitle": "Per-company memberships — enforced by database row-level security, not just the UI",
+      "new_user": "New user",
+      "admin_only": "Only admins can manage access.",
+      "role_admin": "Admin",
+      "role_member": "Member (custom permissions)",
+      "columns": {
+        "user": "User",
+        "tier": "Tier"
+      },
+      "you_badge": "you",
+      "no_access_placeholder": "No access",
+      "no_access_badge": "no access",
+      "permissions": "Permissions",
+      "revoke": "Revoke",
+      "user_fallback": "user",
+      "footer_note": "Public sign-up is disabled — use \"New user\" above to provision access. Admins have everything; every other member's access is exactly the per-page checklist you set via \"Permissions\" — nothing predefined. Changing your own tier is deliberately disabled.",
+      "new_user_slideover": {
+        "share_creds": "Share these credentials with the user",
+        "password_note": "This password won't be shown again — copy it now.",
+        "email_label": "Email:",
+        "password_label": "Password:",
+        "copy": "Copy",
+        "full_name": "Full name",
+        "full_name_placeholder": "Their name",
+        "email": "Email",
+        "email_placeholder": "them (at) company.com",
+        "password": "Password",
+        "password_hint": "Auto-generated — editable",
+        "role": "Role in this company",
+        "create_user": "Create user"
+      },
+      "permissions_slideover": {
+        "title": "Permissions — {name}",
+        "subtitle": "Off = the page doesn't exist for them, not just uneditable",
+        "view": "View",
+        "write": "Write",
+        "save": "Save permissions"
+      },
+      "edit_slideover": {
+        "title": "Edit user",
+        "full_name": "Full name",
+        "full_name_placeholder": "Their name",
+        "email": "Email",
+        "email_placeholder": "them (at) company.com",
+        "new_password": "New password",
+        "new_password_hint": "Leave blank to keep their current password",
+        "new_password_placeholder": "•••••••• (unchanged)",
+        "save": "Save changes"
+      },
+      "toast": {
+        "update_failed": "Update failed",
+        "role_changed": "{name} → {role}",
+        "revoke_failed": "Revoke failed",
+        "access_revoked": "Access revoked",
+        "email_password_required": "Email and password are required",
+        "user_created": "User created",
+        "create_failed": "Create failed",
+        "copied": "Copied to clipboard",
+        "permissions_updated": "Permissions updated for {name}",
+        "user_updated": "User updated"
+      }
+    },
+    "recycle_bin": {
+      "title": "Recycle bin",
+      "subtitle": "Deleted records across every module — master data is restored as-is; posted documents are un-reversed (a new offsetting entry restores the original ledger effect)",
+      "all_modules": "All modules",
+      "deleted_count": "{count} deleted record(s)",
+      "columns": {
+        "record": "Record",
+        "module": "Module",
+        "deleted": "Deleted",
+        "deleted_by": "Deleted by"
+      },
+      "empty": "Nothing in the recycle bin.",
+      "toast": {
+        "load_failed": "Failed to load recycle bin",
+        "restored": "Restored \"{name}\"",
+        "restore_failed": "Restore failed"
+      }
+    }
+  }
+}

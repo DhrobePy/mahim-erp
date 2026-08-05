@@ -1,0 +1,82 @@
+{
+  "banking": {
+    "kicker": "Finance",
+    "title": "Banking / LBPD",
+    "subtitle": "Facilities → bill acceptance → discounting → maturity settlement (or forced PAD)",
+    "new_facility": "New facility",
+    "facilities": {
+      "header": "Facilities",
+      "columns": {
+        "facility": "Facility",
+        "bank": "Bank",
+        "limit": "Limit (৳)",
+        "exposure": "Exposure (৳)",
+        "rate": "Rate %"
+      },
+      "empty": "No facilities."
+    },
+    "bills": {
+      "header": "Bills under LC",
+      "columns": {
+        "bill": "Bill",
+        "invoice": "Invoice",
+        "lc": "LC",
+        "amount": "Amount (৳)",
+        "maturity": "Maturity"
+      },
+      "accept": "Accept",
+      "discount": "Discount (LBPD)",
+      "empty": "No bills submitted."
+    },
+    "disbursements": {
+      "header": "LBPD disbursements",
+      "columns": {
+        "bill": "Bill",
+        "advance": "Advance (৳)",
+        "pct": "%",
+        "disbursed": "Disbursed"
+      },
+      "settle": "Settle",
+      "forced_pad": "Forced PAD",
+      "empty": "No disbursements."
+    },
+    "facility_dialog": {
+      "title": "New bank facility",
+      "bank": "Bank",
+      "type": "Type",
+      "limit": "Limit (৳)",
+      "interest_rate": "Interest rate % (annual)",
+      "add": "Add facility"
+    },
+    "discount_dialog": {
+      "title": "Discount {bill}",
+      "facility": "Facility",
+      "advance_pct": "Advance %",
+      "advance_pct_hint": "80–90% typical",
+      "credit_account": "Credit to account",
+      "credit_account_hint": "which bank account receives the advance",
+      "credit_account_placeholder": "— default bank account —",
+      "cash_now_label": "Cash now:",
+      "disburse": "Disburse"
+    },
+    "settle_dialog": {
+      "title": "Settle {bill} at maturity",
+      "body": "Bank remits ৳{amount} — loan of ৳{principal} closes, interest is charged{penalty}, net margin lands in the bank account.",
+      "penalty_suffix": " at the PENALTY account (5420)",
+      "interest_charged": "Interest charged (৳)",
+      "settle": "Settle"
+    },
+    "toasts": {
+      "facility_failed": "Facility failed",
+      "facility_added": "Facility added",
+      "acceptance_failed": "Acceptance failed",
+      "bill_accepted": "{bill} accepted — maturity set from usance",
+      "disbursement_failed": "Disbursement failed",
+      "lbpd_disbursed": "LBPD disbursed — cash in bank",
+      "settlement_failed": "Settlement failed",
+      "settled": "Settled — margin credited, bill realized",
+      "conversion_failed": "Conversion failed",
+      "converted_forced_pad": "Converted to forced PAD (penalty profile)"
+    }
+  }
+}

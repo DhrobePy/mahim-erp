@@ -5,6 +5,7 @@ const { canWrite, activeCompanyId } = useProfile()
 const { toMm, plyLayout, recipeSummary, costBreakdown } = useCartonMath()
 const { money } = useFmt()
 const { deleteRecord } = useRecycleBin()
+const { t } = useI18n()
 
 const boms = ref<any[]>([])
 const items = ref<any[]>([])
@@ -71,12 +72,12 @@ const removeLine = (i: number) => form.lines.splice(i, 1)
 
 const save = async () => {
   if (!form.finished_item_id || !form.name) {
-    toast.add({ title: 'Finished item and name are required', color: 'red' })
+    toast.add({ title: t('boms.validation.finished_item_name_required'), color: 'red' })
     return
   }
   const validLines = form.lines.filter((l) => l.component_item_id)
   if (!validLines.length) {
-    toast.add({ title: 'Add at least one component', color: 'red' })
+    toast.add({ title: t('boms.validation.at_least_one_component'), color: 'red' })
     return
   }
   saving.value = true
@@ -98,11 +99,11 @@ const save = async () => {
     )
     if (lErr) throw lErr
 
-    toast.add({ title: 'BOM created' })
+    toast.add({ title: t('boms.bom_created') })
     open.value = false
     await load()
   } catch (e: any) {
-    toast.add({ title: 'Save failed', description: e.message, color: 'red' })
+    toast.add({ title: t('common.save_failed'), description: e.message, color: 'red' })
   } finally {
     saving.value = false
   }
@@ -112,11 +113,11 @@ const save = async () => {
 const recipeOpen = ref(false)
 const recipeSaving = ref(false)
 const unitOptions = [{ value: 'cm', label: 'cm' }, { value: 'mm', label: 'mm' }, { value: 'inch', label: 'inch' }]
-const fluteOptions = [
-  { value: 'A', label: 'A — cushioning' }, { value: 'B', label: 'B — printable/die-cut' },
-  { value: 'C', label: 'C — general purpose' }, { value: 'E', label: 'E — fine print' },
-  { value: 'F', label: 'F — micro/premium' }
-]
+const fluteOptions = computed(() => [
+  { value: 'A', label: t('boms.flutes.a') }, { value: 'B', label: t('boms.flutes.b') },
+  { value: 'C', label: t('boms.flutes.c') }, { value: 'E', label: t('boms.flutes.e') },
+  { value: 'F', label: t('boms.flutes.f') }
+])
 const plyOptions = [3, 5, 7]
 
 const recipe = reactive({
@@ -138,11 +139,11 @@ const selectedTemplateId = ref<string | null>(null)
 const roleLabel = (l: typeof recipe.layers[number], idx: number, total: number) => {
   if (l.role === 'medium') {
     const n = recipe.layers.slice(0, idx + 1).filter((x) => x.role === 'medium').length
-    return `Medium ${n} (flute)`
+    return t('boms.layers.medium', { n })
   }
-  if (idx === 0) return 'Outer liner'
-  if (idx === total - 1) return 'Inner liner'
-  return 'Middle liner'
+  if (idx === 0) return t('boms.layers.outer_liner')
+  if (idx === total - 1) return t('boms.layers.inner_liner')
+  return t('boms.layers.middle_liner')
 }
 
 const rebuildLayers = () => {
@@ -182,7 +183,7 @@ const openRecipeEdit = async (bom: any) => {
   const { data: spec } = await client.from('carton_specs')
     .select('*, carton_spec_layers(layer_no, role, flute_code, gsm, raw_item_id)')
     .eq('item_id', bom.finished_item_id).maybeSingle()
-  if (!spec) { toast.add({ title: 'No recipe found for this item', color: 'amber' }); return }
+  if (!spec) { toast.add({ title: t('boms.recipe.no_recipe_found'), color: 'amber' }); return }
   selectedTemplateId.value = null
   Object.assign(recipe, {
     item_id: bom.finished_item_id, newItem: false, newSku: '', newName: '',
@@ -214,16 +215,16 @@ const rawItemName = (id: string | null) => rawItems.value.find((i) => i.id === i
 const saveRecipe = async () => {
   if (recipe.newItem) {
     if (!recipe.newSku || !recipe.newName) {
-      toast.add({ title: 'SKU and name are required for the new item', color: 'red' }); return
+      toast.add({ title: t('boms.validation.new_item_required'), color: 'red' }); return
     }
   } else if (!recipe.item_id) {
-    toast.add({ title: 'Pick a finished item', color: 'red' }); return
+    toast.add({ title: t('boms.validation.pick_finished_item'), color: 'red' }); return
   }
   if (!recipeMm.value.length || !recipeMm.value.width || !recipeMm.value.height) {
-    toast.add({ title: 'Enter length, width and height', color: 'red' }); return
+    toast.add({ title: t('boms.validation.enter_dimensions'), color: 'red' }); return
   }
   if (recipe.layers.some((l) => !l.raw_item_id || !l.gsm)) {
-    toast.add({ title: 'Every layer needs a GSM and a raw material', color: 'red' }); return
+    toast.add({ title: t('boms.validation.layer_gsm_material'), color: 'red' }); return
   }
   recipeSaving.value = true
   try {
@@ -250,11 +251,11 @@ const saveRecipe = async () => {
       p_margin_pct_override: recipe.margin_pct_override
     } as any)
     if (error) throw error
-    toast.add({ title: 'Recipe saved — BOM generated', description: `${preview.value.totalKg.toFixed(4)} kg / box` })
+    toast.add({ title: t('boms.recipe.saved_title'), description: t('boms.recipe.saved_description', { kg: preview.value.totalKg.toFixed(4) }) })
     recipeOpen.value = false
     await load()
   } catch (e: any) {
-    toast.add({ title: 'Recipe failed', description: e.message, color: 'red' })
+    toast.add({ title: t('boms.recipe.failed'), description: e.message, color: 'red' })
   } finally {
     recipeSaving.value = false
   }
@@ -274,11 +275,11 @@ const tplForm = reactive({
 const tplRoleLabel = (l: typeof tplForm.layers[number], idx: number, total: number) => {
   if (l.role === 'medium') {
     const n = tplForm.layers.slice(0, idx + 1).filter((x) => x.role === 'medium').length
-    return `Medium ${n} (flute)`
+    return t('boms.layers.medium', { n })
   }
-  if (idx === 0) return 'Outer liner'
-  if (idx === total - 1) return 'Inner liner'
-  return 'Middle liner'
+  if (idx === 0) return t('boms.layers.outer_liner')
+  if (idx === total - 1) return t('boms.layers.inner_liner')
+  return t('boms.layers.middle_liner')
 }
 
 const tplRebuildLayers = () => {
@@ -301,8 +302,8 @@ const openTplEdit = (t: any) => {
   tplEditorOpen.value = true
 }
 const saveTemplate = async () => {
-  if (!tplForm.name) { toast.add({ title: 'Template name is required', color: 'red' }); return }
-  if (tplForm.layers.some((l) => !l.gsm)) { toast.add({ title: 'Every layer needs a GSM', color: 'red' }); return }
+  if (!tplForm.name) { toast.add({ title: t('boms.validation.template_name_required'), color: 'red' }); return }
+  if (tplForm.layers.some((l) => !l.gsm)) { toast.add({ title: t('boms.validation.layer_gsm_required'), color: 'red' }); return }
   tplSaving.value = true
   try {
     const payload = { name: tplForm.name, ply_count: tplForm.ply, layers: tplForm.layers }
@@ -310,34 +311,34 @@ const saveTemplate = async () => {
       ? await client.from('carton_recipe_templates').update(payload).eq('id', tplForm.id)
       : await client.from('carton_recipe_templates').insert(payload)
     if (error) throw error
-    toast.add({ title: tplForm.id ? 'Template updated' : 'Template created' })
+    toast.add({ title: tplForm.id ? t('boms.template_manager.template_updated') : t('boms.template_manager.template_created') })
     tplEditorOpen.value = false
     await load()
   } catch (e: any) {
-    toast.add({ title: 'Save failed', description: e.message, color: 'red' })
+    toast.add({ title: t('common.save_failed'), description: e.message, color: 'red' })
   } finally {
     tplSaving.value = false
   }
 }
-const deleteTemplate = async (t: any) => {
-  if (!confirm(`Delete template "${t.name}"?`)) return
-  const { error } = await client.from('carton_recipe_templates').delete().eq('id', t.id)
-  if (error) { toast.add({ title: 'Delete failed', description: error.message, color: 'red' }); return }
-  toast.add({ title: 'Template deleted' })
+const deleteTemplate = async (tpl: any) => {
+  if (!confirm(t('boms.template_manager.delete_confirm', { name: tpl.name }))) return
+  const { error } = await client.from('carton_recipe_templates').delete().eq('id', tpl.id)
+  if (error) { toast.add({ title: t('boms.template_manager.delete_failed'), description: error.message, color: 'red' }); return }
+  toast.add({ title: t('boms.template_manager.template_deleted') })
   await load()
 }
 </script>
 
 <template>
   <div>
-    <PageHeader kicker="Operations" title="Bills of material" subtitle="Recipes that drive material consumption during production">
-      <UButton v-if="canWrite" variant="ghost" icon="i-heroicons-rectangle-stack" @click="tplMgrOpen = true">Recipe templates</UButton>
-      <UButton v-if="canWrite" variant="soft" icon="i-heroicons-cube-transparent" @click="openRecipeNew">New carton recipe</UButton>
-      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">New BOM</UButton>
+    <PageHeader :kicker="t('boms.kicker')" :title="t('boms.title')" :subtitle="t('boms.subtitle')">
+      <UButton v-if="canWrite" variant="ghost" icon="i-heroicons-rectangle-stack" @click="tplMgrOpen = true">{{ t('boms.recipe_templates_btn') }}</UButton>
+      <UButton v-if="canWrite" variant="soft" icon="i-heroicons-cube-transparent" @click="openRecipeNew">{{ t('boms.new_carton_recipe_btn') }}</UButton>
+      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">{{ t('boms.new_bom_btn') }}</UButton>
     </PageHeader>
 
-    <div v-if="loading" class="text-sm text-gray-400">Loading…</div>
-    <div v-else-if="!boms.length" class="text-sm text-gray-400">No BOMs yet.</div>
+    <div v-if="loading" class="text-sm text-gray-400">{{ t('common.loading') }}</div>
+    <div v-else-if="!boms.length" class="text-sm text-gray-400">{{ t('boms.no_boms') }}</div>
 
     <div class="grid gap-4 md:grid-cols-2">
       <UCard v-for="b in boms" :key="b.id">
@@ -346,22 +347,27 @@ const deleteTemplate = async (t: any) => {
             <div>
               <p class="font-medium">{{ b.name }}</p>
               <p class="text-xs text-gray-500">
-                {{ b.items?.name }} · yields {{ b.output_qty }}
+                {{ b.items?.name }} · {{ t('boms.card.yields', { qty: b.output_qty }) }}
               </p>
               <p v-if="b.carton_spec_snapshot" class="num text-[11px] text-amber-600 dark:text-amber-400 mt-0.5">
-                {{ b.carton_spec_snapshot.ply_count }}-ply · {{ b.carton_spec_snapshot.flute_summary }}-flute ·
-                {{ b.carton_spec_snapshot.length_mm }}×{{ b.carton_spec_snapshot.width_mm }}×{{ b.carton_spec_snapshot.height_mm }}mm ·
-                {{ Number(b.carton_spec_snapshot.total_kg).toFixed(3) }} kg/box
+                {{ t('boms.card.spec_summary', {
+                  ply: b.carton_spec_snapshot.ply_count,
+                  flute: b.carton_spec_snapshot.flute_summary,
+                  l: b.carton_spec_snapshot.length_mm,
+                  w: b.carton_spec_snapshot.width_mm,
+                  h: b.carton_spec_snapshot.height_mm,
+                  kg: Number(b.carton_spec_snapshot.total_kg).toFixed(3)
+                }) }}
               </p>
             </div>
             <div class="flex items-center gap-2 shrink-0">
               <UBadge size="xs" :color="b.is_active ? 'green' : 'gray'" variant="subtle">
-                {{ b.is_active ? 'active' : 'inactive' }}
+                {{ b.is_active ? t('common.active') : t('common.inactive') }}
               </UBadge>
               <UButton
                 v-if="canWrite && b.is_auto_generated"
                 size="2xs" variant="soft" icon="i-heroicons-pencil-square" @click="openRecipeEdit(b)"
-              >Recipe</UButton>
+              >{{ t('boms.card.recipe_btn') }}</UButton>
               <UButton
                 v-if="canWrite"
                 size="2xs" variant="ghost" color="red" icon="i-heroicons-trash" @click="removeBom(b)"
@@ -374,7 +380,7 @@ const deleteTemplate = async (t: any) => {
             <div class="flex justify-between">
               <span>{{ l.component?.name }}</span>
               <span class="num text-gray-500">
-                {{ Number(l.qty_per).toFixed(4) }}<span v-if="l.wastage_pct"> · +{{ l.wastage_pct }}% waste</span>
+                {{ Number(l.qty_per).toFixed(4) }}<span v-if="l.wastage_pct"> · +{{ l.wastage_pct }}% {{ t('boms.card.waste') }}</span>
               </span>
             </div>
             <p v-if="l.note" class="text-[11px] text-gray-400 dark:text-zinc-600">{{ l.note }}</p>
@@ -385,36 +391,36 @@ const deleteTemplate = async (t: any) => {
 
     <USlideover v-model="open" :ui="{ width: 'w-screen max-w-2xl' }">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">New BOM</p></template>
+        <template #header><p class="font-medium">{{ t('boms.new_bom.title') }}</p></template>
         <div class="space-y-4">
           <div class="grid grid-cols-2 gap-4">
-            <UFormGroup label="Finished item" required>
+            <UFormGroup :label="t('boms.new_bom.finished_item')" required>
               <USelect
                 v-model="form.finished_item_id" :options="finishedItems"
-                option-attribute="name" value-attribute="id" placeholder="Select"
+                option-attribute="name" value-attribute="id" :placeholder="t('boms.new_bom.select')"
               />
             </UFormGroup>
-            <UFormGroup label="Output qty per run" required>
+            <UFormGroup :label="t('boms.new_bom.output_qty')" required>
               <UInput v-model.number="form.output_qty" type="number" />
             </UFormGroup>
-            <UFormGroup label="BOM name" required class="col-span-2">
-              <UInput v-model="form.name" placeholder="e.g. Carton A — standard recipe" />
+            <UFormGroup :label="t('boms.new_bom.name')" required class="col-span-2">
+              <UInput v-model="form.name" :placeholder="t('boms.new_bom.name_placeholder')" />
             </UFormGroup>
           </div>
 
           <div>
             <div class="flex items-center justify-between mb-2">
-              <p class="text-sm font-medium">Components</p>
-              <UButton size="xs" variant="soft" icon="i-heroicons-plus" @click="addLine">Add</UButton>
+              <p class="text-sm font-medium">{{ t('boms.new_bom.components') }}</p>
+              <UButton size="xs" variant="soft" icon="i-heroicons-plus" @click="addLine">{{ t('boms.new_bom.add') }}</UButton>
             </div>
             <div v-for="(l, i) in form.lines" :key="i" class="grid grid-cols-12 gap-2 mb-2 items-center">
               <USelect
                 v-model="l.component_item_id" :options="items"
-                option-attribute="name" value-attribute="id" placeholder="Component"
+                option-attribute="name" value-attribute="id" :placeholder="t('boms.new_bom.component_placeholder')"
                 class="col-span-6"
               />
-              <UInput v-model.number="l.qty_per" type="number" placeholder="Qty" class="col-span-3" />
-              <UInput v-model.number="l.wastage_pct" type="number" placeholder="% waste" class="col-span-2" />
+              <UInput v-model.number="l.qty_per" type="number" :placeholder="t('boms.new_bom.qty_placeholder')" class="col-span-3" />
+              <UInput v-model.number="l.wastage_pct" type="number" :placeholder="t('boms.new_bom.waste_placeholder')" class="col-span-2" />
               <UButton
                 icon="i-heroicons-trash" color="red" variant="ghost" size="xs" class="col-span-1"
                 @click="removeLine(i)"
@@ -424,8 +430,8 @@ const deleteTemplate = async (t: any) => {
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="open = false">Cancel</UButton>
-            <UButton :loading="saving" @click="save">Save BOM</UButton>
+            <UButton color="gray" variant="ghost" @click="open = false">{{ t('common.cancel') }}</UButton>
+            <UButton :loading="saving" @click="save">{{ t('boms.new_bom.save_bom') }}</UButton>
           </div>
         </template>
       </UCard>
@@ -434,17 +440,17 @@ const deleteTemplate = async (t: any) => {
     <USlideover v-model="recipeOpen" :ui="{ width: 'w-screen max-w-3xl' }">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
         <template #header>
-          <p class="font-medium">Carton recipe</p>
-          <p class="text-xs text-gray-500">Standard RSC formula — sheet size and paper weight computed from ply, flute and dimensions</p>
+          <p class="font-medium">{{ t('boms.recipe.title') }}</p>
+          <p class="text-xs text-gray-500">{{ t('boms.recipe.subtitle') }}</p>
         </template>
 
         <div class="space-y-5">
           <!-- Template -->
           <div>
-            <p class="microlabel text-gray-400 dark:text-zinc-500 mb-1.5">Start from template <span class="text-gray-300 dark:text-zinc-700">(optional)</span></p>
+            <p class="microlabel text-gray-400 dark:text-zinc-500 mb-1.5">{{ t('boms.recipe.start_from_template') }} <span class="text-gray-300 dark:text-zinc-700">{{ t('boms.recipe.optional') }}</span></p>
             <USelect
               v-model="selectedTemplateId" :options="templateOptions"
-              option-attribute="label" value-attribute="value" placeholder="Pick a 3/5/7-ply starting point…"
+              option-attribute="label" value-attribute="value" :placeholder="t('boms.recipe.template_placeholder')"
               @update:model-value="applyTemplate"
             />
           </div>
@@ -452,34 +458,34 @@ const deleteTemplate = async (t: any) => {
           <!-- Item -->
           <div>
             <div class="flex items-center justify-between mb-1.5">
-              <p class="microlabel text-gray-400 dark:text-zinc-500">Finished item</p>
-              <UCheckbox v-model="recipe.newItem" label="Create new item" />
+              <p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('boms.recipe.finished_item') }}</p>
+              <UCheckbox v-model="recipe.newItem" :label="t('boms.recipe.create_new_item')" />
             </div>
             <USelect
               v-if="!recipe.newItem"
               v-model="recipe.item_id" :options="finishedItems"
-              option-attribute="name" value-attribute="id" placeholder="Select a carton…"
+              option-attribute="name" value-attribute="id" :placeholder="t('boms.recipe.select_carton_placeholder')"
             />
             <div v-else class="grid grid-cols-2 gap-2">
-              <UInput v-model="recipe.newSku" placeholder="SKU e.g. FG-CARTON-B" />
-              <UInput v-model="recipe.newName" placeholder="Name e.g. Printed Carton — Model B" />
+              <UInput v-model="recipe.newSku" :placeholder="t('boms.recipe.new_sku_placeholder')" />
+              <UInput v-model="recipe.newName" :placeholder="t('boms.recipe.new_name_placeholder')" />
             </div>
           </div>
 
           <!-- Dimensions -->
           <div>
-            <p class="microlabel text-gray-400 dark:text-zinc-500 mb-1.5">Internal dimensions (L × W × H)</p>
+            <p class="microlabel text-gray-400 dark:text-zinc-500 mb-1.5">{{ t('boms.recipe.dimensions') }}</p>
             <div class="grid grid-cols-4 gap-2">
-              <UInput v-model.number="recipe.length" type="number" placeholder="Length" />
-              <UInput v-model.number="recipe.width" type="number" placeholder="Width" />
-              <UInput v-model.number="recipe.height" type="number" placeholder="Height" />
+              <UInput v-model.number="recipe.length" type="number" :placeholder="t('boms.recipe.length_placeholder')" />
+              <UInput v-model.number="recipe.width" type="number" :placeholder="t('boms.recipe.width_placeholder')" />
+              <UInput v-model.number="recipe.height" type="number" :placeholder="t('boms.recipe.height_placeholder')" />
               <USelect v-model="recipe.unit" :options="unitOptions" option-attribute="label" value-attribute="value" />
             </div>
           </div>
 
           <!-- Ply -->
           <div>
-            <p class="microlabel text-gray-400 dark:text-zinc-500 mb-1.5">Ply (wall construction)</p>
+            <p class="microlabel text-gray-400 dark:text-zinc-500 mb-1.5">{{ t('boms.recipe.ply_construction') }}</p>
             <div class="flex gap-2">
               <button
                 v-for="p in plyOptions" :key="p"
@@ -494,14 +500,14 @@ const deleteTemplate = async (t: any) => {
 
           <!-- Layers -->
           <div>
-            <p class="microlabel text-gray-400 dark:text-zinc-500 mb-1.5">Layers (outer → inner)</p>
+            <p class="microlabel text-gray-400 dark:text-zinc-500 mb-1.5">{{ t('boms.recipe.layers_heading') }}</p>
             <div class="space-y-2">
               <div
                 v-for="(l, i) in recipe.layers" :key="i"
                 class="grid grid-cols-12 gap-2 items-center rounded ring-1 ring-gray-100 dark:ring-zinc-800 p-2"
               >
                 <span class="col-span-3 text-xs text-gray-500 dark:text-zinc-400">{{ roleLabel(l, i, recipe.layers.length) }}</span>
-                <UInput v-model.number="l.gsm" type="number" placeholder="GSM" class="col-span-2" />
+                <UInput v-model.number="l.gsm" type="number" :placeholder="t('boms.recipe.gsm_placeholder')" class="col-span-2" />
                 <USelect
                   v-if="l.role === 'medium'"
                   v-model="l.flute_code" :options="fluteOptions"
@@ -510,7 +516,7 @@ const deleteTemplate = async (t: any) => {
                 <span v-else class="col-span-3" />
                 <USelect
                   v-model="l.raw_item_id" :options="rawItems"
-                  option-attribute="sku" value-attribute="id" placeholder="Paper reel…" class="col-span-4"
+                  option-attribute="sku" value-attribute="id" :placeholder="t('boms.recipe.paper_reel_placeholder')" class="col-span-4"
                 />
               </div>
             </div>
@@ -518,25 +524,25 @@ const deleteTemplate = async (t: any) => {
 
           <!-- Allowance & wastage -->
           <div class="grid grid-cols-2 gap-4">
-            <UFormGroup label="Manufacturing allowance (mm)" hint="glue flap">
+            <UFormGroup :label="t('boms.recipe.allowance')" :hint="t('boms.recipe.allowance_hint')">
               <UInput v-model.number="recipe.allowance_mm" type="number" />
             </UFormGroup>
-            <UFormGroup label="Wastage %" hint="applied to every layer">
+            <UFormGroup :label="t('boms.recipe.wastage_pct')" :hint="t('boms.recipe.wastage_hint')">
               <UInput v-model.number="recipe.wastage_pct" type="number" />
             </UFormGroup>
           </div>
 
           <!-- Live preview -->
           <div class="rounded ring-1 ring-amber-500/30 bg-amber-50/40 dark:bg-amber-500/[0.04] p-3">
-            <p class="microlabel text-amber-600 dark:text-amber-400 mb-2">Live preview</p>
+            <p class="microlabel text-amber-600 dark:text-amber-400 mb-2">{{ t('boms.recipe.live_preview') }}</p>
             <div class="grid grid-cols-3 gap-3 text-[13px] mb-2">
-              <div><span class="text-gray-500 dark:text-zinc-500">Blank size</span><br>
+              <div><span class="text-gray-500 dark:text-zinc-500">{{ t('boms.recipe.blank_size') }}</span><br>
                 <span class="num font-medium">{{ preview.blankLengthMm.toFixed(0) }} × {{ preview.blankWidthMm.toFixed(0) }} mm</span>
               </div>
-              <div><span class="text-gray-500 dark:text-zinc-500">Blank area</span><br>
+              <div><span class="text-gray-500 dark:text-zinc-500">{{ t('boms.recipe.blank_area') }}</span><br>
                 <span class="num font-medium">{{ preview.blankAreaM2.toFixed(3) }} m²</span>
               </div>
-              <div><span class="text-gray-500 dark:text-zinc-500">Total paper / box</span><br>
+              <div><span class="text-gray-500 dark:text-zinc-500">{{ t('boms.recipe.total_paper_per_box') }}</span><br>
                 <span class="num font-semibold text-amber-600 dark:text-amber-400">{{ preview.totalKg.toFixed(4) }} kg</span>
               </div>
             </div>
@@ -550,7 +556,7 @@ const deleteTemplate = async (t: any) => {
 
           <!-- Costing & suggested price -->
           <div class="rounded ring-1 ring-emerald-500/30 bg-emerald-50/40 dark:bg-emerald-500/[0.04] p-3">
-            <p class="microlabel text-emerald-600 dark:text-emerald-400 mb-2">Costing &amp; suggested price (per box)</p>
+            <p class="microlabel text-emerald-600 dark:text-emerald-400 mb-2">{{ t('boms.costing.title') }}</p>
 
             <div class="space-y-0.5 text-[12px] mb-3">
               <div v-for="(r, i) in costPreview.paperLines" :key="i" class="flex justify-between text-gray-600 dark:text-zinc-400">
@@ -558,32 +564,32 @@ const deleteTemplate = async (t: any) => {
                 <span class="num">{{ money(r.cost) }}</span>
               </div>
               <div class="flex justify-between text-gray-600 dark:text-zinc-400">
-                <span>Paper subtotal (incl. {{ recipe.wastage_pct }}% wastage)</span>
+                <span>{{ t('boms.costing.paper_subtotal', { pct: recipe.wastage_pct }) }}</span>
                 <span class="num">{{ money(costPreview.paperCost) }}</span>
               </div>
             </div>
 
             <div class="grid grid-cols-2 gap-3 mb-3">
-              <UFormGroup label="Other direct materials / box" hint="starch, glue, ink, gum tape">
+              <UFormGroup :label="t('boms.costing.other_materials')" :hint="t('boms.costing.other_materials_hint')">
                 <UInput v-model.number="recipe.other_materials_cost_per_box" type="number" step="0.01" />
               </UFormGroup>
               <UFormGroup
-                label="Overhead %"
-                :hint="`Suggested ${suggestedOverheadPct}% from your reference costs — leave blank to use it`"
+                :label="t('boms.costing.overhead_pct')"
+                :hint="t('boms.costing.overhead_hint', { pct: suggestedOverheadPct })"
               >
                 <UInput v-model.number="recipe.overhead_pct_override" type="number" step="0.1" :placeholder="String(suggestedOverheadPct)" />
               </UFormGroup>
             </div>
-            <UFormGroup label="Margin %" class="mb-3" :hint="`Company default is ${company?.default_margin_pct ?? 0}% — leave blank to use it`">
+            <UFormGroup :label="t('boms.costing.margin_pct')" class="mb-3" :hint="t('boms.costing.margin_hint', { pct: company?.default_margin_pct ?? 0 })">
               <UInput v-model.number="recipe.margin_pct_override" type="number" step="0.1" class="w-40" :placeholder="String(company?.default_margin_pct ?? 0)" />
             </UFormGroup>
 
             <div class="space-y-1 text-[13px] border-t border-emerald-500/20 pt-2">
-              <div class="flex justify-between"><span class="text-gray-500 dark:text-zinc-500">Material subtotal</span><span class="num">{{ money(costPreview.materialSubtotal) }}</span></div>
-              <div class="flex justify-between"><span class="text-gray-500 dark:text-zinc-500">Overhead ({{ recipe.overhead_pct_override ?? suggestedOverheadPct }}%)</span><span class="num">{{ money(costPreview.overheadAmount) }}</span></div>
-              <div class="flex justify-between font-medium"><span>Total cost</span><span class="num">{{ money(costPreview.totalCost) }}</span></div>
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-zinc-500">{{ t('boms.costing.material_subtotal') }}</span><span class="num">{{ money(costPreview.materialSubtotal) }}</span></div>
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-zinc-500">{{ t('boms.costing.overhead_amount', { pct: recipe.overhead_pct_override ?? suggestedOverheadPct }) }}</span><span class="num">{{ money(costPreview.overheadAmount) }}</span></div>
+              <div class="flex justify-between font-medium"><span>{{ t('boms.costing.total_cost') }}</span><span class="num">{{ money(costPreview.totalCost) }}</span></div>
               <div class="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold text-[15px] pt-1">
-                <span>Suggested price ({{ recipe.margin_pct_override ?? (company?.default_margin_pct ?? 0) }}% margin)</span>
+                <span>{{ t('boms.costing.suggested_price', { pct: recipe.margin_pct_override ?? (company?.default_margin_pct ?? 0) }) }}</span>
                 <span class="num">{{ money(costPreview.suggestedPrice) }}</span>
               </div>
             </div>
@@ -592,8 +598,8 @@ const deleteTemplate = async (t: any) => {
 
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="recipeOpen = false">Cancel</UButton>
-            <UButton :loading="recipeSaving" @click="saveRecipe">Save recipe &amp; generate BOM</UButton>
+            <UButton color="gray" variant="ghost" @click="recipeOpen = false">{{ t('common.cancel') }}</UButton>
+            <UButton :loading="recipeSaving" @click="saveRecipe">{{ t('boms.recipe.save_recipe_btn') }}</UButton>
           </div>
         </template>
       </UCard>
@@ -605,25 +611,25 @@ const deleteTemplate = async (t: any) => {
         <template #header>
           <div class="flex items-center justify-between">
             <div>
-              <p class="font-medium">Carton recipe templates</p>
-              <p class="text-xs text-gray-500">Reusable ply/flute/GSM starting points for the recipe wizard</p>
+              <p class="font-medium">{{ t('boms.template_manager.title') }}</p>
+              <p class="text-xs text-gray-500">{{ t('boms.template_manager.subtitle') }}</p>
             </div>
-            <UButton v-if="canWrite" size="xs" icon="i-heroicons-plus" @click="openTplNew">New template</UButton>
+            <UButton v-if="canWrite" size="xs" icon="i-heroicons-plus" @click="openTplNew">{{ t('boms.template_manager.new_template') }}</UButton>
           </div>
         </template>
         <div class="space-y-2">
-          <div v-if="!templates.length" class="text-sm text-gray-400">No templates yet.</div>
+          <div v-if="!templates.length" class="text-sm text-gray-400">{{ t('boms.template_manager.no_templates') }}</div>
           <div
-            v-for="t in templates" :key="t.id"
+            v-for="tpl in templates" :key="tpl.id"
             class="flex items-center justify-between rounded ring-1 ring-gray-100 dark:ring-zinc-800 p-3"
           >
             <div>
-              <p class="text-sm font-medium">{{ t.name }}</p>
-              <p class="text-xs text-gray-500 dark:text-zinc-500 num">{{ t.ply_count }}-ply · {{ t.layers.length }} layers</p>
+              <p class="text-sm font-medium">{{ tpl.name }}</p>
+              <p class="text-xs text-gray-500 dark:text-zinc-500 num">{{ t('boms.template_manager.ply_layers', { ply: tpl.ply_count, n: tpl.layers.length }) }}</p>
             </div>
             <div v-if="canWrite" class="flex items-center gap-1 shrink-0">
-              <UButton size="2xs" variant="ghost" icon="i-heroicons-pencil-square" @click="openTplEdit(t)" />
-              <UButton size="2xs" variant="ghost" color="red" icon="i-heroicons-trash" @click="deleteTemplate(t)" />
+              <UButton size="2xs" variant="ghost" icon="i-heroicons-pencil-square" @click="openTplEdit(tpl)" />
+              <UButton size="2xs" variant="ghost" color="red" icon="i-heroicons-trash" @click="deleteTemplate(tpl)" />
             </div>
           </div>
         </div>
@@ -633,14 +639,14 @@ const deleteTemplate = async (t: any) => {
     <!-- Template manager: create/edit editor -->
     <USlideover v-model="tplEditorOpen" :ui="{ width: 'w-screen max-w-2xl' }">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">{{ tplForm.id ? 'Edit template' : 'New template' }}</p></template>
+        <template #header><p class="font-medium">{{ tplForm.id ? t('boms.template_manager.edit_title') : t('boms.template_manager.new_title') }}</p></template>
         <div class="space-y-5">
-          <UFormGroup label="Name" required>
-            <UInput v-model="tplForm.name" placeholder="e.g. 5-Ply — Double Wall (BC-flute)" />
+          <UFormGroup :label="t('boms.template_manager.name')" required>
+            <UInput v-model="tplForm.name" :placeholder="t('boms.template_manager.name_placeholder')" />
           </UFormGroup>
 
           <div>
-            <p class="microlabel text-gray-400 dark:text-zinc-500 mb-1.5">Ply (wall construction)</p>
+            <p class="microlabel text-gray-400 dark:text-zinc-500 mb-1.5">{{ t('boms.recipe.ply_construction') }}</p>
             <div class="flex gap-2">
               <button
                 v-for="p in plyOptions" :key="p"
@@ -654,14 +660,14 @@ const deleteTemplate = async (t: any) => {
           </div>
 
           <div>
-            <p class="microlabel text-gray-400 dark:text-zinc-500 mb-1.5">Layers (outer → inner)</p>
+            <p class="microlabel text-gray-400 dark:text-zinc-500 mb-1.5">{{ t('boms.recipe.layers_heading') }}</p>
             <div class="space-y-2">
               <div
                 v-for="(l, i) in tplForm.layers" :key="i"
                 class="grid grid-cols-12 gap-2 items-center rounded ring-1 ring-gray-100 dark:ring-zinc-800 p-2"
               >
                 <span class="col-span-5 text-xs text-gray-500 dark:text-zinc-400">{{ tplRoleLabel(l, i, tplForm.layers.length) }}</span>
-                <UInput v-model.number="l.gsm" type="number" placeholder="GSM" class="col-span-3" />
+                <UInput v-model.number="l.gsm" type="number" :placeholder="t('boms.recipe.gsm_placeholder')" class="col-span-3" />
                 <USelect
                   v-if="l.role === 'medium'"
                   v-model="l.flute_code" :options="fluteOptions"
@@ -674,8 +680,8 @@ const deleteTemplate = async (t: any) => {
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="tplEditorOpen = false">Cancel</UButton>
-            <UButton :loading="tplSaving" @click="saveTemplate">Save template</UButton>
+            <UButton color="gray" variant="ghost" @click="tplEditorOpen = false">{{ t('common.cancel') }}</UButton>
+            <UButton :loading="tplSaving" @click="saveTemplate">{{ t('boms.template_manager.save_template') }}</UButton>
           </div>
         </template>
       </UCard>

@@ -1,0 +1,66 @@
+{
+  "parties": {
+    "kicker": "Procurement",
+    "title": "Parties",
+    "subtitle": "Customers, suppliers, transporters & banks",
+    "new_party": "New party",
+    "search_placeholder": "Search code or name…",
+    "columns": {
+      "code": "Code",
+      "name": "Name",
+      "roles": "Roles",
+      "phone": "Phone",
+      "bin": "BIN"
+    },
+    "roles": {
+      "customer": "customer",
+      "supplier": "supplier",
+      "transporter": "transporter",
+      "bank": "bank",
+      "foreign": "foreign"
+    },
+    "checkboxes": {
+      "customer": "Customer",
+      "supplier": "Supplier",
+      "transporter": "Transporter",
+      "bank": "Bank",
+      "foreign": "Foreign (overseas)"
+    },
+    "empty": "No parties yet.",
+    "edit_party": "Edit party",
+    "new_party_title": "New party",
+    "fields": {
+      "code": "Code",
+      "name": "Name",
+      "phone": "Phone",
+      "email": "Email",
+      "bin": "BIN (VAT reg.)",
+      "tin": "TIN",
+      "address": "Address",
+      "country": "Country"
+    },
+    "country_placeholder": "e.g. China",
+    "party_updated": "Party updated",
+    "party_created": "Party created",
+    "detail": {
+      "kicker": "Parties",
+      "bin_label": "BIN",
+      "mushak_short": "6.1",
+      "receivable": "Receivable from them",
+      "payable": "Payable to them",
+      "invoices": "Invoices",
+      "lifetime": "lifetime",
+      "open_orders": "Open orders",
+      "ledger_position": "Ledger position by account",
+      "sales_orders": "Sales orders",
+      "lcs": "LCs",
+      "supplier_history": "Supplier history",
+      "gap": "gap",
+      "recent_ledger_entries": "Recent ledger entries",
+      "no_postings": "No postings yet.",
+      "not_found": "Party not found.",
+      "dr": "Dr",
+      "cr": "Cr"
+    }
+  }
+}

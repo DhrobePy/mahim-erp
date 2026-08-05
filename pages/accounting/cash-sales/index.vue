@@ -4,6 +4,7 @@ const toast = useToast()
 const { canWrite } = useProfile()
 const { money } = useFmt()
 const { deleteRecord } = useRecycleBin()
+const { t } = useI18n()
 
 const sales = ref<any[]>([])
 const customers = ref<any[]>([])
@@ -11,16 +12,16 @@ const items = ref<any[]>([])
 const cashBankAccounts = ref<any[]>([])
 const loading = ref(true)
 
-const columns = [
-  { key: 'sale_no', label: 'No.' },
-  { key: 'sale_date', label: 'Date' },
-  { key: 'customer', label: 'Customer' },
-  { key: 'account', label: 'Received into' },
-  { key: 'lines', label: 'Lines' },
-  { key: 'total', label: 'Total (৳)' },
-  { key: 'status', label: 'Status' },
+const columns = computed(() => [
+  { key: 'sale_no', label: t('accounting.cash_sales.columns.no') },
+  { key: 'sale_date', label: t('common.date') },
+  { key: 'customer', label: t('accounting.cash_sales.columns.customer') },
+  { key: 'account', label: t('accounting.cash_sales.columns.account') },
+  { key: 'lines', label: t('accounting.cash_sales.columns.lines') },
+  { key: 'total', label: t('accounting.cash_sales.columns.total') },
+  { key: 'status', label: t('common.status') },
   { key: 'actions', label: '' }
-]
+])
 
 const load = async () => {
   loading.value = true
@@ -75,10 +76,10 @@ const draftVat = computed(() => form.vat_applicable ? draftSubtotal.value * form
 const draftTotal = computed(() => draftSubtotal.value + draftVat.value)
 
 const save = async () => {
-  if (!form.cash_bank_account_id) { toast.add({ title: 'Pick the account receiving the cash', color: 'red' }); return }
-  if (!walkIn.value && !form.customer_party_id) { toast.add({ title: 'Pick a customer or switch to walk-in', color: 'red' }); return }
+  if (!form.cash_bank_account_id) { toast.add({ title: t('accounting.cash_sales.toasts.pick_account'), color: 'red' }); return }
+  if (!walkIn.value && !form.customer_party_id) { toast.add({ title: t('accounting.cash_sales.toasts.pick_customer'), color: 'red' }); return }
   const payload = lines.value.filter((l) => l.item_id && l.qty > 0)
-  if (!payload.length) { toast.add({ title: 'Add at least one line', color: 'red' }); return }
+  if (!payload.length) { toast.add({ title: t('accounting.cash_sales.toasts.add_line'), color: 'red' }); return }
   saving.value = true
   try {
     const insertPayload: any = {
@@ -95,11 +96,11 @@ const save = async () => {
       payload.map((l) => ({ ...l, cash_sale_id: (cs as any).id })) as any
     )
     if (res.error) throw res.error
-    toast.add({ title: 'Cash sale saved as draft' })
+    toast.add({ title: t('accounting.cash_sales.toasts.saved_draft') })
     open.value = false
     await load()
   } catch (e: any) {
-    toast.add({ title: 'Save failed', description: e.message, color: 'red' })
+    toast.add({ title: t('accounting.cash_sales.toasts.save_failed'), description: e.message, color: 'red' })
   } finally {
     saving.value = false
   }
@@ -109,8 +110,8 @@ const completing = ref<string | null>(null)
 const complete = async (row: any) => {
   completing.value = row.id
   const { error } = await client.rpc('complete_cash_sale', { p_id: row.id } as any)
-  if (error) toast.add({ title: 'Completion failed', description: error.message, color: 'red' })
-  else { toast.add({ title: `${row.sale_no} completed — posted to GL` }); await load() }
+  if (error) toast.add({ title: t('accounting.cash_sales.toasts.completion_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('accounting.cash_sales.toasts.completed', { sale: row.sale_no }) }); await load() }
   completing.value = null
 }
 
@@ -123,8 +124,8 @@ const remove = async (row: any) => {
 
 <template>
   <div>
-    <PageHeader kicker="Finance" title="Cash sales" subtitle="Walk-in / scrap / edge-trim receipts settled immediately — no LC, no receivable">
-      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">New cash sale</UButton>
+    <PageHeader :kicker="t('accounting.kicker')" :title="t('accounting.cash_sales.title')" :subtitle="t('accounting.cash_sales.subtitle')">
+      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">{{ t('accounting.cash_sales.new_sale') }}</UButton>
     </PageHeader>
 
     <UCard>
@@ -135,7 +136,7 @@ const remove = async (row: any) => {
         <template #sale_date-data="{ row }"><span class="num">{{ row.sale_date }}</span></template>
         <template #customer-data="{ row }">
           <NuxtLink v-if="row.customer_party_id" :to="`/parties/${row.customer_party_id}`" class="hover:underline">{{ row.parties?.name }}</NuxtLink>
-          <span v-else class="text-gray-500 dark:text-zinc-500">{{ row.customer_name || 'Walk-in' }}</span>
+          <span v-else class="text-gray-500 dark:text-zinc-500">{{ row.customer_name || t('accounting.cash_sales.walk_in') }}</span>
         </template>
         <template #account-data="{ row }">{{ row.cash_bank_accounts?.name }}</template>
         <template #lines-data="{ row }">
@@ -149,68 +150,68 @@ const remove = async (row: any) => {
         <template #status-data="{ row }"><UBadge size="xs" variant="subtle" :color="statusColor(row.status)">{{ row.status }}</UBadge></template>
         <template #actions-data="{ row }">
           <div class="flex gap-1 justify-end">
-            <UButton icon="i-heroicons-printer" size="xs" color="gray" variant="ghost" :to="`/print/cashsale/${row.id}`" target="_blank" aria-label="Print" />
-            <UButton v-if="canWrite && row.status === 'draft'" size="xs" variant="soft" color="green" :loading="completing === row.id" @click="complete(row)">Complete</UButton>
+            <UButton icon="i-heroicons-printer" size="xs" color="gray" variant="ghost" :to="`/print/cashsale/${row.id}`" target="_blank" :aria-label="t('accounting.cash_sales.print_aria')" />
+            <UButton v-if="canWrite && row.status === 'draft'" size="xs" variant="soft" color="green" :loading="completing === row.id" @click="complete(row)">{{ t('accounting.cash_sales.complete') }}</UButton>
             <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="remove(row)" />
           </div>
         </template>
         <template #empty-state>
-          <div class="text-center py-6 text-sm text-gray-400">No cash sales yet.</div>
+          <div class="text-center py-6 text-sm text-gray-400">{{ t('accounting.cash_sales.empty') }}</div>
         </template>
       </UTable>
     </UCard>
 
     <USlideover v-model="open" :ui="{ width: 'w-screen max-w-2xl' }">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">New cash sale</p></template>
+        <template #header><p class="font-medium">{{ t('accounting.cash_sales.dialog.title') }}</p></template>
         <div class="grid grid-cols-2 gap-4 mb-4">
-          <UFormGroup label="Date"><UInput v-model="form.sale_date" type="date" /></UFormGroup>
-          <UFormGroup label="Received into" required>
+          <UFormGroup :label="t('common.date')"><UInput v-model="form.sale_date" type="date" /></UFormGroup>
+          <UFormGroup :label="t('accounting.cash_sales.dialog.received_into')" required>
             <USelect v-model="form.cash_bank_account_id" :options="cashBankAccounts" option-attribute="name" value-attribute="id" placeholder="—" />
           </UFormGroup>
           <div class="col-span-2">
-            <UFormGroup label="Customer">
+            <UFormGroup :label="t('accounting.cash_sales.dialog.customer')">
               <div class="flex gap-2 mb-2">
                 <button
                   class="px-3 py-1 rounded text-xs border cursor-pointer"
                   :class="walkIn ? 'border-amber-500 text-amber-600 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-500/10' : 'border-gray-200 dark:border-zinc-700 text-gray-500'"
                   @click="walkIn = true"
-                >Walk-in</button>
+                >{{ t('accounting.cash_sales.dialog.walk_in_tab') }}</button>
                 <button
                   class="px-3 py-1 rounded text-xs border cursor-pointer"
                   :class="!walkIn ? 'border-amber-500 text-amber-600 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-500/10' : 'border-gray-200 dark:border-zinc-700 text-gray-500'"
                   @click="walkIn = false"
-                >Registered party</button>
+                >{{ t('accounting.cash_sales.dialog.registered_party_tab') }}</button>
               </div>
-              <UInput v-if="walkIn" v-model="form.customer_name" placeholder="Optional — walk-in buyer name" />
+              <UInput v-if="walkIn" v-model="form.customer_name" :placeholder="t('accounting.cash_sales.dialog.walk_in_placeholder')" />
               <USelect v-else v-model="form.customer_party_id" :options="customers" option-attribute="name" value-attribute="id" placeholder="—" />
             </UFormGroup>
           </div>
           <div class="col-span-2 flex items-center gap-4">
-            <UCheckbox v-model="form.vat_applicable" label="VAT applicable" />
+            <UCheckbox v-model="form.vat_applicable" :label="t('accounting.cash_sales.dialog.vat_applicable')" />
             <UInput v-if="form.vat_applicable" v-model.number="form.vat_rate" type="number" class="w-20" />
-            <span v-if="form.vat_applicable" class="text-xs text-gray-400">% output VAT (2510)</span>
+            <span v-if="form.vat_applicable" class="text-xs text-gray-400">{{ t('accounting.cash_sales.dialog.vat_suffix') }}</span>
           </div>
         </div>
         <div class="space-y-2">
           <div v-for="(l, idx) in lines" :key="idx" class="grid grid-cols-3 gap-2">
-            <UFormGroup label="Item">
+            <UFormGroup :label="t('accounting.cash_sales.dialog.item')">
               <USelect v-model="l.item_id" :options="items" option-attribute="sku" value-attribute="id" placeholder="—" />
             </UFormGroup>
-            <UFormGroup label="Qty"><UInput v-model.number="l.qty" type="number" /></UFormGroup>
-            <UFormGroup label="Unit price (৳)"><UInput v-model.number="l.unit_price" type="number" /></UFormGroup>
+            <UFormGroup :label="t('accounting.cash_sales.dialog.qty')"><UInput v-model.number="l.qty" type="number" /></UFormGroup>
+            <UFormGroup :label="t('accounting.cash_sales.dialog.unit_price')"><UInput v-model.number="l.unit_price" type="number" /></UFormGroup>
           </div>
-          <UButton size="xs" variant="soft" icon="i-heroicons-plus" @click="lines.push(blankLine())">Add line</UButton>
+          <UButton size="xs" variant="soft" icon="i-heroicons-plus" @click="lines.push(blankLine())">{{ t('accounting.cash_sales.dialog.add_line') }}</UButton>
         </div>
         <div class="mt-4 text-sm space-y-1 border-t border-gray-100 dark:border-zinc-800 pt-3">
-          <div class="flex justify-between"><span class="text-gray-500">Subtotal</span><span class="num">{{ money(draftSubtotal) }}</span></div>
-          <div v-if="form.vat_applicable" class="flex justify-between"><span class="text-gray-500">VAT ({{ form.vat_rate }}%)</span><span class="num">{{ money(draftVat) }}</span></div>
-          <div class="flex justify-between font-semibold"><span>Total</span><span class="num text-amber-600 dark:text-amber-400">{{ money(draftTotal) }}</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">{{ t('accounting.cash_sales.dialog.subtotal') }}</span><span class="num">{{ money(draftSubtotal) }}</span></div>
+          <div v-if="form.vat_applicable" class="flex justify-between"><span class="text-gray-500">{{ t('accounting.cash_sales.dialog.vat', { rate: form.vat_rate }) }}</span><span class="num">{{ money(draftVat) }}</span></div>
+          <div class="flex justify-between font-semibold"><span>{{ t('common.total') }}</span><span class="num text-amber-600 dark:text-amber-400">{{ money(draftTotal) }}</span></div>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="open = false">Cancel</UButton>
-            <UButton :loading="saving" @click="save">Save draft</UButton>
+            <UButton color="gray" variant="ghost" @click="open = false">{{ t('common.cancel') }}</UButton>
+            <UButton :loading="saving" @click="save">{{ t('accounting.cash_sales.dialog.save_draft') }}</UButton>
           </div>
         </template>
       </UCard>

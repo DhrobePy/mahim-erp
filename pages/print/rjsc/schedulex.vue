@@ -7,6 +7,7 @@ definePageMeta({ layout: false })
 const client = useSupabaseClient()
 const { activeCompanyId, load: loadProfile } = useProfile()
 const { num, money } = useFmt()
+const { locale: printLocale, t, toggle: toggleLang } = usePrintLocale()
 
 const company = ref<any>(null)
 const directors = ref<any[]>([])
@@ -32,26 +33,27 @@ const totalValue = computed(() => directors.value.reduce((s, d) => s + Number(d.
 <template>
   <div class="print-root">
     <div class="no-print toolbar">
-      <NuxtLink to="/admin/directors" class="back">← back</NuxtLink>
-      <button class="print-btn" @click="() => window.print()">🖨 Print</button>
+      <NuxtLink to="/admin/directors" class="back">{{ t('printGov.rjscScheduleX.back') }}</NuxtLink>
+      <button class="lang-btn" @click="toggleLang">{{ t('print.toolbar.lang_toggle') }}</button>
+      <button class="print-btn" @click="() => window.print()">{{ t('print.toolbar.print_btn') }}</button>
     </div>
 
-    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">Loading…</div>
+    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">{{ t('print.toolbar.loading') }}</div>
 
-    <div v-else-if="company" class="sheet">
-      <p class="form-tag">SCHEDULE X</p>
-      <p class="form-tag small">[The Companies Act, 1994 — Section 36 / Regulation 2]</p>
-      <div class="doc-title">LIST OF PERSONS HOLDING SHARES IN THE COMPANY</div>
+    <div v-else-if="company" class="sheet" :lang="printLocale">
+      <p class="form-tag">{{ t('printGov.rjscScheduleX.form_tag') }}</p>
+      <p class="form-tag small">{{ t('printGov.rjscScheduleX.act_section') }}</p>
+      <div class="doc-title">{{ t('printGov.rjscScheduleX.doc_title') }}</div>
 
       <table class="meta">
         <tbody>
           <tr>
             <td>
-              <div class="small">Name of the Company</div>
+              <div class="small">{{ t('printGov.rjscScheduleX.name_of_company') }}</div>
               <b>{{ company.legal_name || company.name }}</b>
             </td>
             <td>
-              <div class="small">Registered Address</div>
+              <div class="small">{{ t('printGov.rjscScheduleX.registered_address') }}</div>
               {{ company.address || '—' }}
             </td>
           </tr>
@@ -61,8 +63,8 @@ const totalValue = computed(() => directors.value.reduce((s, d) => s + Number(d.
       <table class="lines">
         <thead>
           <tr>
-            <th style="width: 24px;">SL</th><th>Name of Shareholder</th><th>Address</th>
-            <th class="right">No. of Shares</th><th class="right">Face Value (৳)</th><th class="right">Total Value (৳)</th>
+            <th style="width: 24px;">{{ t('printGov.rjscScheduleX.col_sl') }}</th><th>{{ t('printGov.rjscScheduleX.col_shareholder_name') }}</th><th>{{ t('printGov.rjscScheduleX.col_address') }}</th>
+            <th class="right">{{ t('printGov.rjscScheduleX.col_no_shares') }}</th><th class="right">{{ t('printGov.rjscScheduleX.col_face_value') }}</th><th class="right">{{ t('printGov.rjscScheduleX.col_total_value') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -74,9 +76,9 @@ const totalValue = computed(() => directors.value.reduce((s, d) => s + Number(d.
             <td class="right mono">{{ num(d.share_face_value) }}</td>
             <td class="right mono">{{ num(d.shares_held * d.share_face_value) }}</td>
           </tr>
-          <tr v-if="!directors.length"><td colspan="6" class="small" style="text-align:center;">No shareholders recorded.</td></tr>
+          <tr v-if="!directors.length"><td colspan="6" class="small" style="text-align:center;">{{ t('printGov.rjscScheduleX.no_shareholders') }}</td></tr>
           <tr class="total-row">
-            <td colspan="3"><b>TOTAL</b></td>
+            <td colspan="3"><b>{{ t('printGov.rjscScheduleX.total') }}</b></td>
             <td class="right mono"><b>{{ num(totalShares, 0) }}</b></td>
             <td />
             <td class="right mono"><b>{{ num(totalValue) }}</b></td>
@@ -84,16 +86,15 @@ const totalValue = computed(() => directors.value.reduce((s, d) => s + Number(d.
         </tbody>
       </table>
 
-      <p class="small">Total paid-up capital: <b>{{ money(totalValue) }}</b> ({{ num(totalShares, 0) }} shares)</p>
+      <p class="small">{{ t('printGov.rjscScheduleX.total_paid_up', { value: money(totalValue), shares: num(totalShares, 0) }) }}</p>
 
       <p class="disclaimer">
-        Draft prepared from the company's internal register for reference in filing preparation only.
-        Verify against the current RJSC-prescribed Schedule X and the statutory share ledger before submission.
+        {{ t('printGov.rjscScheduleX.disclaimer') }}
       </p>
 
       <div class="row spread sig-block">
-        <div class="sig"><div class="sig-line" /><div class="small">Signature of Managing Director / Director</div></div>
-        <div class="sig"><div class="sig-line" /><div class="small">Signature of Company Secretary</div></div>
+        <div class="sig"><div class="sig-line" /><div class="small">{{ t('printGov.rjscScheduleX.sig_director') }}</div></div>
+        <div class="sig"><div class="sig-line" /><div class="small">{{ t('printGov.rjscScheduleX.sig_secretary') }}</div></div>
       </div>
     </div>
   </div>
@@ -107,6 +108,7 @@ const totalValue = computed(() => directors.value.reduce((s, d) => s + Number(d.
 }
 .toolbar .back { color: #fbbf24; text-decoration: none; }
 .print-btn { background: #f59e0b; color: #000; border: 0; border-radius: 4px; padding: 6px 16px; font-weight: 600; cursor: pointer; }
+.lang-btn { background: transparent; color: #e4e4e7; border: 1px solid #52525b; border-radius: 4px; padding: 5px 14px; font-weight: 500; cursor: pointer; }
 .sheet {
   width: 210mm; min-height: 280mm; margin: 0 auto 20px; background: #fff; color: #111;
   padding: 18mm 16mm; box-shadow: 0 2px 12px rgba(0,0,0,.4); font-size: 13px; line-height: 1.55;

@@ -4,6 +4,7 @@ const toast = useToast()
 const { canWrite } = useProfile()
 const { money } = useFmt()
 const { deleteRecord } = useRecycleBin()
+const { t } = useI18n()
 
 const accounts = ref<any[]>([])
 const banks = ref<any[]>([])
@@ -47,19 +48,19 @@ const openNew = () => {
 }
 
 const save = async () => {
-  if (!form.name) { toast.add({ title: 'Name is required', color: 'red' }); return }
-  if (form.kind === 'bank' && !form.bank_party_id) { toast.add({ title: 'Pick a bank', color: 'red' }); return }
+  if (!form.name) { toast.add({ title: t('accounting.accounts.toasts.name_required'), color: 'red' }); return }
+  if (form.kind === 'bank' && !form.bank_party_id) { toast.add({ title: t('accounting.accounts.toasts.pick_bank'), color: 'red' }); return }
   saving.value = true
   try {
     const payload: any = { ...form }
     if (form.kind === 'cash') { payload.bank_party_id = null; payload.branch_id = null }
     const { error } = await client.from('cash_bank_accounts').insert(payload)
     if (error) throw error
-    toast.add({ title: 'Account created' })
+    toast.add({ title: t('accounting.accounts.toasts.created') })
     open.value = false
     await load()
   } catch (e: any) {
-    toast.add({ title: 'Save failed', description: e.message, color: 'red' })
+    toast.add({ title: t('common.save_failed'), description: e.message, color: 'red' })
   } finally {
     saving.value = false
   }
@@ -73,21 +74,21 @@ const removeAccount = async (a: any) => {
 
 <template>
   <div>
-    <PageHeader kicker="Finance" title="Bank &amp; cash accounts" subtitle="Every real account gets its own ledger line — the foundation for reconciliation, transfers and cash sales">
-      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">New account</UButton>
+    <PageHeader :kicker="t('accounting.kicker')" :title="t('accounting.accounts.title')" :subtitle="t('accounting.accounts.subtitle')">
+      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">{{ t('accounting.accounts.new_account') }}</UButton>
     </PageHeader>
 
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
       <UCard>
-        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Bank accounts</p></template>
-        <div v-if="!bankAccounts.length" class="text-sm text-gray-400 py-3 text-center">None yet.</div>
+        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('accounting.accounts.bank_accounts') }}</p></template>
+        <div v-if="!bankAccounts.length" class="text-sm text-gray-400 py-3 text-center">{{ t('accounting.accounts.none_yet') }}</div>
         <div
           v-for="a in bankAccounts" :key="a.id"
           class="flex justify-between items-center py-2 text-[13px] border-b border-gray-100 dark:border-zinc-800/60 last:border-0 -mx-1 px-1 rounded"
         >
           <NuxtLink :to="`/accounting/reconcile/${a.id}`" class="flex-1 hover:underline dark:text-zinc-200">
             {{ a.name }} <span class="num text-[11px] text-gray-400 dark:text-zinc-600">{{ a.gl_code }}</span>
-            <UBadge v-if="!a.is_active" size="xs" variant="subtle" color="gray" class="ml-1">inactive</UBadge>
+            <UBadge v-if="!a.is_active" size="xs" variant="subtle" color="gray" class="ml-1">{{ t('accounting.accounts.inactive') }}</UBadge>
           </NuxtLink>
           <span class="num font-medium">{{ money(a.balance) }}</span>
           <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" class="ml-2" @click="removeAccount(a)" />
@@ -95,8 +96,8 @@ const removeAccount = async (a: any) => {
       </UCard>
 
       <UCard>
-        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Cash points</p></template>
-        <div v-if="!cashAccounts.length" class="text-sm text-gray-400 py-3 text-center">None yet.</div>
+        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('accounting.accounts.cash_points') }}</p></template>
+        <div v-if="!cashAccounts.length" class="text-sm text-gray-400 py-3 text-center">{{ t('accounting.accounts.none_yet') }}</div>
         <div v-for="a in cashAccounts" :key="a.id" class="flex justify-between items-center py-2 text-[13px] border-b border-gray-100 dark:border-zinc-800/60 last:border-0">
           <span class="dark:text-zinc-200">
             {{ a.name }} <span class="num text-[11px] text-gray-400 dark:text-zinc-600">{{ a.gl_code }}</span>
@@ -109,41 +110,41 @@ const removeAccount = async (a: any) => {
 
     <USlideover v-model="open">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">New account</p></template>
+        <template #header><p class="font-medium">{{ t('accounting.accounts.dialog.title') }}</p></template>
         <div class="space-y-3">
-          <UFormGroup label="Kind">
+          <UFormGroup :label="t('accounting.accounts.dialog.kind')">
             <div class="flex gap-2">
               <button
                 class="px-4 py-1.5 rounded text-sm border cursor-pointer"
                 :class="form.kind === 'bank' ? 'border-amber-500 text-amber-600 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-500/10' : 'border-gray-200 dark:border-zinc-700 text-gray-500'"
                 @click="form.kind = 'bank'"
-              >Bank account</button>
+              >{{ t('accounting.accounts.dialog.bank_account_option') }}</button>
               <button
                 class="px-4 py-1.5 rounded text-sm border cursor-pointer"
                 :class="form.kind === 'cash' ? 'border-amber-500 text-amber-600 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-500/10' : 'border-gray-200 dark:border-zinc-700 text-gray-500'"
                 @click="form.kind = 'cash'"
-              >Cash point</button>
+              >{{ t('accounting.accounts.dialog.cash_point_option') }}</button>
             </div>
           </UFormGroup>
-          <UFormGroup label="Name" required><UInput v-model="form.name" placeholder="e.g. IBBL Current A/C 1234, or Factory Cash Till" /></UFormGroup>
+          <UFormGroup :label="t('common.name')" required><UInput v-model="form.name" :placeholder="t('accounting.accounts.dialog.name_placeholder')" /></UFormGroup>
           <template v-if="form.kind === 'bank'">
-            <UFormGroup label="Bank" required>
+            <UFormGroup :label="t('accounting.accounts.dialog.bank')" required>
               <USelect v-model="form.bank_party_id" :options="banks" option-attribute="name" value-attribute="id" placeholder="—" />
             </UFormGroup>
-            <UFormGroup label="Branch" hint="optional">
+            <UFormGroup :label="t('accounting.accounts.dialog.branch')" :hint="t('accounting.accounts.dialog.branch_hint')">
               <USelect v-model="form.branch_id" :options="branchesForBank" option-attribute="branch_name" value-attribute="id" placeholder="—" />
             </UFormGroup>
-            <UFormGroup label="Account no."><UInput v-model="form.account_no" /></UFormGroup>
+            <UFormGroup :label="t('accounting.accounts.dialog.account_no')"><UInput v-model="form.account_no" /></UFormGroup>
           </template>
           <div class="grid grid-cols-2 gap-3">
-            <UFormGroup label="Opening balance (৳)"><UInput v-model.number="form.opening_balance" type="number" /></UFormGroup>
-            <UFormGroup label="As of"><UInput v-model="form.opening_date" type="date" /></UFormGroup>
+            <UFormGroup :label="t('accounting.accounts.dialog.opening_balance')"><UInput v-model.number="form.opening_balance" type="number" /></UFormGroup>
+            <UFormGroup :label="t('accounting.accounts.dialog.as_of')"><UInput v-model="form.opening_date" type="date" /></UFormGroup>
           </div>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="open = false">Cancel</UButton>
-            <UButton :loading="saving" @click="save">Create</UButton>
+            <UButton color="gray" variant="ghost" @click="open = false">{{ t('common.cancel') }}</UButton>
+            <UButton :loading="saving" @click="save">{{ t('common.create') }}</UButton>
           </div>
         </template>
       </UCard>

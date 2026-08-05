@@ -3,81 +3,84 @@ const client = useSupabaseClient()
 const user = useSupabaseUser()
 const { profile, load } = useProfile()
 const { canView, load: loadPermissions } = usePermissions()
+const { t, locale, locales, setLocale } = useI18n()
 
 await load()
 await loadPermissions()
 
+// section/link "title"/"module" are translation keys into nav.sections.*
+// and nav.links.* (see locales/{en,bn}/nav.json) — not display text.
 const sections = [
   {
-    title: 'Executive',
+    title: 'executive',
     links: [
-      { label: 'CEO overview', to: '/ceo', icon: 'i-heroicons-chart-bar-square', module: 'ceo' }
+      { to: '/ceo', icon: 'i-heroicons-chart-bar-square', module: 'ceo' }
     ]
   },
   {
-    title: 'Operations',
+    title: 'operations',
     links: [
-      { label: 'Dashboard', to: '/', icon: 'i-heroicons-home', module: 'dashboard' },
-      { label: 'Items', to: '/items', icon: 'i-heroicons-cube', module: 'items' },
-      { label: 'Stock', to: '/stock', icon: 'i-heroicons-archive-box', module: 'stock' },
-      { label: 'BOMs', to: '/boms', icon: 'i-heroicons-rectangle-stack', module: 'boms' },
-      { label: 'Production', to: '/production', icon: 'i-heroicons-cog-6-tooth', module: 'production' }
+      { to: '/', icon: 'i-heroicons-home', module: 'dashboard' },
+      { to: '/items', icon: 'i-heroicons-cube', module: 'items' },
+      { to: '/stock', icon: 'i-heroicons-archive-box', module: 'stock' },
+      { to: '/boms', icon: 'i-heroicons-rectangle-stack', module: 'boms' },
+      { to: '/production', icon: 'i-heroicons-cog-6-tooth', module: 'production' }
     ]
   },
   {
-    title: 'Procurement',
+    title: 'procurement',
     links: [
-      { label: 'Parties', to: '/parties', icon: 'i-heroicons-users', module: 'parties' },
-      { label: 'Purchase orders', to: '/procurement/purchase-orders', icon: 'i-heroicons-clipboard-document-list', module: 'purchase_orders' },
-      { label: 'GRNs', to: '/procurement', icon: 'i-heroicons-truck', module: 'procurement' }
+      { to: '/parties', icon: 'i-heroicons-users', module: 'parties' },
+      { to: '/procurement/purchase-orders', icon: 'i-heroicons-clipboard-document-list', module: 'purchase_orders' },
+      { to: '/procurement', icon: 'i-heroicons-truck', module: 'procurement' }
     ]
   },
   {
-    title: 'Sales & Local LC',
+    title: 'sales',
     links: [
-      { label: 'Quotations / PI', to: '/quotations', icon: 'i-heroicons-clipboard-document-list', module: 'quotations' },
-      { label: 'Sales orders', to: '/sales', icon: 'i-heroicons-shopping-cart', module: 'sales_orders' },
-      { label: 'Challans', to: '/challans', icon: 'i-heroicons-document-duplicate', module: 'challans' },
-      { label: 'LCs', to: '/lcs', icon: 'i-heroicons-document-check', module: 'lcs' },
-      { label: 'Invoices', to: '/invoices', icon: 'i-heroicons-document-text', module: 'invoices' }
+      { to: '/quotations', icon: 'i-heroicons-clipboard-document-list', module: 'quotations' },
+      { to: '/sales', icon: 'i-heroicons-shopping-cart', module: 'sales_orders' },
+      { to: '/challans', icon: 'i-heroicons-document-duplicate', module: 'challans' },
+      { to: '/lcs', icon: 'i-heroicons-document-check', module: 'lcs' },
+      { to: '/invoices', icon: 'i-heroicons-document-text', module: 'invoices' }
     ]
   },
   {
-    title: 'Finance',
+    title: 'finance',
     links: [
-      { label: 'Banking / LBPD', to: '/banking', icon: 'i-heroicons-banknotes', module: 'banking' },
-      { label: 'Accounting', to: '/accounting', icon: 'i-heroicons-calculator', module: 'accounting' },
-      { label: 'Bank & cash accounts', to: '/accounting/accounts', icon: 'i-heroicons-credit-card', module: 'bank_accounts' },
-      { label: 'Cash sales', to: '/accounting/cash-sales', icon: 'i-heroicons-shopping-bag', module: 'cash_sales' },
-      { label: 'Transfers', to: '/accounting/transfers', icon: 'i-heroicons-arrows-right-left', module: 'transfers' },
-      { label: 'Bank charges & fees', to: '/accounting/bank-charges', icon: 'i-heroicons-currency-dollar', module: 'bank_charges' },
-      { label: 'Profit & Loss', to: '/accounting/pnl', icon: 'i-heroicons-chart-bar', module: 'pnl' },
-      { label: 'VAT return', to: '/accounting/vat-return', icon: 'i-heroicons-receipt-percent', module: 'vat_return' },
-      { label: 'AIT summary', to: '/accounting/ait-summary', icon: 'i-heroicons-document-chart-bar', module: 'ait_summary' }
+      { to: '/banking', icon: 'i-heroicons-banknotes', module: 'banking' },
+      { to: '/accounting', icon: 'i-heroicons-calculator', module: 'accounting' },
+      { to: '/accounting/accounts', icon: 'i-heroicons-credit-card', module: 'bank_accounts' },
+      { to: '/accounting/cash-sales', icon: 'i-heroicons-shopping-bag', module: 'cash_sales' },
+      { to: '/accounting/transfers', icon: 'i-heroicons-arrows-right-left', module: 'transfers' },
+      { to: '/accounting/bank-charges', icon: 'i-heroicons-currency-dollar', module: 'bank_charges' },
+      { to: '/accounting/pnl', icon: 'i-heroicons-chart-bar', module: 'pnl' },
+      { to: '/accounting/vat-return', icon: 'i-heroicons-receipt-percent', module: 'vat_return' },
+      { to: '/accounting/ait-summary', icon: 'i-heroicons-document-chart-bar', module: 'ait_summary' }
     ]
   },
   {
-    title: 'HR',
+    title: 'hr',
     links: [
-      { label: 'Employees', to: '/hr', icon: 'i-heroicons-identification', module: 'hr' },
-      { label: 'Attendance', to: '/hr/attendance', icon: 'i-heroicons-finger-print', module: 'attendance' },
-      { label: 'Payroll', to: '/hr/payroll', icon: 'i-heroicons-currency-bangladeshi', module: 'payroll' },
-      { label: 'Office stationery', to: '/hr/stationery', icon: 'i-heroicons-pencil-square', module: 'stationery' }
+      { to: '/hr', icon: 'i-heroicons-identification', module: 'hr' },
+      { to: '/hr/attendance', icon: 'i-heroicons-finger-print', module: 'attendance' },
+      { to: '/hr/payroll', icon: 'i-heroicons-currency-bangladeshi', module: 'payroll' },
+      { to: '/hr/stationery', icon: 'i-heroicons-pencil-square', module: 'stationery' }
     ]
   },
   {
-    title: 'Admin',
+    title: 'admin',
     links: [
-      { label: 'Audit trail', to: '/audit', icon: 'i-heroicons-shield-check', module: 'audit' },
-      { label: 'Recycle bin', to: '/recycle-bin', icon: 'i-heroicons-trash', module: 'recycle_bin' },
-      { label: 'Company & structure', to: '/admin/company', icon: 'i-heroicons-building-office-2', module: 'company' },
-      { label: 'Directors & partners', to: '/admin/directors', icon: 'i-heroicons-user-group', module: 'directors' },
-      { label: 'Board resolutions', to: '/admin/resolutions', icon: 'i-heroicons-clipboard-document-check', module: 'resolutions' },
-      { label: 'Company documents', to: '/admin/documents', icon: 'i-heroicons-folder', module: 'documents' },
-      { label: 'Forwarding pad', to: '/admin/forwarding', icon: 'i-heroicons-paper-airplane', module: 'forwarding' },
-      { label: 'Bank service requests', to: '/admin/bank-requests', icon: 'i-heroicons-building-library', module: 'bank_requests' },
-      { label: 'Tax — IT-10B', to: '/admin/tax', icon: 'i-heroicons-calculator', module: 'tax_it10b' },
-      { label: 'Corporate tax computation', to: '/admin/tax/corporate', icon: 'i-heroicons-scale', module: 'tax_corporate' }
+      { to: '/audit', icon: 'i-heroicons-shield-check', module: 'audit' },
+      { to: '/recycle-bin', icon: 'i-heroicons-trash', module: 'recycle_bin' },
+      { to: '/admin/company', icon: 'i-heroicons-building-office-2', module: 'company' },
+      { to: '/admin/directors', icon: 'i-heroicons-user-group', module: 'directors' },
+      { to: '/admin/resolutions', icon: 'i-heroicons-clipboard-document-check', module: 'resolutions' },
+      { to: '/admin/documents', icon: 'i-heroicons-folder', module: 'documents' },
+      { to: '/admin/forwarding', icon: 'i-heroicons-paper-airplane', module: 'forwarding' },
+      { to: '/admin/bank-requests', icon: 'i-heroicons-building-library', module: 'bank_requests' },
+      { to: '/admin/tax', icon: 'i-heroicons-calculator', module: 'tax_it10b' },
+      { to: '/admin/tax/corporate', icon: 'i-heroicons-scale', module: 'tax_corporate' }
     ]
   }
 ]
@@ -90,10 +93,10 @@ const visibleSections = computed(() => {
     .map((s) => ({ ...s, links: s.links.filter((l) => canView(l.module)) }))
     .filter((s) => s.links.length)
   if (profile.value?.role === 'admin') {
-    const admin = out.find((s) => s.title === 'Admin')
-    const accessLink = { label: 'Access & roles', to: '/access', icon: 'i-heroicons-key', module: 'access' }
+    const admin = out.find((s) => s.title === 'admin')
+    const accessLink = { to: '/access', icon: 'i-heroicons-key', module: 'access' }
     if (admin) admin.links.unshift(accessLink)
-    else out.push({ title: 'Admin', links: [accessLink] })
+    else out.push({ title: 'admin', links: [accessLink] })
   }
   return out
 })
@@ -143,8 +146,11 @@ const signOut = async () => {
 const displayName = computed(() => profile.value?.full_name || user.value?.email || 'User')
 const profileMenu = computed(() => [
   [{ label: displayName.value, disabled: true, icon: 'i-heroicons-user-circle' }],
-  [{ label: 'Sign out', icon: 'i-heroicons-arrow-right-on-rectangle', click: signOut }]
+  [{ label: t('nav.sign_out'), icon: 'i-heroicons-arrow-right-on-rectangle', click: signOut }]
 ])
+
+const otherLocale = computed(() => locales.value.find((l: any) => l.code !== locale.value))
+const toggleLocale = () => otherLocale.value && setLocale(otherLocale.value.code)
 </script>
 
 <template>
@@ -185,7 +191,7 @@ const profileMenu = computed(() => [
             @click="toggle(section.title)"
           >
             <span class="microlabel text-gray-400 dark:text-zinc-600 group-hover:text-gray-600 dark:group-hover:text-zinc-400">
-              {{ section.title }}
+              {{ t(`nav.sections.${section.title}`) }}
             </span>
             <UIcon
               :name="isOpen(section.title) ? 'i-heroicons-chevron-down' : 'i-heroicons-chevron-right'"
@@ -197,27 +203,27 @@ const profileMenu = computed(() => [
               v-for="link in section.links"
               :key="link.to"
               :to="link.to"
-              :title="sidebarCollapsed ? link.label : undefined"
+              :title="sidebarCollapsed ? t(`nav.links.${link.module}`) : undefined"
               active-class="!border-amber-500 !text-amber-600 dark:!text-amber-400 bg-amber-50/60 dark:bg-amber-500/[0.06]"
               class="flex items-center gap-2.5 py-[7px] text-[13px] border-l-2 border-transparent text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors duration-150 cursor-pointer"
               :class="sidebarCollapsed ? 'justify-center px-0' : 'pl-[15px] pr-3'"
               @click="mobileNavOpen = false"
             >
               <UIcon :name="link.icon" class="text-base opacity-70 shrink-0" />
-              <span v-if="!sidebarCollapsed">{{ link.label }}</span>
+              <span v-if="!sidebarCollapsed">{{ t(`nav.links.${link.module}`) }}</span>
             </ULink>
           </template>
         </template>
       </nav>
 
       <div v-if="!sidebarCollapsed" class="px-4 py-3 border-t border-gray-200 dark:border-zinc-800/80 shrink-0">
-        <p class="microlabel text-gray-400 dark:text-zinc-600">Company</p>
+        <p class="microlabel text-gray-400 dark:text-zinc-600">{{ t('nav.company_label') }}</p>
         <p class="text-[12px] mt-0.5 dark:text-zinc-300 truncate">Mahim Packaging Ltd.</p>
       </div>
 
       <button
         class="hidden lg:flex items-center justify-center h-9 shrink-0 border-t border-gray-200 dark:border-zinc-800/80 text-gray-400 dark:text-zinc-600 hover:text-gray-700 dark:hover:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-900 cursor-pointer"
-        :aria-label="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+        :aria-label="sidebarCollapsed ? t('nav.expand') : t('nav.collapse')"
         @click="toggleCollapsed"
       >
         <UIcon :name="sidebarCollapsed ? 'i-heroicons-chevron-double-right' : 'i-heroicons-chevron-double-left'" class="text-sm" />
@@ -229,18 +235,25 @@ const profileMenu = computed(() => [
       <header class="h-12 shrink-0 flex items-center justify-between gap-2.5 px-3 lg:px-5 border-b border-gray-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c0c0f]">
         <button
           class="lg:hidden flex items-center justify-center cursor-pointer text-gray-500 dark:text-zinc-400"
-          aria-label="Open menu" @click="mobileNavOpen = true"
+          :aria-label="t('nav.open_menu')" @click="mobileNavOpen = true"
         >
           <UIcon name="i-heroicons-bars-3" class="text-xl" />
         </button>
         <div class="flex-1" />
         <div class="flex items-center gap-2.5">
+          <button
+            class="microlabel px-2 py-1 rounded border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-zinc-400 hover:text-gray-800 dark:hover:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-700 cursor-pointer"
+            :aria-label="t('nav.switch_language')" :title="t('nav.switch_language')"
+            @click="toggleLocale"
+          >
+            {{ otherLocale?.code === 'bn' ? 'বাংলা' : 'EN' }}
+          </button>
           <NotificationBell />
           <span class="microlabel px-1.5 py-0.5 rounded border border-amber-500/40 text-amber-600 dark:text-amber-400">
             {{ profile?.role || 'viewer' }}
           </span>
           <UDropdown :items="profileMenu" :popper="{ placement: 'bottom-end' }">
-            <button class="flex items-center gap-2 rounded-full cursor-pointer hover:opacity-80" aria-label="Profile menu">
+            <button class="flex items-center gap-2 rounded-full cursor-pointer hover:opacity-80" :aria-label="t('nav.profile_menu')">
               <UAvatar
                 :alt="displayName"
                 size="sm"

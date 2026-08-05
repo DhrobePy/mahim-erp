@@ -1,0 +1,74 @@
+{
+  "challans": {
+    "kicker": "Sales & Local LC",
+    "title": "Delivery challans",
+    "subtitle": "Standard (LC in hand) and pre-LC originals; covering sets issue once the LC lands",
+    "new_challan": "New challan",
+    "columns": {
+      "challan": "Challan",
+      "kind": "Kind",
+      "buyer": "Buyer",
+      "dates": "Doc / actual date",
+      "lc": "LC",
+      "covers": "Covers",
+      "status": "Status"
+    },
+    "actual_prefix": "actual {date}",
+    "issue": "Issue",
+    "cover_with_lc": "Cover with LC",
+    "invoice": "Invoice",
+    "delete_aria": "Delete",
+    "empty": "No challans yet.",
+    "print_aria": "Print delivery challan",
+    "modal_title": "New delivery challan",
+    "so_label": "Sales order",
+    "so_placeholder": "—",
+    "kind_label": "Kind",
+    "lc_label": "LC",
+    "lc_placeholder": "—",
+    "actual_delivery_date_label": "Actual delivery date",
+    "document_date_label": "Document (printed) date",
+    "lines_hint": "Lines (prefilled with undelivered qty)",
+    "cancel": "Cancel",
+    "save_draft": "Save draft",
+    "issue_now": "Issue now",
+    "cover_modal_title": "Cover {no} with an LC",
+    "cover_desc": "Issues an official-series covering challan linked to the original. Stock and GDNI stay untouched — the invoice will clear GDNI.",
+    "cover_lc_label": "LC",
+    "cover_lc_placeholder": "—",
+    "cover_date_label": "Document date (matches LC window)",
+    "issue_covering_set": "Issue covering set",
+    "kinds": {
+      "standard": "Standard — LC in hand (official DC no.)",
+      "original": "Original — pre-LC delivery (internal no., posts GDNI)"
+    },
+    "kind_short": {
+      "standard": "Standard",
+      "original": "Original",
+      "covering": "Covering"
+    },
+    "statuses": {
+      "draft": "Draft",
+      "issued": "Issued",
+      "delivered_unbilled": "Delivered — unbilled",
+      "covered": "Covered",
+      "invoiced": "Invoiced",
+      "cancelled": "Cancelled"
+    },
+    "toast": {
+      "pick_so": "Pick a sales order",
+      "standard_needs_lc": "Standard challans need an LC — use an original (pre-LC) challan instead",
+      "nothing_to_deliver": "Nothing to deliver",
+      "challan_failed": "Challan failed",
+      "issued_stock": "Challan issued — stock dispatched",
+      "saved_draft": "Challan saved as draft",
+      "issue_failed": "Issue failed",
+      "issued": "{no} issued",
+      "pick_lc": "Pick the LC",
+      "covering_failed": "Covering failed",
+      "covering_issued": "Covering set issued (official series, no re-posting)",
+      "invoicing_failed": "Invoicing failed",
+      "invoice_created": "Invoice created for {no}"
+    }
+  }
+}

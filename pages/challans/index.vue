@@ -3,6 +3,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { deleteRecord } = useRecycleBin()
+const { t } = useI18n()
 
 const challans = ref<any[]>([])
 const orders = ref<any[]>([])
@@ -10,16 +11,16 @@ const lcs = ref<any[]>([])
 const items = ref<any[]>([])
 const loading = ref(true)
 
-const columns = [
-  { key: 'challan_no', label: 'Challan' },
-  { key: 'challan_kind', label: 'Kind' },
-  { key: 'customer', label: 'Buyer' },
-  { key: 'dates', label: 'Doc / actual date' },
-  { key: 'lc', label: 'LC' },
-  { key: 'covers', label: 'Covers' },
-  { key: 'status', label: 'Status' },
+const columns = computed(() => [
+  { key: 'challan_no', label: t('challans.columns.challan') },
+  { key: 'challan_kind', label: t('challans.columns.kind') },
+  { key: 'customer', label: t('challans.columns.buyer') },
+  { key: 'dates', label: t('challans.columns.dates') },
+  { key: 'lc', label: t('challans.columns.lc') },
+  { key: 'covers', label: t('challans.columns.covers') },
+  { key: 'status', label: t('challans.columns.status') },
   { key: 'actions', label: '' }
-]
+])
 
 const load = async () => {
   loading.value = true
@@ -53,10 +54,10 @@ const form = reactive({
   document_date: new Date().toISOString().slice(0, 10)
 })
 const lines = ref<any[]>([])
-const kindOptions = [
-  { value: 'standard', label: 'Standard — LC in hand (official DC no.)' },
-  { value: 'original', label: 'Original — pre-LC delivery (internal no., posts GDNI)' }
-]
+const kindOptions = computed(() => [
+  { value: 'standard', label: t('challans.kinds.standard') },
+  { value: 'original', label: t('challans.kinds.original') }
+])
 const openNew = () => {
   Object.assign(form, {
     so_id: null, challan_kind: 'standard', lc_id: null,
@@ -82,9 +83,9 @@ watch(() => form.so_id, (soId) => {
 
 const save = async (issue: boolean) => {
   const so = orders.value.find((o) => o.id === form.so_id)
-  if (!so) { toast.add({ title: 'Pick a sales order', color: 'red' }); return }
+  if (!so) { toast.add({ title: t('challans.toast.pick_so'), color: 'red' }); return }
   if (form.challan_kind === 'standard' && !form.lc_id) {
-    toast.add({ title: 'Standard challans need an LC — use an original (pre-LC) challan instead', color: 'red' })
+    toast.add({ title: t('challans.toast.standard_needs_lc'), color: 'red' })
     return
   }
   saving.value = true
@@ -100,18 +101,18 @@ const save = async (issue: boolean) => {
     if (error) throw error
     const payload = lines.value.filter((l) => l.item_id && l.qty > 0)
       .map((l) => ({ challan_id: (ch as any).id, item_id: l.item_id, qty: l.qty, unit_price: l.unit_price }))
-    if (!payload.length) throw new Error('Nothing to deliver')
+    if (!payload.length) throw new Error(t('challans.toast.nothing_to_deliver'))
     const res = await client.from('delivery_challan_lines').insert(payload as any)
     if (res.error) throw res.error
     if (issue) {
       const rpc = await client.rpc('issue_challan', { p_challan_id: (ch as any).id } as any)
       if (rpc.error) throw rpc.error
     }
-    toast.add({ title: issue ? 'Challan issued — stock dispatched' : 'Challan saved as draft' })
+    toast.add({ title: issue ? t('challans.toast.issued_stock') : t('challans.toast.saved_draft') })
     open.value = false
     await load()
   } catch (e: any) {
-    toast.add({ title: 'Challan failed', description: e.message, color: 'red' })
+    toast.add({ title: t('challans.toast.challan_failed'), description: e.message, color: 'red' })
   } finally {
     saving.value = false
   }
@@ -119,8 +120,8 @@ const save = async (issue: boolean) => {
 
 const issueDraft = async (row: any) => {
   const { error } = await client.rpc('issue_challan', { p_challan_id: row.id } as any)
-  if (error) toast.add({ title: 'Issue failed', description: error.message, color: 'red' })
-  else { toast.add({ title: `${row.challan_no} issued` }); await load() }
+  if (error) toast.add({ title: t('challans.toast.issue_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('challans.toast.issued', { no: row.challan_no }) }); await load() }
 }
 
 // --- Covering set ---
@@ -133,15 +134,15 @@ const openCover = (row: any) => {
   coverOpen.value = true
 }
 const createCover = async () => {
-  if (!coverForm.lc_id) { toast.add({ title: 'Pick the LC', color: 'red' }); return }
+  if (!coverForm.lc_id) { toast.add({ title: t('challans.toast.pick_lc'), color: 'red' }); return }
   const { error } = await client.rpc('create_covering_set', {
     p_original_id: coverTarget.value.id,
     p_lc_id: coverForm.lc_id,
     p_document_date: coverForm.document_date
   } as any)
-  if (error) toast.add({ title: 'Covering failed', description: error.message, color: 'red' })
+  if (error) toast.add({ title: t('challans.toast.covering_failed'), description: error.message, color: 'red' })
   else {
-    toast.add({ title: 'Covering set issued (official series, no re-posting)' })
+    toast.add({ title: t('challans.toast.covering_issued') })
     coverOpen.value = false
     await load()
   }
@@ -149,8 +150,8 @@ const createCover = async () => {
 
 const invoiceChallan = async (row: any) => {
   const { error } = await client.rpc('create_invoice_from_challan', { p_challan_id: row.id } as any)
-  if (error) toast.add({ title: 'Invoicing failed', description: error.message, color: 'red' })
-  else { toast.add({ title: `Invoice created for ${row.challan_no}` }); await load() }
+  if (error) toast.add({ title: t('challans.toast.invoicing_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('challans.toast.invoice_created', { no: row.challan_no }) }); await load() }
 }
 
 const onDelete = async (row: any) => {
@@ -159,20 +160,22 @@ const onDelete = async (row: any) => {
 
 const kindColor = (k: string) =>
   ({ standard: 'blue', original: 'amber', covering: 'purple' } as any)[k] || 'gray'
+const kindLabel = (k: string) => t(`challans.kind_short.${k}`)
 const statusColor = (s: string) =>
   ({ draft: 'gray', issued: 'blue', delivered_unbilled: 'amber', covered: 'purple', invoiced: 'green', cancelled: 'red' } as any)[s] || 'gray'
+const statusLabel = (s: string) => s === 'draft' ? t('common.draft') : t(`challans.statuses.${s}`)
 </script>
 
 <template>
   <div>
-    <PageHeader kicker="Sales &amp; Local LC" title="Delivery challans" subtitle="Standard (LC in hand) and pre-LC originals; covering sets issue once the LC lands">
-      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">New challan</UButton>
+    <PageHeader :kicker="t('challans.kicker')" :title="t('challans.title')" :subtitle="t('challans.subtitle')">
+      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">{{ t('challans.new_challan') }}</UButton>
     </PageHeader>
 
     <UCard>
       <UTable :rows="challans" :columns="columns" :loading="loading">
         <template #challan_kind-data="{ row }">
-          <UBadge size="xs" variant="subtle" :color="kindColor(row.challan_kind)">{{ row.challan_kind }}</UBadge>
+          <UBadge size="xs" variant="subtle" :color="kindColor(row.challan_kind)">{{ kindLabel(row.challan_kind) }}</UBadge>
         </template>
         <template #customer-data="{ row }">
           <NuxtLink :to="`/parties/${row.customer_party_id}`" class="hover:underline">{{ row.parties?.name }}</NuxtLink>
@@ -184,7 +187,7 @@ const statusColor = (s: string) =>
           <div class="text-xs num">
             <div>{{ row.document_date }}</div>
             <div v-if="row.document_date !== row.actual_delivery_date" class="text-amber-600 dark:text-amber-400">
-              actual {{ row.actual_delivery_date }}
+              {{ t('challans.actual_prefix', { date: row.actual_delivery_date }) }}
             </div>
           </div>
         </template>
@@ -194,55 +197,55 @@ const statusColor = (s: string) =>
         </template>
         <template #covers-data="{ row }">{{ row.covers?.challan_no || '—' }}</template>
         <template #status-data="{ row }">
-          <UBadge size="xs" variant="subtle" :color="statusColor(row.status)">{{ row.status }}</UBadge>
+          <UBadge size="xs" variant="subtle" :color="statusColor(row.status)">{{ statusLabel(row.status) }}</UBadge>
         </template>
         <template #actions-data="{ row }">
           <div class="flex gap-1 justify-end">
             <UButton
               v-if="row.status !== 'draft'"
               icon="i-heroicons-printer" size="xs" color="gray" variant="ghost"
-              :to="`/print/challan/${row.id}`" target="_blank" aria-label="Print delivery challan"
+              :to="`/print/challan/${row.id}`" target="_blank" :aria-label="t('challans.print_aria')"
             />
-            <UButton v-if="canWrite && row.status === 'draft'" size="xs" variant="soft" @click="issueDraft(row)">Issue</UButton>
+            <UButton v-if="canWrite && row.status === 'draft'" size="xs" variant="soft" @click="issueDraft(row)">{{ t('challans.issue') }}</UButton>
             <UButton
               v-if="canWrite && row.challan_kind === 'original' && row.status === 'delivered_unbilled'"
               size="xs" variant="soft" color="purple" @click="openCover(row)"
-            >Cover with LC</UButton>
+            >{{ t('challans.cover_with_lc') }}</UButton>
             <UButton
               v-if="canWrite && row.status === 'issued' && row.challan_kind !== 'original'"
               size="xs" variant="soft" color="green" @click="invoiceChallan(row)"
-            >Invoice</UButton>
-            <UButton v-if="canWrite" icon="i-heroicons-trash" size="xs" color="red" variant="ghost" aria-label="Delete" @click="onDelete(row)" />
+            >{{ t('challans.invoice') }}</UButton>
+            <UButton v-if="canWrite" icon="i-heroicons-trash" size="xs" color="red" variant="ghost" :aria-label="t('challans.delete_aria')" @click="onDelete(row)" />
           </div>
         </template>
         <template #empty-state>
-          <div class="text-center py-6 text-sm text-gray-400">No challans yet.</div>
+          <div class="text-center py-6 text-sm text-gray-400">{{ t('challans.empty') }}</div>
         </template>
       </UTable>
     </UCard>
 
     <USlideover v-model="open" :ui="{ width: 'w-screen max-w-2xl' }">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">New delivery challan</p></template>
+        <template #header><p class="font-medium">{{ t('challans.modal_title') }}</p></template>
         <div class="grid grid-cols-2 gap-4 mb-4">
-          <UFormGroup label="Sales order" required>
-            <USelect v-model="form.so_id" :options="orders" option-attribute="so_no" value-attribute="id" placeholder="—" />
+          <UFormGroup :label="t('challans.so_label')" required>
+            <USelect v-model="form.so_id" :options="orders" option-attribute="so_no" value-attribute="id" :placeholder="t('challans.so_placeholder')" />
           </UFormGroup>
-          <UFormGroup label="Kind" required>
+          <UFormGroup :label="t('challans.kind_label')" required>
             <USelect v-model="form.challan_kind" :options="kindOptions" option-attribute="label" value-attribute="value" />
           </UFormGroup>
-          <UFormGroup v-if="form.challan_kind === 'standard'" label="LC" required>
-            <USelect v-model="form.lc_id" :options="lcs" option-attribute="lc_no" value-attribute="id" placeholder="—" />
+          <UFormGroup v-if="form.challan_kind === 'standard'" :label="t('challans.lc_label')" required>
+            <USelect v-model="form.lc_id" :options="lcs" option-attribute="lc_no" value-attribute="id" :placeholder="t('challans.lc_placeholder')" />
           </UFormGroup>
-          <UFormGroup label="Actual delivery date">
+          <UFormGroup :label="t('challans.actual_delivery_date_label')">
             <UInput v-model="form.actual_delivery_date" type="date" />
           </UFormGroup>
-          <UFormGroup label="Document (printed) date">
+          <UFormGroup :label="t('challans.document_date_label')">
             <UInput v-model="form.document_date" type="date" />
           </UFormGroup>
         </div>
         <div v-if="lines.length" class="space-y-2">
-          <p class="text-xs uppercase tracking-wide text-gray-400">Lines (prefilled with undelivered qty)</p>
+          <p class="text-xs uppercase tracking-wide text-gray-400">{{ t('challans.lines_hint') }}</p>
           <div v-for="(l, idx) in lines" :key="idx" class="grid grid-cols-3 gap-2 items-center">
             <span class="text-sm">{{ l.sku }}</span>
             <UInput v-model.number="l.qty" type="number" />
@@ -251,9 +254,9 @@ const statusColor = (s: string) =>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="open = false">Cancel</UButton>
-            <UButton color="gray" variant="soft" :loading="saving" @click="save(false)">Save draft</UButton>
-            <UButton :loading="saving" @click="save(true)">Issue now</UButton>
+            <UButton color="gray" variant="ghost" @click="open = false">{{ t('challans.cancel') }}</UButton>
+            <UButton color="gray" variant="soft" :loading="saving" @click="save(false)">{{ t('challans.save_draft') }}</UButton>
+            <UButton :loading="saving" @click="save(true)">{{ t('challans.issue_now') }}</UButton>
           </div>
         </template>
       </UCard>
@@ -262,24 +265,23 @@ const statusColor = (s: string) =>
     <USlideover v-model="coverOpen">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
         <template #header>
-          <p class="font-medium">Cover {{ coverTarget?.challan_no }} with an LC</p>
+          <p class="font-medium">{{ t('challans.cover_modal_title', { no: coverTarget?.challan_no }) }}</p>
         </template>
         <div class="space-y-4">
           <p class="text-sm text-gray-500">
-            Issues an official-series covering challan linked to the original.
-            Stock and GDNI stay untouched — the invoice will clear GDNI.
+            {{ t('challans.cover_desc') }}
           </p>
-          <UFormGroup label="LC" required>
-            <USelect v-model="coverForm.lc_id" :options="lcs" option-attribute="lc_no" value-attribute="id" placeholder="—" />
+          <UFormGroup :label="t('challans.cover_lc_label')" required>
+            <USelect v-model="coverForm.lc_id" :options="lcs" option-attribute="lc_no" value-attribute="id" :placeholder="t('challans.cover_lc_placeholder')" />
           </UFormGroup>
-          <UFormGroup label="Document date (matches LC window)">
+          <UFormGroup :label="t('challans.cover_date_label')">
             <UInput v-model="coverForm.document_date" type="date" />
           </UFormGroup>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="coverOpen = false">Cancel</UButton>
-            <UButton color="purple" @click="createCover">Issue covering set</UButton>
+            <UButton color="gray" variant="ghost" @click="coverOpen = false">{{ t('challans.cancel') }}</UButton>
+            <UButton color="purple" @click="createCover">{{ t('challans.issue_covering_set') }}</UButton>
           </div>
         </template>
       </UCard>

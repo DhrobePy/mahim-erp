@@ -1,0 +1,144 @@
+{
+  "procurement": {
+    "statuses": {
+      "draft": "খসড়া",
+      "approved": "অনুমোদিত",
+      "partially_received": "আংশিক গৃহীত",
+      "received": "গৃহীত",
+      "closed": "বন্ধ",
+      "cancelled": "বাতিল",
+      "completed": "সম্পন্ন"
+    },
+    "grn": {
+      "kicker": "ক্রয়",
+      "title": "পণ্য গ্রহণ (জিআরএন)",
+      "subtitle": "QA-সমন্বিত প্রকৃত নিট ওজন — গ্রহণের পরই দায় পোস্ট হয়",
+      "new_grn": "নতুন জিআরএন",
+      "columns": {
+        "grn_no": "জিআরএন",
+        "supplier": "সরবরাহকারী",
+        "date": "তারিখ",
+        "mushak_61": "মুশক ৬.১",
+        "status": "স্ট্যাটাস"
+      },
+      "empty": "এখনো কোনো জিআরএন নেই।",
+      "complete_and_post": "সম্পন্ন ও পোস্ট করুন",
+      "debit_notes_header": "ডেবিট নোট — সরবরাহকারীদের জারি করা QA ঘাটতি",
+      "dn_columns": {
+        "dn_no": "ডিএন",
+        "supplier": "সরবরাহকারী",
+        "qty_gap": "পরিমাণ ঘাটতি",
+        "amount": "পরিমাণ (৳)",
+        "reason": "কারণ"
+      },
+      "no_debit_notes": "কোনো ডেবিট নোট নেই।",
+      "form": {
+        "title": "নতুন জিআরএন",
+        "supplier": "সরবরাহকারী",
+        "supplier_placeholder": "—",
+        "warehouse": "গুদাম",
+        "warehouse_placeholder": "ডিফল্ট",
+        "mushak_61_no": "সরবরাহকারীর মুশক ৬.১ নং",
+        "receive_against_po": "ক্রয় আদেশের বিপরীতে গ্রহণ করুন",
+        "receive_against_po_hint": "অবশিষ্ট পরিমাণ ও ল্যান্ডেড ইউনিট খরচ দিয়ে লাইন পূরণ করবে",
+        "standalone_receipt": "একক গ্রহণ — কোনো PO নেই",
+        "item": "পণ্য",
+        "item_placeholder": "—",
+        "invoice_qty": "চালান পরিমাণ",
+        "unit_price": "ইউনিট মূল্য",
+        "gross_weight": "গ্রস ওজন",
+        "core_tare": "কোর/টেয়ার",
+        "moisture_pct": "আর্দ্রতা %",
+        "batch_no": "ব্যাচ / রোল",
+        "batch_no_placeholder": "ঐচ্ছিক",
+        "fsc_certified": "FSC সনদপ্রাপ্ত রোল",
+        "true_net": "প্রকৃত নিট:",
+        "gap_note": "(ঘাটতি {gap} → ডেবিট নোট)",
+        "add_line": "লাইন যোগ করুন",
+        "save_draft": "খসড়া সংরক্ষণ করুন"
+      },
+      "toast": {
+        "po_nothing_left": "এই PO-তে গ্রহণের মতো কিছু বাকি নেই",
+        "pick_supplier": "একজন সরবরাহকারী নির্বাচন করুন",
+        "add_line_required": "অন্তত একটি লাইন যোগ করুন",
+        "completed_and_posted": "জিআরএন সম্পন্ন ও পোস্ট হয়েছে",
+        "saved_draft": "জিআরএন খসড়া হিসেবে সংরক্ষিত হয়েছে",
+        "grn_failed": "জিআরএন ব্যর্থ হয়েছে",
+        "completion_failed": "সম্পন্ন করা ব্যর্থ হয়েছে",
+        "named_completed": "{grn} সম্পন্ন ও পোস্ট হয়েছে"
+      }
+    },
+    "po": {
+      "kicker": "ক্রয়",
+      "title": "ক্রয় আদেশ",
+      "subtitle": "কাঁচামাল আদেশ তৈরি, অনুমোদন ও গ্রহণ করুন — ল্যান্ডেড খরচ (ফ্রেইট/শুল্ক/ক্লিয়ারিং) লাইন অনুযায়ী বণ্টিত",
+      "new_po": "নতুন ক্রয় আদেশ",
+      "empty": "এখনো কোনো ক্রয় আদেশ নেই।",
+      "columns": {
+        "po_no": "PO নং",
+        "supplier": "সরবরাহকারী",
+        "order_date": "আদেশের তারিখ",
+        "lines": "লাইন",
+        "value": "মূল্য",
+        "status": "স্ট্যাটাস"
+      },
+      "approve": "অনুমোদন",
+      "cancel": "বাতিল",
+      "form": {
+        "title": "নতুন ক্রয় আদেশ",
+        "subtitle": "খসড়া হিসেবে তৈরি হয়েছে — গ্রহণের আগে অনুমোদন করুন",
+        "supplier": "সরবরাহকারী",
+        "supplier_placeholder": "সরবরাহকারী নির্বাচন করুন",
+        "order_date": "আদেশের তারিখ",
+        "expected_delivery": "প্রত্যাশিত ডেলিভারি",
+        "currency": "মুদ্রা",
+        "line_items": "লাইন আইটেম",
+        "add": "যোগ করুন",
+        "item_placeholder": "কাঁচামাল",
+        "qty_placeholder": "পরিমাণ",
+        "unit_price_placeholder": "ইউনিট মূল্য",
+        "landed_per_unit": "ল্যান্ডেড: ৳{cost}/ইউনিট",
+        "landed_costs_header": "ল্যান্ডেড খরচ (মূল্যের অনুপাতে লাইন জুড়ে বণ্টিত)",
+        "freight": "ফ্রেইট",
+        "customs_duty": "শুল্ক",
+        "clearing_fee": "ক্লিয়ারিং ফি",
+        "other": "অন্যান্য",
+        "note": "নোট",
+        "ex_factory_value": "এক্স-ফ্যাক্টরি মূল্য",
+        "landed_costs": "ল্যান্ডেড খরচ",
+        "save_as_draft": "খসড়া হিসেবে সংরক্ষণ করুন"
+      },
+      "toast": {
+        "pick_supplier": "একজন সরবরাহকারী নির্বাচন করুন",
+        "add_line_required": "অন্তত একটি লাইন আইটেম যোগ করুন",
+        "created_draft": "ক্রয় আদেশ খসড়া হিসেবে তৈরি হয়েছে",
+        "save_failed": "সংরক্ষণ ব্যর্থ হয়েছে",
+        "approve_failed": "অনুমোদন ব্যর্থ হয়েছে",
+        "named_approved": "{po} অনুমোদিত হয়েছে"
+      },
+      "detail": {
+        "not_found": "ক্রয় আদেশ পাওয়া যায়নি।",
+        "ordered_prefix": "আদেশকৃত",
+        "ex_factory_value": "এক্স-ফ্যাক্টরি মূল্য",
+        "landed_costs": "ল্যান্ডেড খরচ",
+        "total_landed_value": "মোট ল্যান্ডেড মূল্য",
+        "line_items": "লাইন আইটেম",
+        "columns": {
+          "item": "পণ্য",
+          "ordered": "আদেশকৃত",
+          "ex_factory_price": "এক্স-ফ্যাক্টরি মূল্য",
+          "landed_unit_cost": "ল্যান্ডেড ইউনিট খরচ",
+          "received": "গৃহীত"
+        },
+        "note": "নোট",
+        "received_via": "গৃহীত মাধ্যম",
+        "accepted": "গৃহীত",
+        "cancel_confirm": "{po} বাতিল করবেন?",
+        "approved_toast": "অনুমোদিত হয়েছে",
+        "approve_failed": "অনুমোদন ব্যর্থ হয়েছে",
+        "cancelled_toast": "বাতিল হয়েছে",
+        "cancel_failed": "বাতিল ব্যর্থ হয়েছে"
+      }
+    }
+  }
+}

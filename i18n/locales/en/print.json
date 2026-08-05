@@ -1,0 +1,36 @@
+{
+  "print": {
+    "toolbar": {
+      "print_btn": "🖨 Print",
+      "loading": "Loading…",
+      "lang_toggle": "বাংলা"
+    },
+    "challan": {
+      "back": "← back to challans",
+      "title": "DELIVERY CHALLAN",
+      "kind_covering": "(Covering Set{ref})",
+      "kind_covering_ref": " — covers {no}",
+      "kind_original": "(Pre-LC Original — internal series)",
+      "consignee": "Consignee / Buyer",
+      "challan_no": "Challan No:",
+      "date": "Date:",
+      "actual_delivery": "Actual delivery: {date}",
+      "order_ref": "Order Ref:",
+      "lc_no": "L/C No:",
+      "lc_not_assigned": "Not yet assigned",
+      "status": "Status:",
+      "col_sl": "SL",
+      "col_description": "Description of Goods",
+      "col_size_spec": "Size / Spec",
+      "col_batch": "Batch / Roll",
+      "col_qty": "Quantity (Pcs)",
+      "total": "TOTAL",
+      "vehicle_no": "Vehicle No.",
+      "driver_name": "Driver Name",
+      "gate_pass_no": "Gate Pass No.",
+      "dispatched_by": "Dispatched by",
+      "received_by": "Received by (Buyer's Signature & Seal)",
+      "not_found": "Challan not found."
+    }
+  }
+}

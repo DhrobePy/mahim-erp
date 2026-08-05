@@ -4,16 +4,19 @@ definePageMeta({ layout: false })
 const route = useRoute()
 const client = useSupabaseClient()
 const { logoUrl } = useCompanyLogo()
+const { locale: printLocale, t, toggle: toggleLang } = usePrintLocale()
 
 const id = route.params.id as string
 const resolution = ref<any>(null)
 const company = ref<any>(null)
 const loading = ref(true)
 
-const meetingTypeLabel: Record<string, string> = {
-  board_meeting: 'Board of Directors', agm: 'Annual General Meeting',
-  egm: 'Extraordinary General Meeting', circular_resolution: 'Circular Resolution'
-}
+const meetingTypeLabel = computed<Record<string, string>>(() => ({
+  board_meeting: t('printHr.resolution.meeting_type_board'),
+  agm: t('printHr.resolution.meeting_type_agm'),
+  egm: t('printHr.resolution.meeting_type_egm'),
+  circular_resolution: t('printHr.resolution.meeting_type_circular')
+}))
 
 const load = async () => {
   loading.value = true
@@ -36,18 +39,29 @@ const agendasSorted = computed(() =>
 const fmtDate = (d?: string) => d
   ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
   : '—'
+
+const minutesTitle = computed(() => resolution.value ? t('printHr.resolution.minutes_title', {
+  meetingNo: (resolution.value.meeting_no || '').toUpperCase() || t('printHr.resolution.meeting_no_fallback'),
+  meetingType: meetingTypeLabel.value[resolution.value.meeting_type]?.toUpperCase()
+}) : '')
+const heldOnText = computed(() => resolution.value
+  ? (resolution.value.venue
+      ? t('printHr.resolution.held_on_at_venue', { date: fmtDate(resolution.value.meeting_date), venue: resolution.value.venue })
+      : t('printHr.resolution.held_on', { date: fmtDate(resolution.value.meeting_date) }))
+  : '')
 </script>
 
 <template>
   <div class="print-root">
     <div class="no-print toolbar">
-      <NuxtLink to="/admin/resolutions" class="back">← back</NuxtLink>
-      <button class="print-btn" @click="() => window.print()">🖨 Print</button>
+      <NuxtLink to="/admin/resolutions" class="back">{{ t('printHr.resolution.back') }}</NuxtLink>
+      <button class="lang-btn" @click="toggleLang">{{ t('print.toolbar.lang_toggle') }}</button>
+      <button class="print-btn" @click="() => window.print()">{{ t('print.toolbar.print_btn') }}</button>
     </div>
 
-    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">Loading…</div>
+    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">{{ t('print.toolbar.loading') }}</div>
 
-    <div v-else-if="resolution && company" class="sheet">
+    <div v-else-if="resolution && company" class="sheet" :lang="printLocale">
       <div class="letterhead">
         <img v-if="logoUrl(company)" :src="logoUrl(company)" class="co-logo" alt="Company logo">
         <div class="co-name">{{ company.legal_name || company.name }}</div>
@@ -55,18 +69,17 @@ const fmtDate = (d?: string) => d
       </div>
 
       <div class="doc-title">
-        MINUTES OF THE {{ (resolution.meeting_no || '').toUpperCase() || 'MEETING' }} OF THE
-        {{ meetingTypeLabel[resolution.meeting_type]?.toUpperCase() }}
+        {{ minutesTitle }}
       </div>
       <p class="small center">
-        held on {{ fmtDate(resolution.meeting_date) }}{{ resolution.venue ? ' at ' + resolution.venue : '' }}
+        {{ heldOnText }}
       </p>
 
-      <p class="small"><b>Ref:</b> {{ resolution.resolution_no }}</p>
-      <p v-if="resolution.chairperson" class="small"><b>In the Chair:</b> {{ resolution.chairperson }}</p>
+      <p class="small"><b>{{ t('printHr.resolution.ref_label') }}</b> {{ resolution.resolution_no }}</p>
+      <p v-if="resolution.chairperson" class="small"><b>{{ t('printHr.resolution.in_chair_label') }}</b> {{ resolution.chairperson }}</p>
 
       <div v-if="resolution.board_resolution_attendees?.length" class="attendees">
-        <p class="section-hdr">PRESENT</p>
+        <p class="section-hdr">{{ t('printHr.resolution.present_header') }}</p>
         <ol>
           <li v-for="(a, i) in resolution.board_resolution_attendees" :key="i">
             {{ a.company_directors?.full_name }} — {{ a.company_directors?.designation?.replace(/_/g, ' ') }}
@@ -74,18 +87,18 @@ const fmtDate = (d?: string) => d
         </ol>
       </div>
 
-      <p class="section-hdr">RESOLUTIONS</p>
+      <p class="section-hdr">{{ t('printHr.resolution.resolutions_header') }}</p>
       <div v-for="a in agendasSorted" :key="a.agenda_no" class="agenda">
         <p class="agenda-title">{{ a.agenda_no }}. {{ a.title }}</p>
         <p class="agenda-text">{{ a.resolution_text }}</p>
       </div>
-      <p v-if="!agendasSorted.length" class="small center">No agenda items recorded.</p>
+      <p v-if="!agendasSorted.length" class="small center">{{ t('printHr.resolution.no_agenda') }}</p>
 
-      <p class="closing">There being no other business, the meeting concluded with a vote of thanks to the Chair.</p>
+      <p class="closing">{{ t('printHr.resolution.closing') }}</p>
 
       <div class="row spread sig-block">
-        <div class="sig"><div class="sig-line" /><div class="small">Chairperson</div></div>
-        <div class="sig"><div class="sig-line" /><div class="small">Company Secretary</div></div>
+        <div class="sig"><div class="sig-line" /><div class="small">{{ t('printHr.resolution.chairperson') }}</div></div>
+        <div class="sig"><div class="sig-line" /><div class="small">{{ t('printHr.resolution.company_secretary') }}</div></div>
       </div>
     </div>
   </div>
@@ -99,6 +112,7 @@ const fmtDate = (d?: string) => d
 }
 .toolbar .back { color: #fbbf24; text-decoration: none; }
 .print-btn { background: #f59e0b; color: #000; border: 0; border-radius: 4px; padding: 6px 16px; font-weight: 600; cursor: pointer; }
+.lang-btn { background: transparent; color: #e4e4e7; border: 1px solid #52525b; border-radius: 4px; padding: 5px 14px; font-weight: 500; cursor: pointer; }
 .sheet {
   width: 210mm; min-height: 280mm; margin: 0 auto 20px; background: #fff; color: #111;
   padding: 18mm 16mm; box-shadow: 0 2px 12px rgba(0,0,0,.4); font-size: 13px; line-height: 1.6;

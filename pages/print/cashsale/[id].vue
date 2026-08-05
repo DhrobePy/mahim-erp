@@ -6,6 +6,7 @@ const client = useSupabaseClient()
 const { money } = useFmt()
 const { takaWords } = useTakaWords()
 const { logoUrl } = useCompanyLogo()
+const { locale: printLocale, t, toggle: toggleLang } = usePrintLocale()
 
 const id = route.params.id as string
 const sale = ref<any>(null)
@@ -39,33 +40,34 @@ const total = computed(() => subtotal.value + vatAmount.value)
 <template>
   <div class="print-root">
     <div class="no-print toolbar">
-      <NuxtLink to="/accounting/cash-sales" class="back">← back</NuxtLink>
-      <button class="print-btn" @click="() => window.print()">🖨 Print</button>
+      <NuxtLink to="/accounting/cash-sales" class="back">{{ t('printTrade.cashsale.back') }}</NuxtLink>
+      <button class="lang-btn" @click="toggleLang">{{ t('print.toolbar.lang_toggle') }}</button>
+      <button class="print-btn" @click="() => window.print()">{{ t('print.toolbar.print_btn') }}</button>
     </div>
 
-    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">Loading…</div>
+    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">{{ t('print.toolbar.loading') }}</div>
 
-    <div v-else-if="sale && company" class="sheet">
+    <div v-else-if="sale && company" class="sheet" :lang="printLocale">
       <div class="letterhead">
         <img v-if="logoUrl(company)" :src="logoUrl(company)" class="co-logo" alt="Company logo">
         <div class="co-name">{{ company.legal_name || company.name }}</div>
         <div class="small">{{ company.address || '' }}</div>
-        <div class="title">CASH SALE RECEIPT</div>
+        <div class="title">{{ t('printTrade.cashsale.title') }}</div>
       </div>
 
       <div class="row spread ref-row">
-        <div>Receipt No: <b class="mono">{{ sale.sale_no }}</b></div>
-        <div>Date: <b>{{ fmtDate(sale.sale_date) }}</b></div>
+        <div>{{ t('printTrade.cashsale.receipt_no') }} <b class="mono">{{ sale.sale_no }}</b></div>
+        <div>{{ t('printTrade.cashsale.date') }} <b>{{ fmtDate(sale.sale_date) }}</b></div>
       </div>
 
       <div class="row spread ref-row">
-        <div>Received from: <b>{{ sale.parties?.name || sale.customer_name || 'Walk-in customer' }}</b></div>
-        <div>Received into: <b>{{ sale.cash_bank_accounts?.name }}</b></div>
+        <div>{{ t('printTrade.cashsale.received_from') }} <b>{{ sale.parties?.name || sale.customer_name || t('printTrade.cashsale.walkin_customer') }}</b></div>
+        <div>{{ t('printTrade.cashsale.received_into') }} <b>{{ sale.cash_bank_accounts?.name }}</b></div>
       </div>
 
       <table class="lines">
         <thead>
-          <tr><th>#</th><th>Item</th><th class="num">Qty</th><th class="num">Unit price (৳)</th><th class="num">Amount (৳)</th></tr>
+          <tr><th>{{ t('printTrade.cashsale.col_no') }}</th><th>{{ t('printTrade.cashsale.col_item') }}</th><th class="num">{{ t('printTrade.cashsale.col_qty') }}</th><th class="num">{{ t('printTrade.cashsale.col_unit_price') }}</th><th class="num">{{ t('printTrade.cashsale.col_amount') }}</th></tr>
         </thead>
         <tbody>
           <tr v-for="(l, idx) in sale.cash_sale_lines" :key="l.id">
@@ -77,19 +79,19 @@ const total = computed(() => subtotal.value + vatAmount.value)
           </tr>
         </tbody>
         <tfoot>
-          <tr><td colspan="4" class="num">Subtotal</td><td class="num">{{ money(subtotal) }}</td></tr>
-          <tr v-if="sale.vat_applicable"><td colspan="4" class="num">VAT ({{ sale.vat_rate }}%)</td><td class="num">{{ money(vatAmount) }}</td></tr>
-          <tr class="total-row"><td colspan="4" class="num">Total</td><td class="num">{{ money(total) }}</td></tr>
+          <tr><td colspan="4" class="num">{{ t('printTrade.cashsale.subtotal') }}</td><td class="num">{{ money(subtotal) }}</td></tr>
+          <tr v-if="sale.vat_applicable"><td colspan="4" class="num">{{ t('printTrade.cashsale.vat_label', { rate: sale.vat_rate }) }}</td><td class="num">{{ money(vatAmount) }}</td></tr>
+          <tr class="total-row"><td colspan="4" class="num">{{ t('printTrade.cashsale.total') }}</td><td class="num">{{ money(total) }}</td></tr>
         </tfoot>
       </table>
 
-      <p class="small words">In words: {{ takaWords(total) }}</p>
+      <p class="small words">{{ t('printTrade.cashsale.in_words', { words: takaWords(total) }) }}</p>
 
       <div class="sig-block">
-        <p>Received by,</p>
+        <p>{{ t('printTrade.cashsale.received_by') }}</p>
         <div class="sig-line" />
-        <p><b>For {{ company.legal_name || company.name }}</b></p>
-        <p class="small">Authorised Signature</p>
+        <p><b>{{ t('printTrade.cashsale.for_company', { company: company.legal_name || company.name }) }}</b></p>
+        <p class="small">{{ t('printTrade.cashsale.authorised_signature') }}</p>
       </div>
     </div>
   </div>
@@ -103,6 +105,7 @@ const total = computed(() => subtotal.value + vatAmount.value)
 }
 .toolbar .back { color: #fbbf24; text-decoration: none; }
 .print-btn { background: #f59e0b; color: #000; border: 0; border-radius: 4px; padding: 6px 16px; font-weight: 600; cursor: pointer; }
+.lang-btn { background: transparent; color: #e4e4e7; border: 1px solid #52525b; border-radius: 4px; padding: 5px 14px; font-weight: 500; cursor: pointer; }
 .sheet {
   width: 210mm; min-height: 200mm; margin: 0 auto 20px; background: #fff; color: #111;
   padding: 20mm 18mm; box-shadow: 0 2px 12px rgba(0,0,0,.4); font-size: 13px; line-height: 1.7;

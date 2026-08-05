@@ -4,6 +4,7 @@ const user = useSupabaseUser()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { deleteRecord } = useRecycleBin()
+const { t } = useI18n()
 
 const orders = ref<any[]>([])
 const items = ref<any[]>([])
@@ -16,15 +17,15 @@ const statusColor: Record<string, string> = {
   completed: 'green', cancelled: 'gray'
 }
 
-const columns = [
-  { key: 'order_no', label: 'Order #' },
-  { key: 'item', label: 'Finished item' },
-  { key: 'planned_qty', label: 'Planned' },
-  { key: 'produced_qty', label: 'Produced' },
-  { key: 'status', label: 'Status' },
-  { key: 'planned_date', label: 'Date' },
+const columns = computed(() => [
+  { key: 'order_no', label: t('production.columns.order_no') },
+  { key: 'item', label: t('production.columns.item') },
+  { key: 'planned_qty', label: t('production.columns.planned') },
+  { key: 'produced_qty', label: t('production.columns.produced') },
+  { key: 'status', label: t('common.status') },
+  { key: 'planned_date', label: t('common.date') },
   { key: 'actions', label: '' }
-]
+])
 
 const finishedItems = computed(() =>
   items.value.filter((i) => ['finished_good', 'wip'].includes(i.item_type))
@@ -76,7 +77,7 @@ const openNew = () => {
 
 const save = async () => {
   if (!form.finished_item_id) {
-    toast.add({ title: 'Select a finished item', color: 'red' })
+    toast.add({ title: t('production.select_finished_item'), color: 'red' })
     return
   }
   saving.value = true
@@ -91,11 +92,11 @@ const save = async () => {
       created_by: user.value?.id
     })
     if (error) throw error
-    toast.add({ title: 'Production order created' })
+    toast.add({ title: t('production.order_created') })
     open.value = false
     await load()
   } catch (e: any) {
-    toast.add({ title: 'Save failed', description: e.message, color: 'red' })
+    toast.add({ title: t('common.save_failed'), description: e.message, color: 'red' })
   } finally {
     saving.value = false
   }
@@ -111,10 +112,10 @@ const completeOrder = async (row: any) => {
       p_qty: Number(row.planned_qty)
     })
     if (error) throw error
-    toast.add({ title: `${row.order_no} completed`, description: 'Stock movements posted.' })
+    toast.add({ title: t('production.order_completed', { order_no: row.order_no }), description: t('production.stock_posted') })
     await load()
   } catch (e: any) {
-    toast.add({ title: 'Completion failed', description: e.message, color: 'red' })
+    toast.add({ title: t('production.completion_failed'), description: e.message, color: 'red' })
   } finally {
     completing.value = null
   }
@@ -128,8 +129,8 @@ const deleteOrder = async (row: any) => {
 
 <template>
   <div>
-    <PageHeader kicker="Operations" title="Production orders" subtitle="Complete an order to auto-post output and BOM consumption">
-      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">New order</UButton>
+    <PageHeader :kicker="t('production.kicker')" :title="t('production.title')" :subtitle="t('production.subtitle')">
+      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">{{ t('production.new_order') }}</UButton>
     </PageHeader>
 
     <UCard>
@@ -148,7 +149,7 @@ const deleteOrder = async (row: any) => {
               size="xs" color="green" variant="soft"
               :loading="completing === row.id"
               @click="completeOrder(row)"
-            >Complete</UButton>
+            >{{ t('production.complete') }}</UButton>
             <UButton
               v-if="canWrite && row.status !== 'completed' && row.status !== 'cancelled'"
               icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="deleteOrder(row)"
@@ -156,46 +157,46 @@ const deleteOrder = async (row: any) => {
           </div>
         </template>
         <template #empty-state>
-          <div class="text-center py-6 text-sm text-gray-400">No production orders yet.</div>
+          <div class="text-center py-6 text-sm text-gray-400">{{ t('production.no_orders') }}</div>
         </template>
       </UTable>
     </UCard>
 
     <USlideover v-model="open">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">New production order</p></template>
+        <template #header><p class="font-medium">{{ t('production.new_order_title') }}</p></template>
         <div class="space-y-4">
-          <UFormGroup label="Finished item" required>
+          <UFormGroup :label="t('production.fields.finished_item')" required>
             <USelect
               v-model="form.finished_item_id" :options="finishedItems"
-              option-attribute="name" value-attribute="id" placeholder="Select"
+              option-attribute="name" value-attribute="id" :placeholder="t('production.fields.select')"
             />
           </UFormGroup>
-          <UFormGroup label="BOM (drives material consumption)">
+          <UFormGroup :label="t('production.fields.bom')">
             <USelect
               v-model="form.bom_id" :options="bomOptions"
-              option-attribute="name" value-attribute="id" placeholder="Optional"
+              option-attribute="name" value-attribute="id" :placeholder="t('production.fields.optional')"
             />
           </UFormGroup>
           <div class="grid grid-cols-2 gap-4">
-            <UFormGroup label="Planned qty" required>
+            <UFormGroup :label="t('production.fields.planned_qty')" required>
               <UInput v-model.number="form.planned_qty" type="number" />
             </UFormGroup>
-            <UFormGroup label="Output warehouse">
+            <UFormGroup :label="t('production.fields.output_warehouse')">
               <USelect v-model="form.warehouse_id" :options="warehouses" option-attribute="code" value-attribute="id" />
             </UFormGroup>
-            <UFormGroup label="Planned date" class="col-span-2">
+            <UFormGroup :label="t('production.fields.planned_date')" class="col-span-2">
               <UInput v-model="form.planned_date" type="date" />
             </UFormGroup>
           </div>
-          <UFormGroup label="Notes">
+          <UFormGroup :label="t('common.notes')">
             <UInput v-model="form.notes" />
           </UFormGroup>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="open = false">Cancel</UButton>
-            <UButton :loading="saving" @click="save">Create</UButton>
+            <UButton color="gray" variant="ghost" @click="open = false">{{ t('common.cancel') }}</UButton>
+            <UButton :loading="saving" @click="save">{{ t('production.create') }}</UButton>
           </div>
         </template>
       </UCard>

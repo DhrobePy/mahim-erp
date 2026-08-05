@@ -1,0 +1,36 @@
+{
+  "print": {
+    "toolbar": {
+      "print_btn": "🖨 প্রিন্ট",
+      "loading": "লোড হচ্ছে…",
+      "lang_toggle": "English"
+    },
+    "challan": {
+      "back": "← চালান তালিকায় ফিরুন",
+      "title": "ডেলিভারি চালান",
+      "kind_covering": "(কভারিং সেট{ref})",
+      "kind_covering_ref": " — কভার করে {no}",
+      "kind_original": "(প্রি-এলসি মূল কপি — অভ্যন্তরীণ সিরিজ)",
+      "consignee": "প্রাপক / ক্রেতা",
+      "challan_no": "চালান নং:",
+      "date": "তারিখ:",
+      "actual_delivery": "প্রকৃত ডেলিভারি: {date}",
+      "order_ref": "অর্ডার রেফ:",
+      "lc_no": "এলসি নং:",
+      "lc_not_assigned": "এখনো নির্ধারিত হয়নি",
+      "status": "অবস্থা:",
+      "col_sl": "ক্র.",
+      "col_description": "পণ্যের বিবরণ",
+      "col_size_spec": "সাইজ / স্পেক",
+      "col_batch": "ব্যাচ / রোল",
+      "col_qty": "পরিমাণ (পিস)",
+      "total": "মোট",
+      "vehicle_no": "গাড়ির নং",
+      "driver_name": "ড্রাইভারের নাম",
+      "gate_pass_no": "গেট পাস নং",
+      "dispatched_by": "প্রেরণকারী",
+      "received_by": "গ্রহণকারী (ক্রেতার স্বাক্ষর ও সিল)",
+      "not_found": "চালান পাওয়া যায়নি।"
+    }
+  }
+}

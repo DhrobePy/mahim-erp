@@ -1,0 +1,356 @@
+{
+  "hr": {
+    "kicker": "HR",
+    "employees": {
+      "title": "Employees",
+      "subtitle": "OT rate = (basic / 208) × 2 per BLA 2006; loans capped at 6 × basic",
+      "disburse_loan": "Disburse loan",
+      "new_employee": "New employee",
+      "columns": {
+        "id": "ID",
+        "name": "Name",
+        "designation": "Designation",
+        "joined": "Joined",
+        "basic": "Basic (৳)",
+        "gross": "Gross (৳)",
+        "ot_rate": "OT rate/hr"
+      },
+      "no_employees": "No employees yet.",
+      "loans_header": "Employee loans — amortised via payroll",
+      "loans_columns": {
+        "loan": "Loan",
+        "employee": "Employee",
+        "principal": "Principal (৳)",
+        "installment": "Installment",
+        "balance": "Balance",
+        "status": "Status"
+      },
+      "no_loans": "No loans.",
+      "edit_title": "Edit employee",
+      "new_title": "New employee",
+      "form": {
+        "full_name": "Full name",
+        "designation": "Designation",
+        "department": "Department",
+        "joining_date": "Joining date",
+        "biometric_id": "Biometric ID",
+        "basic_salary": "Basic salary (৳)",
+        "gross_salary": "Gross salary (৳)",
+        "attendance_allowance": "Attendance allowance (৳/mo)",
+        "phone": "Phone",
+        "nid_no": "NID no.",
+        "personal_info": "Personal information",
+        "father_name": "Father's name",
+        "date_of_birth": "Date of birth",
+        "blood_group": "Blood group",
+        "blood_group_placeholder": "e.g. B+",
+        "marital_status": "Marital status",
+        "marital_status_placeholder": "single / married",
+        "present_address": "Present address",
+        "permanent_address": "Permanent address",
+        "emergency_contact_name": "Emergency contact name",
+        "emergency_contact_phone": "Emergency contact phone"
+      },
+      "loan_form": {
+        "title": "Disburse employee loan",
+        "employee": "Employee",
+        "principal": "Principal (৳)",
+        "principal_hint": "max 6 × basic",
+        "installment": "Monthly installment (৳)",
+        "paid_from_account": "Paid from account",
+        "default_account_placeholder": "— default bank account —",
+        "note": "Note",
+        "disburse_button": "Disburse (Dr 1240 / Cr 1100)"
+      },
+      "toast": {
+        "employee_updated": "Employee updated",
+        "employee_added": "Employee added",
+        "save_failed": "Save failed",
+        "loan_failed": "Loan failed",
+        "loan_disbursed": "Loan disbursed & posted"
+      },
+      "status": {
+        "active": "active",
+        "inactive": "inactive"
+      }
+    },
+    "detail": {
+      "active": "active",
+      "inactive": "inactive",
+      "joined_label": "joined",
+      "salary_certificate": "Salary certificate",
+      "not_found": "Employee not found.",
+      "stats": {
+        "basic": "Basic",
+        "gross": "Gross",
+        "ot_rate": "OT rate/hr (BLA)",
+        "this_month": "This month",
+        "ot_this_month": "OT this month"
+      },
+      "personal_info": {
+        "title": "Personal information",
+        "father_name": "Father's name",
+        "date_of_birth": "Date of birth",
+        "blood_group": "Blood group",
+        "marital_status": "Marital status",
+        "nid_no": "NID no.",
+        "phone": "Phone",
+        "present_address": "Present address",
+        "permanent_address": "Permanent address",
+        "emergency_contact": "Emergency contact"
+      },
+      "payslip_history": {
+        "title": "Payslip history",
+        "no_runs": "No payroll runs yet.",
+        "bonus_badge": "bonus",
+        "print_aria": "Print payslip"
+      },
+      "loans": {
+        "title": "Loans",
+        "balance_label": "bal",
+        "print_aria": "Print loan agreement"
+      },
+      "stationery_usage": {
+        "title": "Stationery / inventory usage",
+        "no_usage": "No stationery issued yet.",
+        "total": "Total"
+      },
+      "attendance": {
+        "title": "Attendance this month",
+        "no_records": "No records this month.",
+        "late": "late",
+        "ot_suffix": "OT"
+      },
+      "acr": {
+        "title": "Annual Confidential Report (ACR)",
+        "new": "New ACR",
+        "no_records": "No ACR on file yet.",
+        "draft_badge": "draft",
+        "print_aria": "Print ACR",
+        "new_title": "New Annual Confidential Report",
+        "review_year": "Review year",
+        "reviewing_officer": "Reviewing officer",
+        "job_knowledge": "Job knowledge (1-5)",
+        "quality_of_work": "Quality of work (1-5)",
+        "integrity": "Integrity (1-5)",
+        "punctuality": "Punctuality (1-5)",
+        "initiative": "Initiative (1-5)",
+        "overall_grade": "Overall grade",
+        "strengths": "Strengths",
+        "areas_of_improvement": "Areas of improvement",
+        "officer_remarks": "Reporting officer remarks",
+        "employee_remarks": "Employee remarks",
+        "employee_remarks_hint": "employee's right of reply",
+        "status": "Status",
+        "grades": {
+          "outstanding": "Outstanding",
+          "very_good": "Very good",
+          "good": "Good",
+          "satisfactory": "Satisfactory",
+          "poor": "Poor"
+        },
+        "status_options": {
+          "draft": "Draft",
+          "finalized": "Finalized"
+        },
+        "toast": {
+          "save_failed": "Save failed",
+          "saved": "ACR saved"
+        }
+      },
+      "assistance": {
+        "title": "Welfare & medical assistance",
+        "new": "New request",
+        "no_requests": "No requests on file.",
+        "approve": "Approve",
+        "reject": "Reject",
+        "pay": "Pay",
+        "new_title": "New welfare / medical assistance request",
+        "type": "Type",
+        "types": {
+          "welfare": "Welfare",
+          "medical": "Medical"
+        },
+        "date": "Date",
+        "amount": "Amount (৳)",
+        "reason": "Reason",
+        "submit": "Submit",
+        "pay_title": "Pay {request_no}",
+        "pay_from_account": "Pay from account",
+        "default_account_placeholder": "— default bank account —",
+        "status": {
+          "requested": "requested",
+          "approved": "approved",
+          "paid": "paid",
+          "rejected": "rejected"
+        },
+        "toast": {
+          "amount_required": "Amount is required",
+          "save_failed": "Save failed",
+          "created": "Assistance request created",
+          "failed": "Failed",
+          "approved": "Approved",
+          "rejected": "Rejected",
+          "payment_failed": "Payment failed",
+          "paid": "Paid — posted to GL"
+        }
+      }
+    },
+    "attendance": {
+      "title": "Attendance",
+      "subtitle": "Daily register — OT capped at 4h/day (Sedex/BSCI guardrail, enforced by the database)",
+      "save_day": "Save day",
+      "columns": {
+        "id": "ID",
+        "employee": "Employee",
+        "status": "Status",
+        "ot_hours": "OT hours",
+        "late": "Late"
+      },
+      "status_options": {
+        "present": "present",
+        "absent": "absent",
+        "leave": "leave",
+        "holiday": "holiday",
+        "weekend": "weekend"
+      },
+      "empty": "No active employees — add them in HR → Employees.",
+      "toast": {
+        "saved": "Attendance saved for {date}",
+        "save_failed": "Save failed"
+      }
+    },
+    "payroll": {
+      "title": "Payroll",
+      "subtitle": "Generate → post to GL → pay. Bonus runs prorate on tenure.",
+      "monthly": {
+        "title": "Monthly payroll",
+        "year": "Year",
+        "month": "Month",
+        "generate": "Generate"
+      },
+      "bonus": {
+        "title": "Festival bonus",
+        "year": "Year",
+        "month": "Month",
+        "label": "Label",
+        "label_placeholder": "Eid-ul-Fitr 2026",
+        "generate": "Generate"
+      },
+      "bonus_badge": "bonus",
+      "net_prefix": "net",
+      "post_to_gl": "Post to GL",
+      "pay": "Pay",
+      "no_runs": "No payroll runs yet.",
+      "status": {
+        "draft": "draft",
+        "posted": "posted",
+        "paid": "paid"
+      },
+      "table": {
+        "employee": "Employee",
+        "present": "Present",
+        "absent": "Absent",
+        "ot_hours": "OT h",
+        "ot_amount": "OT ৳",
+        "allowance": "Allowance",
+        "absence_deduction": "Absence ded.",
+        "loan": "Loan",
+        "net": "Net ৳"
+      },
+      "pay_slideover": {
+        "pay_from_account": "Pay from account",
+        "default_account_placeholder": "— default bank account —"
+      },
+      "toast": {
+        "generation_failed": "Generation failed",
+        "generated": "Payroll generated (draft)",
+        "bonus_label_required": "Give the bonus a label (e.g. Eid-ul-Fitr 2026)",
+        "bonus_failed": "Bonus failed",
+        "bonus_generated": "Festival bonus generated (tenure-prorated)",
+        "posting_failed": "Posting failed",
+        "posted": "{run} posted to GL — loans amortised",
+        "payment_failed": "Payment failed",
+        "paid": "{run} paid (Dr 2200 / Cr bank)"
+      }
+    },
+    "stationery": {
+      "title": "Office stationery",
+      "subtitle": "Stock, cost and desk-level usage of office supplies — issuing expenses the cost immediately (5800)",
+      "manage_items": "Manage items",
+      "receive_stock": "Receive stock",
+      "issue_to_employee": "Issue to employee",
+      "stats": {
+        "items": "Stationery items",
+        "stock_value": "Stock value",
+        "below_reorder": "Below reorder level"
+      },
+      "current_stock": {
+        "title": "Current stock",
+        "columns": {
+          "sku": "SKU",
+          "item": "Item",
+          "on_hand": "On hand",
+          "reorder_at": "Reorder at",
+          "value": "Value (৳)"
+        },
+        "empty_prefix": "No stationery items yet —",
+        "empty_link": "add one",
+        "empty_suffix": "with type \"consumable\"."
+      },
+      "recent_receipts": {
+        "title": "Recent receipts",
+        "none": "None yet."
+      },
+      "recent_issues": {
+        "title": "Recent issues",
+        "none": "None yet."
+      },
+      "usage_by_person": {
+        "title": "Usage by person",
+        "columns": {
+          "id": "ID",
+          "employee": "Employee",
+          "issues": "Issues",
+          "total_qty": "Total qty",
+          "total_cost": "Total cost (৳)"
+        },
+        "empty": "No issues recorded yet."
+      },
+      "receive_form": {
+        "title": "Receive stationery stock",
+        "date": "Date",
+        "item": "Item",
+        "qty": "Qty",
+        "unit_cost": "Unit cost (৳)",
+        "supplier": "Supplier",
+        "supplier_hint": "optional",
+        "paid_from_account": "Paid from account",
+        "paid_from_account_hint": "leave blank if purchased on credit (posts to Accounts Payable)",
+        "on_credit_placeholder": "— on credit —",
+        "reference_no": "Reference no.",
+        "reference_no_hint": "optional — invoice/receipt no.",
+        "note": "Note",
+        "receive_button": "Receive"
+      },
+      "issue_form": {
+        "title": "Issue to employee desk",
+        "date": "Date",
+        "item": "Item",
+        "employee": "Employee",
+        "qty": "Qty",
+        "note": "Note",
+        "note_placeholder": "e.g. new desk setup, monthly replenishment",
+        "issue_button": "Issue"
+      },
+      "toast": {
+        "pick_item_qty": "Pick an item and quantity",
+        "receipt_failed": "Receipt failed",
+        "stock_received": "Stock received",
+        "pick_item_employee_qty": "Pick an item, employee and quantity",
+        "issue_failed": "Issue failed",
+        "issued": "Issued to employee desk"
+      }
+    }
+  }
+}

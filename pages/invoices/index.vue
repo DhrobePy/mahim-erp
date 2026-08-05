@@ -3,20 +3,21 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { deleteRecord } = useRecycleBin()
+const { t } = useI18n()
 
 const invoices = ref<any[]>([])
 const loading = ref(true)
 
-const columns = [
-  { key: 'invoice_no', label: 'Invoice' },
-  { key: 'customer', label: 'Buyer' },
-  { key: 'invoice_date', label: 'Date' },
-  { key: 'challan', label: 'Challan' },
-  { key: 'lc', label: 'LC' },
-  { key: 'total', label: 'Total (৳)' },
-  { key: 'status', label: 'Status' },
+const columns = computed(() => [
+  { key: 'invoice_no', label: t('invoices.list.columns.invoice') },
+  { key: 'customer', label: t('invoices.list.columns.buyer') },
+  { key: 'invoice_date', label: t('common.date') },
+  { key: 'challan', label: t('invoices.list.columns.challan') },
+  { key: 'lc', label: t('invoices.list.columns.lc') },
+  { key: 'total', label: t('invoices.list.columns.total') },
+  { key: 'status', label: t('common.status') },
   { key: 'actions', label: '' }
-]
+])
 
 const load = async () => {
   loading.value = true
@@ -31,8 +32,8 @@ onMounted(load)
 
 const makeBill = async (row: any) => {
   const { error } = await client.rpc('create_bill', { p_invoice_id: row.id } as any)
-  if (error) toast.add({ title: 'Bill failed', description: error.message, color: 'red' })
-  else { toast.add({ title: `Bill submitted for ${row.invoice_no} — see Banking` }); await load() }
+  if (error) toast.add({ title: t('invoices.list.bill_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('invoices.list.bill_submitted', { invoice: row.invoice_no }) }); await load() }
 }
 
 // --- Sales return ---
@@ -52,9 +53,9 @@ const saveReturn = async () => {
     p_scrap_unit_value: retForm.scrap_unit_value,
     p_reason: retForm.reason || null
   } as any)
-  if (error) toast.add({ title: 'Return failed', description: error.message, color: 'red' })
+  if (error) toast.add({ title: t('invoices.list.return_dialog.return_failed'), description: error.message, color: 'red' })
   else {
-    toast.add({ title: 'Credit note issued — stock downgraded to scrap' })
+    toast.add({ title: t('invoices.list.return_dialog.credit_note_issued') })
     retOpen.value = false
     await load()
   }
@@ -70,7 +71,7 @@ const statusColor = (s: string) =>
 
 <template>
   <div>
-    <PageHeader kicker="Sales &amp; Local LC" title="Invoices" subtitle="Created from issued challans; submit bills against LC invoices for LBPD" />
+    <PageHeader :kicker="t('invoices.list.kicker')" :title="t('invoices.list.title')" :subtitle="t('invoices.list.subtitle')" />
 
     <UCard>
       <UTable :rows="invoices" :columns="columns" :loading="loading">
@@ -82,7 +83,7 @@ const statusColor = (s: string) =>
           <UBadge
             v-if="row.delivery_challans?.challan_kind === 'covering'"
             size="xs" variant="subtle" color="purple" class="ml-1"
-          >covering</UBadge>
+          >{{ t('invoices.list.covering') }}</UBadge>
         </template>
         <template #invoice_no-data="{ row }">
           <NuxtLink :to="`/invoices/${row.id}`" class="num font-medium text-amber-600 dark:text-amber-400 hover:underline">{{ row.invoice_no }}</NuxtLink>
@@ -101,46 +102,46 @@ const statusColor = (s: string) =>
           <div class="flex gap-1 justify-end">
             <UButton
               icon="i-heroicons-printer" size="xs" color="gray" variant="ghost"
-              :to="`/print/${row.id}`" target="_blank" aria-label="Print bank document set"
+              :to="`/print/${row.id}`" target="_blank" :aria-label="t('invoices.list.print_aria')"
             />
             <UButton
               v-if="canWrite && row.lc_id && row.status === 'open'"
               size="xs" variant="soft" @click="makeBill(row)"
-            >Submit bill</UButton>
+            >{{ t('invoices.list.submit_bill') }}</UButton>
             <UButton
               v-if="canWrite && row.status !== 'open'"
               size="xs" variant="soft" color="red" @click="openReturn(row)"
-            >Return</UButton>
-            <UButton v-if="canWrite" icon="i-heroicons-trash" size="xs" color="red" variant="ghost" aria-label="Delete" @click="onDelete(row)" />
+            >{{ t('invoices.list.return') }}</UButton>
+            <UButton v-if="canWrite" icon="i-heroicons-trash" size="xs" color="red" variant="ghost" :aria-label="t('common.delete')" @click="onDelete(row)" />
           </div>
         </template>
         <template #empty-state>
-          <div class="text-center py-6 text-sm text-gray-400">No invoices — issue and invoice a challan first.</div>
+          <div class="text-center py-6 text-sm text-gray-400">{{ t('invoices.list.empty') }}</div>
         </template>
       </UTable>
     </UCard>
 
     <USlideover v-model="retOpen">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">Sales return against {{ retTarget?.invoice_no }}</p></template>
+        <template #header><p class="font-medium">{{ t('invoices.list.return_dialog.title', { invoice: retTarget?.invoice_no }) }}</p></template>
         <div class="space-y-4">
-          <UFormGroup label="Item">
+          <UFormGroup :label="t('invoices.list.return_dialog.item')">
             <USelect
               v-model="retForm.item_id"
               :options="(retTarget?.invoice_lines ?? []).map((l: any) => ({ id: l.item_id, sku: l.items?.sku }))"
               option-attribute="sku" value-attribute="id"
             />
           </UFormGroup>
-          <UFormGroup label="Returned qty"><UInput v-model.number="retForm.qty" type="number" /></UFormGroup>
-          <UFormGroup label="Scrap unit value (৳)" hint="branded stock downgrades to scrap at this value">
+          <UFormGroup :label="t('invoices.list.return_dialog.returned_qty')"><UInput v-model.number="retForm.qty" type="number" /></UFormGroup>
+          <UFormGroup :label="t('invoices.list.return_dialog.scrap_unit_value')" :hint="t('invoices.list.return_dialog.scrap_unit_value_hint')">
             <UInput v-model.number="retForm.scrap_unit_value" type="number" />
           </UFormGroup>
-          <UFormGroup label="Reason"><UInput v-model="retForm.reason" /></UFormGroup>
+          <UFormGroup :label="t('invoices.list.return_dialog.reason')"><UInput v-model="retForm.reason" /></UFormGroup>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="retOpen = false">Cancel</UButton>
-            <UButton color="red" @click="saveReturn">Issue credit note</UButton>
+            <UButton color="gray" variant="ghost" @click="retOpen = false">{{ t('common.cancel') }}</UButton>
+            <UButton color="red" @click="saveReturn">{{ t('invoices.list.return_dialog.issue_credit_note') }}</UButton>
           </div>
         </template>
       </UCard>

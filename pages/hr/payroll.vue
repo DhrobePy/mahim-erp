@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite, activeCompanyId } = useProfile()
@@ -30,24 +31,24 @@ const generate = async () => {
   const { error } = await client.rpc('generate_payroll', {
     p_company: activeCompanyId.value, p_year: genForm.year, p_month: genForm.month
   } as any)
-  if (error) toast.add({ title: 'Generation failed', description: error.message, color: 'red' })
-  else { toast.add({ title: 'Payroll generated (draft)' }); await load() }
+  if (error) toast.add({ title: t('hr.payroll.toast.generation_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('hr.payroll.toast.generated') }); await load() }
 }
 
 const generateBonus = async () => {
-  if (!bonusForm.label) { toast.add({ title: 'Give the bonus a label (e.g. Eid-ul-Fitr 2026)', color: 'red' }); return }
+  if (!bonusForm.label) { toast.add({ title: t('hr.payroll.toast.bonus_label_required'), color: 'red' }); return }
   const { error } = await client.rpc('generate_festival_bonus', {
     p_company: activeCompanyId.value, p_year: bonusForm.year,
     p_month: bonusForm.month, p_label: bonusForm.label
   } as any)
-  if (error) toast.add({ title: 'Bonus failed', description: error.message, color: 'red' })
-  else { toast.add({ title: 'Festival bonus generated (tenure-prorated)' }); await load() }
+  if (error) toast.add({ title: t('hr.payroll.toast.bonus_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('hr.payroll.toast.bonus_generated') }); await load() }
 }
 
 const post = async (row: any) => {
   const { error } = await client.rpc('post_payroll', { p_run_id: row.id } as any)
-  if (error) toast.add({ title: 'Posting failed', description: error.message, color: 'red' })
-  else { toast.add({ title: `${row.run_no} posted to GL — loans amortised` }); await load() }
+  if (error) toast.add({ title: t('hr.payroll.toast.posting_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('hr.payroll.toast.posted', { run: row.run_no }) }); await load() }
 }
 const payOpen = ref(false)
 const payTarget = ref<any>(null)
@@ -55,12 +56,13 @@ const payAccount = ref<string | null>(null)
 const openPay = (row: any) => { payTarget.value = row; payAccount.value = null; payOpen.value = true }
 const confirmPay = async () => {
   const { error } = await client.rpc('pay_payroll', { p_run_id: payTarget.value.id, p_cash_bank_account_id: payAccount.value } as any)
-  if (error) toast.add({ title: 'Payment failed', description: error.message, color: 'red' })
-  else { toast.add({ title: `${payTarget.value.run_no} paid (Dr 2200 / Cr bank)` }); payOpen.value = false; await load() }
+  if (error) toast.add({ title: t('hr.payroll.toast.payment_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('hr.payroll.toast.paid', { run: payTarget.value.run_no }) }); payOpen.value = false; await load() }
 }
 
 const expanded = ref<string | null>(null)
 const statusColor = (s: string) => ({ draft: 'yellow', posted: 'blue', paid: 'green' } as any)[s] || 'gray'
+const statusLabel = (s: string) => t(`hr.payroll.status.${s}`)
 
 const remove = async (row: any) => {
   if (await deleteRecord('payroll_runs', row.id, row.run_no)) await load()
@@ -69,24 +71,24 @@ const remove = async (row: any) => {
 
 <template>
   <div>
-    <PageHeader kicker="HR" title="Payroll" subtitle="Generate → post to GL → pay. Bonus runs prorate on tenure." />
+    <PageHeader :kicker="t('hr.kicker')" :title="t('hr.payroll.title')" :subtitle="t('hr.payroll.subtitle')" />
 
     <div v-if="canWrite" class="grid md:grid-cols-2 gap-4 mb-6">
       <UCard>
-        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Monthly payroll</p></template>
+        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('hr.payroll.monthly.title') }}</p></template>
         <div class="flex items-end gap-2">
-          <UFormGroup label="Year"><UInput v-model.number="genForm.year" type="number" class="w-24" /></UFormGroup>
-          <UFormGroup label="Month"><UInput v-model.number="genForm.month" type="number" min="1" max="12" class="w-20" /></UFormGroup>
-          <UButton @click="generate">Generate</UButton>
+          <UFormGroup :label="t('hr.payroll.monthly.year')"><UInput v-model.number="genForm.year" type="number" class="w-24" /></UFormGroup>
+          <UFormGroup :label="t('hr.payroll.monthly.month')"><UInput v-model.number="genForm.month" type="number" min="1" max="12" class="w-20" /></UFormGroup>
+          <UButton @click="generate">{{ t('hr.payroll.monthly.generate') }}</UButton>
         </div>
       </UCard>
       <UCard>
-        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Festival bonus</p></template>
+        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('hr.payroll.bonus.title') }}</p></template>
         <div class="flex items-end gap-2">
-          <UFormGroup label="Year"><UInput v-model.number="bonusForm.year" type="number" class="w-24" /></UFormGroup>
-          <UFormGroup label="Month"><UInput v-model.number="bonusForm.month" type="number" min="1" max="12" class="w-20" /></UFormGroup>
-          <UFormGroup label="Label" class="flex-1"><UInput v-model="bonusForm.label" placeholder="Eid-ul-Fitr 2026" /></UFormGroup>
-          <UButton color="purple" @click="generateBonus">Generate</UButton>
+          <UFormGroup :label="t('hr.payroll.bonus.year')"><UInput v-model.number="bonusForm.year" type="number" class="w-24" /></UFormGroup>
+          <UFormGroup :label="t('hr.payroll.bonus.month')"><UInput v-model.number="bonusForm.month" type="number" min="1" max="12" class="w-20" /></UFormGroup>
+          <UFormGroup :label="t('hr.payroll.bonus.label')" class="flex-1"><UInput v-model="bonusForm.label" :placeholder="t('hr.payroll.bonus.label_placeholder')" /></UFormGroup>
+          <UButton color="purple" @click="generateBonus">{{ t('hr.payroll.bonus.generate') }}</UButton>
         </div>
       </UCard>
     </div>
@@ -98,13 +100,13 @@ const remove = async (row: any) => {
             <button class="text-left cursor-pointer" @click="expanded = expanded === r.id ? null : r.id">
               <span class="num text-sm font-medium text-amber-600 dark:text-amber-400">{{ r.run_no }}</span>
               <span class="text-sm text-gray-500 dark:text-zinc-400 ml-2">{{ r.label }}</span>
-              <UBadge v-if="r.run_type === 'festival_bonus'" size="xs" variant="subtle" color="purple" class="ml-2">bonus</UBadge>
-              <span class="text-xs text-gray-500 dark:text-zinc-500 ml-3">net <span class="num font-semibold text-gray-900 dark:text-zinc-100">৳{{ Number(r.total_net).toLocaleString('en-IN') }}</span></span>
+              <UBadge v-if="r.run_type === 'festival_bonus'" size="xs" variant="subtle" color="purple" class="ml-2">{{ t('hr.payroll.bonus_badge') }}</UBadge>
+              <span class="text-xs text-gray-500 dark:text-zinc-500 ml-3">{{ t('hr.payroll.net_prefix') }} <span class="num font-semibold text-gray-900 dark:text-zinc-100">৳{{ Number(r.total_net).toLocaleString('en-IN') }}</span></span>
             </button>
             <div class="flex items-center gap-2">
-              <UBadge size="xs" variant="subtle" :color="statusColor(r.status)">{{ r.status }}</UBadge>
-              <UButton v-if="canWrite && r.status === 'draft'" size="xs" variant="soft" @click="post(r)">Post to GL</UButton>
-              <UButton v-if="canWrite && r.status === 'posted'" size="xs" variant="soft" color="green" @click="openPay(r)">Pay</UButton>
+              <UBadge size="xs" variant="subtle" :color="statusColor(r.status)">{{ statusLabel(r.status) }}</UBadge>
+              <UButton v-if="canWrite && r.status === 'draft'" size="xs" variant="soft" @click="post(r)">{{ t('hr.payroll.post_to_gl') }}</UButton>
+              <UButton v-if="canWrite && r.status === 'posted'" size="xs" variant="soft" color="green" @click="openPay(r)">{{ t('hr.payroll.pay') }}</UButton>
               <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="remove(r)" />
             </div>
           </div>
@@ -112,9 +114,9 @@ const remove = async (row: any) => {
             <table class="w-full text-xs">
               <thead class="text-gray-400 text-left">
                 <tr>
-                  <th class="py-1 pr-2">Employee</th><th class="pr-2">Present</th><th class="pr-2">Absent</th>
-                  <th class="pr-2">OT h</th><th class="pr-2">OT ৳</th><th class="pr-2">Allowance</th>
-                  <th class="pr-2">Absence ded.</th><th class="pr-2">Loan</th><th class="text-right">Net ৳</th>
+                  <th class="py-1 pr-2">{{ t('hr.payroll.table.employee') }}</th><th class="pr-2">{{ t('hr.payroll.table.present') }}</th><th class="pr-2">{{ t('hr.payroll.table.absent') }}</th>
+                  <th class="pr-2">{{ t('hr.payroll.table.ot_hours') }}</th><th class="pr-2">{{ t('hr.payroll.table.ot_amount') }}</th><th class="pr-2">{{ t('hr.payroll.table.allowance') }}</th>
+                  <th class="pr-2">{{ t('hr.payroll.table.absence_deduction') }}</th><th class="pr-2">{{ t('hr.payroll.table.loan') }}</th><th class="text-right">{{ t('hr.payroll.table.net') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -134,7 +136,7 @@ const remove = async (row: any) => {
           </div>
         </div>
         <div v-if="!runs.length && !loading" class="text-center py-6 text-sm text-gray-400">
-          No payroll runs yet.
+          {{ t('hr.payroll.no_runs') }}
         </div>
       </div>
     </UCard>
@@ -142,17 +144,17 @@ const remove = async (row: any) => {
     <USlideover v-model="payOpen">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
         <template #header>
-          <p class="font-medium">Pay {{ payTarget?.run_no }} <span class="num text-amber-500">(৳{{ Number(payTarget?.total_net).toLocaleString('en-IN') }})</span></p>
+          <p class="font-medium">{{ t('hr.payroll.pay') }} {{ payTarget?.run_no }} <span class="num text-amber-500">(৳{{ Number(payTarget?.total_net).toLocaleString('en-IN') }})</span></p>
         </template>
         <div class="space-y-4">
-          <UFormGroup label="Pay from account">
-            <USelect v-model="payAccount" :options="cashBankAccounts" option-attribute="name" value-attribute="id" placeholder="— default bank account —" />
+          <UFormGroup :label="t('hr.payroll.pay_slideover.pay_from_account')">
+            <USelect v-model="payAccount" :options="cashBankAccounts" option-attribute="name" value-attribute="id" :placeholder="t('hr.payroll.pay_slideover.default_account_placeholder')" />
           </UFormGroup>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="payOpen = false">Cancel</UButton>
-            <UButton color="green" @click="confirmPay">Pay</UButton>
+            <UButton color="gray" variant="ghost" @click="payOpen = false">{{ t('common.cancel') }}</UButton>
+            <UButton color="green" @click="confirmPay">{{ t('hr.payroll.pay') }}</UButton>
           </div>
         </template>
       </UCard>

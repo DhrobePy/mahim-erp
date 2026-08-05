@@ -4,6 +4,7 @@ const toast = useToast()
 const { canWrite } = useProfile()
 const { money } = useFmt()
 const { deleteRecord } = useRecycleBin()
+const { t } = useI18n()
 
 const computations = ref<any[]>([])
 const totalsByComp = ref<Record<string, any>>({})
@@ -17,7 +18,7 @@ const load = async () => {
     .order('assessment_year', { ascending: false })
   computations.value = data ?? []
   const { data: totals } = await client.from('v_tax_computation_totals').select('*')
-  totalsByComp.value = Object.fromEntries((totals ?? []).map((t: any) => [t.computation_id, t]))
+  totalsByComp.value = Object.fromEntries((totals ?? []).map((row: any) => [row.computation_id, row]))
   loading.value = false
 }
 onMounted(load)
@@ -40,19 +41,19 @@ const openNew = () => {
 const pullFromPnl = async () => {
   const { data } = await client.from('v_profit_and_loss').select('amount')
   form.net_profit_per_accounts = Math.round(((data ?? []).reduce((s: number, r: any) => s + Number(r.amount), 0)) * 100) / 100
-  toast.add({ title: 'Pulled cumulative net profit from posted GL entries' })
+  toast.add({ title: t('admin.tax_corporate.toasts.pnl_pulled') })
 }
 const pullFromAit = async () => {
   const { data } = await client.from('v_ait_summary').select('*').maybeSingle()
   form.advance_tax_paid = Number(data?.advance_tax_paid ?? 0)
-  toast.add({ title: 'Pulled advance tax paid from AIT summary' })
+  toast.add({ title: t('admin.tax_corporate.toasts.ait_pulled') })
 }
 const save = async () => {
-  if (!form.assessment_year) { toast.add({ title: 'Assessment year is required (e.g. 2025-2026)', color: 'red' }); return }
+  if (!form.assessment_year) { toast.add({ title: t('admin.tax_corporate.validation.assessment_year_required'), color: 'red' }); return }
   saving.value = true
   const { error } = await client.from('company_tax_computations').insert({ ...form } as any)
-  if (error) toast.add({ title: 'Save failed', description: error.message, color: 'red' })
-  else { toast.add({ title: 'Tax computation created' }); open.value = false; await load() }
+  if (error) toast.add({ title: t('common.save_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('admin.tax_corporate.toasts.computation_created') }); open.value = false; await load() }
   saving.value = false
 }
 
@@ -61,12 +62,12 @@ const expanded = ref<string | null>(null)
 const lineForm = reactive({ adj_type: 'addback', description: '', amount: 0 })
 const addingLine = ref(false)
 const addLine = async (computationId: string) => {
-  if (!lineForm.description || !lineForm.amount) { toast.add({ title: 'Description and amount are required', color: 'red' }); return }
+  if (!lineForm.description || !lineForm.amount) { toast.add({ title: t('admin.tax_corporate.validation.description_amount_required'), color: 'red' }); return }
   addingLine.value = true
   const { error } = await client.from('company_tax_adjustment_lines').insert({ computation_id: computationId, ...lineForm } as any)
-  if (error) toast.add({ title: 'Failed', description: error.message, color: 'red' })
+  if (error) toast.add({ title: t('admin.tax_corporate.toasts.failed'), description: error.message, color: 'red' })
   else {
-    toast.add({ title: 'Adjustment added' })
+    toast.add({ title: t('admin.tax_corporate.toasts.adjustment_added') })
     Object.assign(lineForm, { adj_type: 'addback', description: '', amount: 0 })
     await load()
   }
@@ -74,7 +75,7 @@ const addLine = async (computationId: string) => {
 }
 const removeLine = async (id: string) => {
   const { error } = await client.from('company_tax_adjustment_lines').delete().eq('id', id)
-  if (error) toast.add({ title: 'Failed', description: error.message, color: 'red' })
+  if (error) toast.add({ title: t('admin.tax_corporate.toasts.failed'), description: error.message, color: 'red' })
   else await load()
 }
 

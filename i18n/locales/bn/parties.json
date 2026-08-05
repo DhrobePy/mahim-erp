@@ -1,0 +1,66 @@
+{
+  "parties": {
+    "kicker": "ক্রয়",
+    "title": "পার্টি",
+    "subtitle": "ক্রেতা, সরবরাহকারী, পরিবহনকারী ও ব্যাংক",
+    "new_party": "নতুন পার্টি",
+    "search_placeholder": "কোড বা নাম খুঁজুন…",
+    "columns": {
+      "code": "কোড",
+      "name": "নাম",
+      "roles": "ভূমিকা",
+      "phone": "ফোন",
+      "bin": "বিআইএন"
+    },
+    "roles": {
+      "customer": "ক্রেতা",
+      "supplier": "সরবরাহকারী",
+      "transporter": "পরিবহনকারী",
+      "bank": "ব্যাংক",
+      "foreign": "বিদেশী"
+    },
+    "checkboxes": {
+      "customer": "ক্রেতা",
+      "supplier": "সরবরাহকারী",
+      "transporter": "পরিবহনকারী",
+      "bank": "ব্যাংক",
+      "foreign": "বিদেশী (বিদেশস্থ)"
+    },
+    "empty": "এখনো কোনো পার্টি নেই।",
+    "edit_party": "পার্টি সম্পাদনা",
+    "new_party_title": "নতুন পার্টি",
+    "fields": {
+      "code": "কোড",
+      "name": "নাম",
+      "phone": "ফোন",
+      "email": "ইমেইল",
+      "bin": "বিআইএন (ভ্যাট নিবন্ধন)",
+      "tin": "টিআইএন",
+      "address": "ঠিকানা",
+      "country": "দেশ"
+    },
+    "country_placeholder": "যেমন চীন",
+    "party_updated": "পার্টি আপডেট হয়েছে",
+    "party_created": "পার্টি তৈরি হয়েছে",
+    "detail": {
+      "kicker": "পার্টি",
+      "bin_label": "BIN",
+      "mushak_short": "6.1",
+      "receivable": "তাদের কাছে পাওনা",
+      "payable": "তাদের কাছে দেনা",
+      "invoices": "ইনভয়েস",
+      "lifetime": "সর্বমোট",
+      "open_orders": "চলমান আদেশ",
+      "ledger_position": "হিসাব অনুযায়ী লেজার অবস্থান",
+      "sales_orders": "বিক্রয় আদেশ",
+      "lcs": "এলসি",
+      "supplier_history": "সরবরাহকারীর ইতিহাস",
+      "gap": "ঘাটতি",
+      "recent_ledger_entries": "সাম্প্রতিক লেজার এন্ট্রি",
+      "no_postings": "এখনো কোনো পোস্টিং নেই।",
+      "not_found": "পার্টি পাওয়া যায়নি।",
+      "dr": "Dr",
+      "cr": "Cr"
+    }
+  }
+}

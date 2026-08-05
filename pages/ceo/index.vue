@@ -4,6 +4,7 @@
 // and operational tables — nothing here is hand-keyed.
 const client = useSupabaseClient()
 const { money, num } = useFmt()
+const { t } = useI18n()
 
 const loading = ref(true)
 const bal = ref<Map<string, number>>(new Map())
@@ -94,7 +95,7 @@ const exposure = (f: any) =>
 
 <template>
   <div>
-    <PageHeader kicker="Executive" title="CEO overview" subtitle="The running business at a glance — every number clicks through to its source" />
+    <PageHeader :kicker="t('ceo.kicker')" :title="t('ceo.title')" :subtitle="t('ceo.subtitle')" />
 
     <!-- Alert strip -->
     <div v-if="alerts.length" class="mb-4 space-y-1">
@@ -107,45 +108,45 @@ const exposure = (f: any) =>
             ? 'ring-amber-500/40 bg-amber-500/5 text-amber-600 dark:text-amber-400'
             : 'ring-purple-500/40 bg-purple-500/5 text-purple-500 dark:text-purple-400'"
       >
-        <template v-if="a.alert_type === 'overdue'">⚠ OVERDUE — bill {{ a.bill_no }} on {{ a.lc_no }} (maturity {{ a.maturity_date }})</template>
-        <template v-else-if="a.alert_type === 'maturity_soon'">Bill {{ a.bill_no }} on {{ a.lc_no }} matures in {{ a.days }} day(s)</template>
-        <template v-else>Unresolved discrepancy on {{ a.lc_no }}</template>
+        <template v-if="a.alert_type === 'overdue'">{{ t('ceo.alerts.overdue', { bill: a.bill_no, lc: a.lc_no, date: a.maturity_date }) }}</template>
+        <template v-else-if="a.alert_type === 'maturity_soon'">{{ t('ceo.alerts.maturity_soon', { bill: a.bill_no, lc: a.lc_no, days: a.days }) }}</template>
+        <template v-else>{{ t('ceo.alerts.discrepancy', { lc: a.lc_no }) }}</template>
       </NuxtLink>
     </div>
 
     <!-- Financial position -->
-    <p class="microlabel text-gray-400 dark:text-zinc-500 mb-2">Where the money is</p>
+    <p class="microlabel text-gray-400 dark:text-zinc-500 mb-2">{{ t('ceo.sections.money') }}</p>
     <div class="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 mb-5">
-      <NuxtLink to="/accounting"><StatCard label="Bank + cash" :value="money(cash)" :tone="cash < 0 ? 'red' : 'default'" /></NuxtLink>
-      <NuxtLink to="/banking"><StatCard label="Bills receivable (LC)" :value="money(receivableLc)" /></NuxtLink>
-      <NuxtLink to="/challans"><StatCard label="Delivered, not invoiced" :value="money(gdni)" :tone="gdni > 0 ? 'amber' : 'default'" sub="pre-LC risk" /></NuxtLink>
-      <NuxtLink to="/stock"><StatCard label="Stock" :value="money(stockValue)" /></NuxtLink>
-      <NuxtLink to="/procurement"><StatCard label="We owe (AP + wages)" :value="money(payable)" :tone="payable > 0 ? 'red' : 'default'" /></NuxtLink>
-      <NuxtLink to="/banking"><StatCard label="Bank debt" :value="money(debt)" :tone="debt > 0 ? 'red' : 'default'" /></NuxtLink>
-      <NuxtLink to="/accounting"><StatCard label="Net position" :value="money(netPosition)" :tone="netPosition >= 0 ? 'green' : 'red'" /></NuxtLink>
+      <NuxtLink to="/accounting"><StatCard :label="t('ceo.stats.bank')" :value="money(cash)" :tone="cash < 0 ? 'red' : 'default'" /></NuxtLink>
+      <NuxtLink to="/banking"><StatCard :label="t('ceo.stats.bills_receivable_lc')" :value="money(receivableLc)" /></NuxtLink>
+      <NuxtLink to="/challans"><StatCard :label="t('ceo.stats.delivered_not_invoiced')" :value="money(gdni)" :tone="gdni > 0 ? 'amber' : 'default'" :sub="t('ceo.stats.pre_lc_risk')" /></NuxtLink>
+      <NuxtLink to="/stock"><StatCard :label="t('ceo.stats.stock')" :value="money(stockValue)" /></NuxtLink>
+      <NuxtLink to="/procurement"><StatCard :label="t('ceo.stats.payable')" :value="money(payable)" :tone="payable > 0 ? 'red' : 'default'" /></NuxtLink>
+      <NuxtLink to="/banking"><StatCard :label="t('ceo.stats.bank_debt')" :value="money(debt)" :tone="debt > 0 ? 'red' : 'default'" /></NuxtLink>
+      <NuxtLink to="/accounting"><StatCard :label="t('ceo.stats.net_position')" :value="money(netPosition)" :tone="netPosition >= 0 ? 'green' : 'red'" /></NuxtLink>
     </div>
 
     <!-- P&L + pipeline -->
-    <p class="microlabel text-gray-400 dark:text-zinc-500 mb-2">Earning &amp; pipeline</p>
+    <p class="microlabel text-gray-400 dark:text-zinc-500 mb-2">{{ t('ceo.sections.earning_pipeline') }}</p>
     <div class="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3 mb-5">
-      <NuxtLink to="/invoices"><StatCard label="Revenue (to date)" :value="money(typeTotals.income)" /></NuxtLink>
-      <NuxtLink to="/accounting"><StatCard label="Expenses" :value="money(typeTotals.expense)" /></NuxtLink>
-      <NuxtLink to="/accounting"><StatCard label="Net profit" :value="money(netProfit)" :tone="netProfit >= 0 ? 'green' : 'red'" /></NuxtLink>
-      <NuxtLink to="/sales"><StatCard label="Undelivered orders" :value="money(pipelineValue)" :sub="openSos.length + ' order(s)'" /></NuxtLink>
-      <NuxtLink to="/challans"><StatCard label="Awaiting LC cover" :value="money(totalUnbilled)" :sub="unbilled.length + ' delivery(ies)'" :tone="totalUnbilled > 0 ? 'amber' : 'default'" /></NuxtLink>
-      <NuxtLink to="/banking"><StatCard label="Bills awaiting maturity" :value="money(billsAwaiting)" :sub="bills.length + ' bill(s)'" /></NuxtLink>
+      <NuxtLink to="/invoices"><StatCard :label="t('ceo.stats.revenue')" :value="money(typeTotals.income)" /></NuxtLink>
+      <NuxtLink to="/accounting"><StatCard :label="t('ceo.stats.expenses')" :value="money(typeTotals.expense)" /></NuxtLink>
+      <NuxtLink to="/accounting"><StatCard :label="t('ceo.stats.net_profit')" :value="money(netProfit)" :tone="netProfit >= 0 ? 'green' : 'red'" /></NuxtLink>
+      <NuxtLink to="/sales"><StatCard :label="t('ceo.stats.undelivered_orders')" :value="money(pipelineValue)" :sub="openSos.length + ' ' + t('ceo.orders_suffix')" /></NuxtLink>
+      <NuxtLink to="/challans"><StatCard :label="t('ceo.stats.awaiting_lc_cover')" :value="money(totalUnbilled)" :sub="unbilled.length + ' ' + t('ceo.deliveries_suffix')" :tone="totalUnbilled > 0 ? 'amber' : 'default'" /></NuxtLink>
+      <NuxtLink to="/banking"><StatCard :label="t('ceo.stats.bills_awaiting_maturity')" :value="money(billsAwaiting)" :sub="bills.length + ' ' + t('ceo.bills_suffix')" /></NuxtLink>
     </div>
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
       <!-- LC book -->
       <UCard class="xl:col-span-2">
-        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">LC contract book — profit per contract</p></template>
+        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('ceo.sections.lc_book') }}</p></template>
         <UTable
           :rows="pnlRows"
           :columns="[
-            { key: 'lc_no', label: 'LC' }, { key: 'status', label: 'Status' },
-            { key: 'revenue', label: 'Revenue (৳)' }, { key: 'cogs_net', label: 'COGS (৳)' },
-            { key: 'fin', label: 'Fees + int (৳)' }, { key: 'contract_profit', label: 'Profit (৳)' }
+            { key: 'lc_no', label: t('ceo.table.lc') }, { key: 'status', label: t('common.status') },
+            { key: 'revenue', label: t('ceo.table.revenue') }, { key: 'cogs_net', label: t('ceo.table.cogs') },
+            { key: 'fin', label: t('ceo.table.fees_interest') }, { key: 'contract_profit', label: t('ceo.table.profit') }
           ]"
         >
           <template #lc_no-data="{ row }">
@@ -162,15 +163,15 @@ const exposure = (f: any) =>
               {{ num(row.contract_profit) }}
             </span>
           </template>
-          <template #empty-state><div class="text-center py-4 text-sm text-gray-400">No LC contracts yet.</div></template>
+          <template #empty-state><div class="text-center py-4 text-sm text-gray-400">{{ t('ceo.empty.lc_contracts') }}</div></template>
         </UTable>
       </UCard>
 
       <div class="space-y-4">
         <!-- Top customers -->
         <UCard>
-          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Top buyers by lifetime billing</p></template>
-          <div v-if="!topCustomers.length" class="text-sm text-gray-400 py-3 text-center">No invoices yet.</div>
+          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('ceo.sections.top_buyers') }}</p></template>
+          <div v-if="!topCustomers.length" class="text-sm text-gray-400 py-3 text-center">{{ t('ceo.empty.invoices') }}</div>
           <div v-for="c in topCustomers" :key="c.id" class="flex justify-between py-1.5 text-[13px]">
             <NuxtLink :to="`/parties/${c.id}`" class="text-amber-600 dark:text-amber-400 hover:underline truncate">{{ c.name }}</NuxtLink>
             <span class="num font-medium dark:text-zinc-100">{{ money(c.total) }}</span>
@@ -179,8 +180,8 @@ const exposure = (f: any) =>
 
         <!-- Facilities -->
         <UCard>
-          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Facility headroom</p></template>
-          <div v-if="!facilities.length" class="text-sm text-gray-400 py-3 text-center">No facilities.</div>
+          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('ceo.sections.facility_headroom') }}</p></template>
+          <div v-if="!facilities.length" class="text-sm text-gray-400 py-3 text-center">{{ t('ceo.empty.facilities') }}</div>
           <div v-for="f in facilities" :key="f.id" class="py-1.5">
             <div class="flex justify-between text-[13px]">
               <NuxtLink to="/banking" class="hover:underline">{{ f.name }}</NuxtLink>
@@ -198,26 +199,26 @@ const exposure = (f: any) =>
 
         <!-- People -->
         <UCard>
-          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">People</p></template>
+          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('ceo.sections.people') }}</p></template>
           <div class="flex justify-between py-1 text-[13px]">
-            <NuxtLink to="/hr" class="hover:underline">Headcount</NuxtLink>
+            <NuxtLink to="/hr" class="hover:underline">{{ t('ceo.headcount') }}</NuxtLink>
             <span class="num font-medium dark:text-zinc-100">{{ headcount }}</span>
           </div>
           <div v-if="lastPayroll" class="flex justify-between py-1 text-[13px]">
-            <NuxtLink to="/hr/payroll" class="hover:underline">Last payroll ({{ lastPayroll.label }})</NuxtLink>
+            <NuxtLink to="/hr/payroll" class="hover:underline">{{ t('ceo.last_payroll', { label: lastPayroll.label }) }}</NuxtLink>
             <span class="num font-medium dark:text-zinc-100">{{ money(lastPayroll.total_net) }} · {{ lastPayroll.status }}</span>
           </div>
         </UCard>
 
         <!-- Pre-LC deliveries detail -->
         <UCard v-if="unbilled.length">
-          <template #header><p class="microlabel text-amber-600 dark:text-amber-400">Goods out on trust (no LC yet)</p></template>
+          <template #header><p class="microlabel text-amber-600 dark:text-amber-400">{{ t('ceo.sections.pre_lc') }}</p></template>
           <div v-for="c in unbilled" :key="c.id" class="flex justify-between py-1.5 text-[13px]">
             <span>
               <NuxtLink to="/challans" class="num text-amber-600 dark:text-amber-400 hover:underline">{{ c.challan_no }}</NuxtLink>
               <NuxtLink :to="`/parties/${c.customer_party_id}`" class="text-gray-500 dark:text-zinc-500 ml-2 hover:underline">{{ c.parties?.name }}</NuxtLink>
             </span>
-            <span class="num">{{ money(unbilledValue(c)) }} <span class="text-gray-400 dark:text-zinc-600">since {{ c.actual_delivery_date }}</span></span>
+            <span class="num">{{ money(unbilledValue(c)) }} <span class="text-gray-400 dark:text-zinc-600">{{ t('ceo.since', { date: c.actual_delivery_date }) }}</span></span>
           </div>
         </UCard>
       </div>

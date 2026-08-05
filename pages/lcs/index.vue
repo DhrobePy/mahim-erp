@@ -4,6 +4,7 @@ const toast = useToast()
 const { canWrite, activeCompanyId, memberships } = useProfile()
 const { extractLc } = usePdfExtract()
 const { deleteRecord } = useRecycleBin()
+const { t } = useI18n()
 const ownCompanyName = computed(() => memberships.value.find((m) => m.company_id === activeCompanyId.value)?.company?.name)
 
 const lcs = ref<any[]>([])
@@ -13,25 +14,31 @@ const banks = ref<any[]>([])
 const cashBankAccounts = ref<any[]>([])
 const loading = ref(true)
 
-const roleOptions = [
-  { value: 'export_local', label: 'Export — Local LC (back-to-back)' },
-  { value: 'export_direct', label: 'Export — Direct (foreign)' },
-  { value: 'import', label: 'Import (foreign)' }
-]
-const roleLabel: Record<string, string> = Object.fromEntries(roleOptions.map((r) => [r.value, r.label]))
+const roleOptions = computed(() => [
+  { value: 'export_local', label: t('lcs.roles.export_local') },
+  { value: 'export_direct', label: t('lcs.roles.export_direct') },
+  { value: 'import', label: t('lcs.roles.import') }
+])
+const roleLabel = computed<Record<string, string>>(() => Object.fromEntries(roleOptions.value.map((r) => [r.value, r.label])))
 const roleColor: Record<string, string> = { export_local: 'green', export_direct: 'blue', import: 'amber' }
-const roleShort: Record<string, string> = { export_local: 'Local export', export_direct: 'Direct export', import: 'Import' }
+const roleShort = computed<Record<string, string>>(() => ({
+  export_local: t('lcs.roles_short.export_local'), export_direct: t('lcs.roles_short.export_direct'), import: t('lcs.roles_short.import')
+}))
+const statusLabel = computed<Record<string, string>>(() => ({
+  active: t('lcs.statuses.active'), closed: t('lcs.statuses.closed'), cancelled: t('lcs.statuses.cancelled')
+}))
+const lcTypeLabel = computed<Record<string, string>>(() => ({ sight: t('lcs.lc_types.sight'), usance: t('lcs.lc_types.usance') }))
 
-const columns = [
-  { key: 'lc_no', label: 'LC no.' },
-  { key: 'role', label: 'Role' },
-  { key: 'counterparty', label: 'Counterparty' },
-  { key: 'bank', label: 'Issuing bank' },
-  { key: 'terms', label: 'Active terms' },
-  { key: 'lc_type', label: 'Type' },
-  { key: 'status', label: 'Status' },
+const columns = computed(() => [
+  { key: 'lc_no', label: t('lcs.index.columns.lc_no') },
+  { key: 'role', label: t('lcs.index.columns.role') },
+  { key: 'counterparty', label: t('lcs.index.columns.counterparty') },
+  { key: 'bank', label: t('lcs.index.columns.bank') },
+  { key: 'terms', label: t('lcs.index.columns.terms') },
+  { key: 'lc_type', label: t('lcs.index.columns.type') },
+  { key: 'status', label: t('lcs.index.columns.status') },
   { key: 'actions', label: '' }
-]
+])
 
 const load = async () => {
   loading.value = true
@@ -73,7 +80,7 @@ const form = reactive({
 })
 const isForeign = computed(() => form.lc_role !== 'export_local')
 const counterpartyOptions = computed(() => form.lc_role === 'import' ? supplierParties.value : customerParties.value)
-const counterpartyLabel = computed(() => form.lc_role === 'import' ? 'Supplier' : 'Buyer')
+const counterpartyLabel = computed(() => form.lc_role === 'import' ? t('lcs.index.supplier_label') : t('lcs.index.buyer_label'))
 
 const blankForm = () => ({
   lc_no: '', lc_role: 'export_local', counterparty_party_id: null, bank_party_id: null, lc_type: 'usance',
@@ -134,12 +141,12 @@ const fromPdf = async (ev: Event) => {
     if (f.available_with_by) form.available_with_by = f.available_with_by
     const found = Object.keys(f).filter((k) => k !== 'raw_text').length
     toast.add({
-      title: found ? `Extracted ${found} field(s) as ${roleLabel[f.lc_role || 'export_local']} — review before saving` : 'No fields recognised',
-      description: f.applicant ? `Applicant on document: ${f.applicant}` : f.beneficiary ? `Beneficiary on document: ${f.beneficiary}` : undefined,
+      title: found ? t('lcs.index.toast.extracted', { count: found, role: roleLabel.value[f.lc_role || 'export_local'] }) : t('lcs.index.toast.none_recognised'),
+      description: f.applicant ? t('lcs.index.toast.applicant_on_doc', { name: f.applicant }) : f.beneficiary ? t('lcs.index.toast.beneficiary_on_doc', { name: f.beneficiary }) : undefined,
       color: found ? 'green' : 'amber'
     })
   } catch (e: any) {
-    toast.add({ title: 'Extraction failed', description: e.message, color: 'red' })
+    toast.add({ title: t('lcs.index.toast.extraction_failed'), description: e.message, color: 'red' })
   } finally {
     extracting.value = false
     ;(ev.target as HTMLInputElement).value = ''
@@ -148,7 +155,7 @@ const fromPdf = async (ev: Event) => {
 
 const save = async () => {
   if (!form.lc_no || !form.counterparty_party_id) {
-    toast.add({ title: `LC number and ${counterpartyLabel.value.toLowerCase()} are required`, color: 'red' }); return
+    toast.add({ title: t('lcs.index.toast.lc_no_required', { label: counterpartyLabel.value.toLowerCase() }), color: 'red' }); return
   }
   saving.value = true
   try {
@@ -163,7 +170,7 @@ const save = async () => {
     if (editId.value) {
       const { error } = await client.from('lcs').update(header).eq('id', editId.value)
       if (error) throw error
-      toast.add({ title: 'LC updated' })
+      toast.add({ title: t('lcs.index.toast.lc_updated') })
     } else {
       const { data: lc, error } = await client.from('lcs').insert(header).select('id').single()
       if (error) throw error
@@ -185,12 +192,12 @@ const save = async () => {
         }
         pdfFile.value = null
       }
-      toast.add({ title: 'LC registered (v1 terms)' })
+      toast.add({ title: t('lcs.index.toast.lc_registered') })
     }
     open.value = false
     await load()
   } catch (e: any) {
-    toast.add({ title: 'LC failed', description: e.message, color: 'red' })
+    toast.add({ title: t('lcs.index.toast.lc_failed'), description: e.message, color: 'red' })
   } finally {
     saving.value = false
   }
@@ -214,9 +221,9 @@ const saveAmend = async () => {
   const { error } = await client.from('lc_amendments').insert({
     lc_id: amendTarget.value.id, version: next, ...amendForm
   } as any)
-  if (error) toast.add({ title: 'Amendment failed', description: error.message, color: 'red' })
+  if (error) toast.add({ title: t('lcs.index.toast.amendment_failed'), description: error.message, color: 'red' })
   else {
-    toast.add({ title: `Amendment v${next} recorded${amendForm.bank_fee > 0 ? ' — MT707 fee posted' : ''}` })
+    toast.add({ title: t('lcs.index.toast.amendment_recorded', { version: next }) + (amendForm.bank_fee > 0 ? t('lcs.index.toast.amendment_fee_note') : '') })
     amendOpen.value = false
     await load()
   }
@@ -229,15 +236,15 @@ const onDelete = async (row: any) => {
 
 <template>
   <div>
-    <PageHeader kicker="Sales &amp; Trade Finance" title="Letters of Credit" subtitle="Local export (back-to-back), direct foreign export, and import LCs — master-child versioning per contract">
+    <PageHeader :kicker="t('lcs.kicker')" :title="t('lcs.index.title')" :subtitle="t('lcs.index.subtitle')">
       <label v-if="canWrite" class="cursor-pointer">
         <span class="inline-flex items-center gap-1.5 text-sm px-2.5 py-1.5 rounded bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 hover:bg-gray-200 dark:hover:bg-zinc-700 font-medium">
           <UIcon name="i-heroicons-document-arrow-up" class="text-base" />
-          {{ extracting ? 'Extracting…' : 'Register from PDF' }}
+          {{ extracting ? t('lcs.index.extracting') : t('lcs.index.register_from_pdf') }}
         </span>
         <input type="file" accept="application/pdf" class="hidden" :disabled="extracting" @change="fromPdf">
       </label>
-      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">Register LC</UButton>
+      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">{{ t('lcs.index.register_lc') }}</UButton>
     </PageHeader>
 
     <UCard>
@@ -245,7 +252,7 @@ const onDelete = async (row: any) => {
         <template #role-data="{ row }"><UBadge size="xs" variant="subtle" :color="roleColor[row.lc_role]">{{ roleShort[row.lc_role] }}</UBadge></template>
         <template #counterparty-data="{ row }">
           {{ row.counterparty?.name }}
-          <UBadge v-if="row.counterparty?.is_foreign" size="xs" variant="subtle" color="gray" class="ml-1">{{ row.counterparty?.country || 'foreign' }}</UBadge>
+          <UBadge v-if="row.counterparty?.is_foreign" size="xs" variant="subtle" color="gray" class="ml-1">{{ row.counterparty?.country || t('lcs.index.foreign_fallback') }}</UBadge>
         </template>
         <template #bank-data="{ row }">{{ row.bank?.name || '—' }}</template>
         <template #lc_no-data="{ row }">
@@ -257,78 +264,78 @@ const onDelete = async (row: any) => {
           <div v-if="active(row)" class="text-xs num">
             <UBadge size="xs" variant="subtle" color="purple">v{{ active(row).version }}</UBadge>
             <span class="text-amber-600 dark:text-amber-400">{{ row.currency }} {{ active(row).amount }}</span> · {{ active(row).quantity ?? '—' }} pcs ±{{ active(row).tolerance_pct }}%
-            <span v-if="active(row).expiry_date"> · exp {{ active(row).expiry_date }}</span>
+            <span v-if="active(row).expiry_date"> · {{ t('lcs.index.exp_label', { date: active(row).expiry_date }) }}</span>
           </div>
         </template>
         <template #lc_type-data="{ row }">
-          {{ row.lc_type }}<span v-if="row.lc_type === 'usance'"> {{ row.usance_days }}d</span>
+          {{ lcTypeLabel[row.lc_type] }}<span v-if="row.lc_type === 'usance'"> {{ t('lcs.usance_days_suffix', { days: row.usance_days }) }}</span>
         </template>
         <template #status-data="{ row }">
-          <UBadge size="xs" variant="subtle" :color="row.status === 'active' ? 'green' : 'gray'">{{ row.status }}</UBadge>
+          <UBadge size="xs" variant="subtle" :color="row.status === 'active' ? 'green' : 'gray'">{{ statusLabel[row.status] }}</UBadge>
         </template>
         <template #actions-data="{ row }">
           <div class="flex gap-1 justify-end">
-            <UButton v-if="canWrite" icon="i-heroicons-pencil-square" size="xs" color="gray" variant="ghost" @click="openEdit(row)" aria-label="Edit LC" />
-            <UButton v-if="canWrite && row.status === 'active'" size="xs" variant="soft" @click="openAmend(row)">Amend</UButton>
-            <UButton v-if="canWrite" icon="i-heroicons-trash" size="xs" color="red" variant="ghost" aria-label="Delete" @click="onDelete(row)" />
+            <UButton v-if="canWrite" icon="i-heroicons-pencil-square" size="xs" color="gray" variant="ghost" @click="openEdit(row)" :aria-label="t('lcs.index.edit_aria')" />
+            <UButton v-if="canWrite && row.status === 'active'" size="xs" variant="soft" @click="openAmend(row)">{{ t('lcs.index.amend') }}</UButton>
+            <UButton v-if="canWrite" icon="i-heroicons-trash" size="xs" color="red" variant="ghost" :aria-label="t('lcs.index.delete_aria')" @click="onDelete(row)" />
           </div>
         </template>
         <template #empty-state>
-          <div class="text-center py-6 text-sm text-gray-400">No LCs registered.</div>
+          <div class="text-center py-6 text-sm text-gray-400">{{ t('lcs.index.empty') }}</div>
         </template>
       </UTable>
     </UCard>
 
     <USlideover v-model="open" :ui="{ width: 'w-screen max-w-2xl' }">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">{{ editId ? 'Edit LC' : 'Register LC (v1 terms)' }}</p></template>
+        <template #header><p class="font-medium">{{ editId ? t('lcs.index.modal.edit_title') : t('lcs.index.modal.register_title') }}</p></template>
         <div class="grid grid-cols-2 gap-4">
-          <UFormGroup label="Role" required class="col-span-2">
+          <UFormGroup :label="t('lcs.index.modal.role_label')" required class="col-span-2">
             <USelect v-model="form.lc_role" :options="roleOptions" option-attribute="label" value-attribute="value" />
           </UFormGroup>
-          <UFormGroup label="LC number" required><UInput v-model="form.lc_no" /></UFormGroup>
+          <UFormGroup :label="t('lcs.index.modal.lc_no_label')" required><UInput v-model="form.lc_no" /></UFormGroup>
           <UFormGroup :label="counterpartyLabel" required>
             <USelect v-model="form.counterparty_party_id" :options="counterpartyOptions" option-attribute="name" value-attribute="id" placeholder="—" />
           </UFormGroup>
-          <UFormGroup label="Issuing bank">
+          <UFormGroup :label="t('lcs.index.modal.bank_label')">
             <USelect v-model="form.bank_party_id" :options="banks" option-attribute="name" value-attribute="id" placeholder="—" />
           </UFormGroup>
-          <UFormGroup label="Currency">
+          <UFormGroup :label="t('lcs.index.modal.currency_label')">
             <USelect v-model="form.currency" :options="['BDT', 'USD', 'EUR', 'GBP', 'CNY']" />
           </UFormGroup>
-          <UFormGroup label="Type">
-            <USelect v-model="form.lc_type" :options="[{ value: 'sight', label: 'Sight' }, { value: 'usance', label: 'Usance' }]" option-attribute="label" value-attribute="value" />
+          <UFormGroup :label="t('lcs.index.modal.type_label')">
+            <USelect v-model="form.lc_type" :options="[{ value: 'sight', label: t('lcs.lc_types.sight') }, { value: 'usance', label: t('lcs.lc_types.usance') }]" option-attribute="label" value-attribute="value" />
           </UFormGroup>
-          <UFormGroup v-if="form.lc_type === 'usance'" label="Usance days">
+          <UFormGroup v-if="form.lc_type === 'usance'" :label="t('lcs.index.modal.usance_days_label')">
             <UInput v-model.number="form.usance_days" type="number" />
           </UFormGroup>
-          <UFormGroup label="Opened"><UInput v-model="form.opened_at" type="date" /></UFormGroup>
+          <UFormGroup :label="t('lcs.index.modal.opened_label')"><UInput v-model="form.opened_at" type="date" /></UFormGroup>
           <template v-if="!editId">
-            <UFormGroup :label="`Amount (${form.currency})`"><UInput v-model.number="form.amount" type="number" /></UFormGroup>
-            <UFormGroup label="Quantity"><UInput v-model.number="form.quantity" type="number" /></UFormGroup>
-            <UFormGroup label="Tolerance %"><UInput v-model.number="form.tolerance_pct" type="number" /></UFormGroup>
-            <UFormGroup label="Expiry"><UInput v-model="form.expiry_date" type="date" /></UFormGroup>
+            <UFormGroup :label="t('lcs.index.modal.amount_label', { currency: form.currency })"><UInput v-model.number="form.amount" type="number" /></UFormGroup>
+            <UFormGroup :label="t('lcs.index.modal.quantity_label')"><UInput v-model.number="form.quantity" type="number" /></UFormGroup>
+            <UFormGroup :label="t('lcs.index.modal.tolerance_label')"><UInput v-model.number="form.tolerance_pct" type="number" /></UFormGroup>
+            <UFormGroup :label="t('lcs.index.modal.expiry_label')"><UInput v-model="form.expiry_date" type="date" /></UFormGroup>
           </template>
           <p v-else class="col-span-2 text-xs text-gray-400 dark:text-zinc-500">
-            Amount, quantity, tolerance and expiry are versioned terms — use "Amend" on the list to change those.
+            {{ t('lcs.index.modal.amend_hint') }}
           </p>
 
           <template v-if="isForeign">
             <div class="col-span-2 border-t border-gray-100 dark:border-zinc-800 pt-3 mt-1">
-              <p class="microlabel text-gray-400 dark:text-zinc-500">Shipment &amp; foreign trade terms</p>
+              <p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('lcs.index.modal.shipment_terms_header') }}</p>
             </div>
-            <UFormGroup label="Incoterm" hint="e.g. CFR, FOB, CIF, EXW"><UInput v-model="form.incoterm" /></UFormGroup>
-            <UFormGroup label="Latest shipment date"><UInput v-model="form.latest_shipment_date" type="date" /></UFormGroup>
-            <UFormGroup label="Port of loading"><UInput v-model="form.port_of_loading" /></UFormGroup>
-            <UFormGroup label="Port of discharge"><UInput v-model="form.port_of_discharge" /></UFormGroup>
-            <UFormGroup label="Presentation period (days)"><UInput v-model.number="form.presentation_period_days" type="number" /></UFormGroup>
-            <UFormGroup label="Available with / by" class="col-span-2" hint="e.g. Any bank in China, by negotiation"><UInput v-model="form.available_with_by" /></UFormGroup>
+            <UFormGroup :label="t('lcs.index.modal.incoterm_label')" :hint="t('lcs.index.modal.incoterm_hint')"><UInput v-model="form.incoterm" /></UFormGroup>
+            <UFormGroup :label="t('lcs.index.modal.latest_shipment_label')"><UInput v-model="form.latest_shipment_date" type="date" /></UFormGroup>
+            <UFormGroup :label="t('lcs.index.modal.port_loading_label')"><UInput v-model="form.port_of_loading" /></UFormGroup>
+            <UFormGroup :label="t('lcs.index.modal.port_discharge_label')"><UInput v-model="form.port_of_discharge" /></UFormGroup>
+            <UFormGroup :label="t('lcs.index.modal.presentation_period_label')"><UInput v-model.number="form.presentation_period_days" type="number" /></UFormGroup>
+            <UFormGroup :label="t('lcs.index.modal.available_with_by_label')" class="col-span-2" :hint="t('lcs.index.modal.available_with_by_hint')"><UInput v-model="form.available_with_by" /></UFormGroup>
           </template>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="open = false">Cancel</UButton>
-            <UButton :loading="saving" @click="save">{{ editId ? 'Save' : 'Register' }}</UButton>
+            <UButton color="gray" variant="ghost" @click="open = false">{{ t('common.cancel') }}</UButton>
+            <UButton :loading="saving" @click="save">{{ editId ? t('common.save') : t('lcs.index.modal.register') }}</UButton>
           </div>
         </template>
       </UCard>
@@ -337,25 +344,25 @@ const onDelete = async (row: any) => {
     <USlideover v-model="amendOpen">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
         <template #header>
-          <p class="font-medium">Amend {{ amendTarget?.lc_no }} → v{{ (active(amendTarget)?.version ?? 0) + 1 }}</p>
+          <p class="font-medium">{{ t('lcs.index.amend_modal.title', { no: amendTarget?.lc_no, version: (active(amendTarget)?.version ?? 0) + 1 }) }}</p>
         </template>
         <div class="grid grid-cols-2 gap-4">
-          <UFormGroup label="Amount"><UInput v-model.number="amendForm.amount" type="number" /></UFormGroup>
-          <UFormGroup label="Quantity"><UInput v-model.number="amendForm.quantity" type="number" /></UFormGroup>
-          <UFormGroup label="Tolerance %"><UInput v-model.number="amendForm.tolerance_pct" type="number" /></UFormGroup>
-          <UFormGroup label="Expiry"><UInput v-model="amendForm.expiry_date" type="date" /></UFormGroup>
-          <UFormGroup label="MT707 fee on us (৳)" hint="posts to 5400 if > 0">
+          <UFormGroup :label="t('lcs.index.amend_modal.amount_label')"><UInput v-model.number="amendForm.amount" type="number" /></UFormGroup>
+          <UFormGroup :label="t('lcs.index.amend_modal.quantity_label')"><UInput v-model.number="amendForm.quantity" type="number" /></UFormGroup>
+          <UFormGroup :label="t('lcs.index.amend_modal.tolerance_label')"><UInput v-model.number="amendForm.tolerance_pct" type="number" /></UFormGroup>
+          <UFormGroup :label="t('lcs.index.amend_modal.expiry_label')"><UInput v-model="amendForm.expiry_date" type="date" /></UFormGroup>
+          <UFormGroup :label="t('lcs.index.amend_modal.fee_label')" :hint="t('lcs.index.amend_modal.fee_hint')">
             <UInput v-model.number="amendForm.bank_fee" type="number" />
           </UFormGroup>
-          <UFormGroup v-if="amendForm.bank_fee > 0" label="Fee paid from" hint="which account the fee is debited from">
-            <USelect v-model="amendForm.cash_bank_account_id" :options="cashBankAccounts" option-attribute="name" value-attribute="id" placeholder="— default bank account —" />
+          <UFormGroup v-if="amendForm.bank_fee > 0" :label="t('lcs.index.amend_modal.fee_paid_from_label')" :hint="t('lcs.index.amend_modal.fee_paid_from_hint')">
+            <USelect v-model="amendForm.cash_bank_account_id" :options="cashBankAccounts" option-attribute="name" value-attribute="id" :placeholder="t('lcs.index.amend_modal.fee_default_option')" />
           </UFormGroup>
-          <UFormGroup label="Note"><UInput v-model="amendForm.note" /></UFormGroup>
+          <UFormGroup :label="t('lcs.index.amend_modal.note_label')"><UInput v-model="amendForm.note" /></UFormGroup>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="amendOpen = false">Cancel</UButton>
-            <UButton @click="saveAmend">Record amendment</UButton>
+            <UButton color="gray" variant="ghost" @click="amendOpen = false">{{ t('common.cancel') }}</UButton>
+            <UButton @click="saveAmend">{{ t('lcs.index.amend_modal.record') }}</UButton>
           </div>
         </template>
       </UCard>

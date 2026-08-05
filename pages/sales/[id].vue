@@ -4,6 +4,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { money, num } = useFmt()
+const { t } = useI18n()
 
 const id = route.params.id as string
 const so = ref<any>(null)
@@ -13,7 +14,11 @@ const linkedDocs = ref<any[]>([])
 const generatingPi = ref(false)
 const loading = ref(true)
 
-const typeLabel: Record<string, string> = { quotation: 'Quotation', pi: 'Proforma Invoice', contract: 'Sales Contract' }
+const typeLabel = computed<Record<string, string>>(() => ({
+  quotation: t('sales.doc_types.quotation'),
+  pi: t('sales.doc_types.pi'),
+  contract: t('sales.doc_types.contract')
+}))
 
 const load = async () => {
   loading.value = true
@@ -38,8 +43,8 @@ onMounted(load)
 const generatePi = async () => {
   generatingPi.value = true
   const { error } = await client.rpc('generate_pi_from_order', { p_so_id: id } as any)
-  if (error) toast.add({ title: 'PI generation failed', description: error.message, color: 'red' })
-  else { toast.add({ title: 'Proforma Invoice generated' }); await load() }
+  if (error) toast.add({ title: t('sales.detail.toast.pi_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('sales.detail.toast.pi_generated') }); await load() }
   generatingPi.value = false
 }
 
@@ -54,32 +59,37 @@ const deliveredPct = computed(() => {
 const kindColor = (k: string) => ({ standard: 'blue', original: 'amber', covering: 'purple' } as any)[k] || 'gray'
 const statusColor = (s: string) =>
   ({ draft: 'gray', issued: 'blue', delivered_unbilled: 'amber', covered: 'purple', invoiced: 'green' } as any)[s] || 'gray'
+const soStatusLabel = (s: string) => t(`sales.statuses.${s}`)
+const challanStatusLabel = (s: string) => t(`sales.challan_statuses.${s}`)
+const challanKindLabel = (k: string) => t(`sales.challan_kinds.${k}`)
+const invoiceStatusLabel = (s: string) => t(`sales.invoice_statuses.${s}`)
+const docStatusLabel = (s: string) => s === 'draft' ? t('common.draft') : t(`quotations.statuses.${s}`)
 </script>
 
 <template>
   <div v-if="so">
-    <PageHeader kicker="Sales &amp; Local LC" :title="so.so_no" :subtitle="`${so.order_date} · ${so.is_deemed_export ? 'deemed export' : 'domestic'}`">
-      <UBadge variant="subtle" :color="so.status === 'delivered' ? 'green' : 'blue'">{{ so.status }}</UBadge>
+    <PageHeader :kicker="t('sales.kicker')" :title="so.so_no" :subtitle="`${so.order_date} · ${so.is_deemed_export ? t('sales.detail.deemed_export') : t('sales.detail.domestic')}`">
+      <UBadge variant="subtle" :color="so.status === 'delivered' ? 'green' : 'blue'">{{ soStatusLabel(so.status) }}</UBadge>
       <UButton v-if="canWrite" :loading="generatingPi" variant="soft" icon="i-heroicons-document-plus" @click="generatePi">
-        Generate PI
+        {{ t('sales.detail.generate_pi') }}
       </UButton>
     </PageHeader>
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-      <StatCard label="Buyer" :value="so.parties?.name ?? '—'">
+      <StatCard :label="t('sales.detail.buyer')" :value="so.parties?.name ?? '—'">
       </StatCard>
-      <StatCard label="Order value" :value="money(orderValue)" />
-      <StatCard label="Delivered" :value="deliveredPct + '%'" :tone="deliveredPct >= 95 ? 'green' : 'amber'" />
-      <StatCard label="LC" :value="so.lcs?.lc_no ?? 'pre-LC'" :tone="so.lcs ? 'default' : 'amber'" />
+      <StatCard :label="t('sales.detail.order_value')" :value="money(orderValue)" />
+      <StatCard :label="t('sales.detail.delivered')" :value="deliveredPct + '%'" :tone="deliveredPct >= 95 ? 'green' : 'amber'" />
+      <StatCard :label="t('sales.detail.lc')" :value="so.lcs?.lc_no ?? t('sales.detail.pre_lc')" :tone="so.lcs ? 'default' : 'amber'" />
     </div>
     <div class="flex gap-2 mb-4 text-[12.5px]">
-      <NuxtLink :to="`/parties/${so.parties?.id}`" class="text-amber-600 dark:text-amber-400 hover:underline">→ buyer profile</NuxtLink>
-      <NuxtLink v-if="so.lcs" :to="`/lcs/${so.lcs.id}`" class="text-amber-600 dark:text-amber-400 hover:underline">→ LC lifecycle</NuxtLink>
+      <NuxtLink :to="`/parties/${so.parties?.id}`" class="text-amber-600 dark:text-amber-400 hover:underline">{{ t('sales.detail.buyer_profile') }}</NuxtLink>
+      <NuxtLink v-if="so.lcs" :to="`/lcs/${so.lcs.id}`" class="text-amber-600 dark:text-amber-400 hover:underline">{{ t('sales.detail.lc_lifecycle') }}</NuxtLink>
     </div>
 
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
       <UCard>
-        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Lines &amp; fulfilment</p></template>
+        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('sales.detail.lines_fulfilment') }}</p></template>
         <div v-for="l in so.sales_order_lines" :key="l.id" class="py-2 border-b border-gray-100 dark:border-zinc-800/60 last:border-0">
           <div class="flex justify-between text-[13px]">
             <span class="dark:text-zinc-200">{{ l.items?.sku }} — {{ l.items?.name }}</span>
@@ -97,39 +107,39 @@ const statusColor = (s: string) =>
 
       <div class="space-y-4">
         <UCard>
-          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Challans</p></template>
-          <div v-if="!challans.length" class="text-sm text-gray-400 py-3 text-center">None yet.</div>
+          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('sales.detail.challans') }}</p></template>
+          <div v-if="!challans.length" class="text-sm text-gray-400 py-3 text-center">{{ t('sales.detail.none_yet') }}</div>
           <div v-for="c in challans" :key="c.id" class="flex items-center justify-between py-1.5 text-[13px]">
             <span>
               <NuxtLink to="/challans" class="num text-amber-600 dark:text-amber-400 hover:underline">{{ c.challan_no }}</NuxtLink>
-              <UBadge size="xs" variant="subtle" :color="kindColor(c.challan_kind)" class="ml-2">{{ c.challan_kind }}</UBadge>
-              <span v-if="c.covers" class="num text-[11px] text-gray-400 dark:text-zinc-600 ml-1">covers {{ c.covers.challan_no }}</span>
+              <UBadge size="xs" variant="subtle" :color="kindColor(c.challan_kind)" class="ml-2">{{ challanKindLabel(c.challan_kind) }}</UBadge>
+              <span v-if="c.covers" class="num text-[11px] text-gray-400 dark:text-zinc-600 ml-1">{{ t('sales.detail.covers', { no: c.covers.challan_no }) }}</span>
             </span>
             <span class="flex items-center gap-2">
               <span class="num text-gray-500 dark:text-zinc-500">{{ c.document_date }}</span>
-              <UBadge size="xs" variant="subtle" :color="statusColor(c.status)">{{ c.status }}</UBadge>
+              <UBadge size="xs" variant="subtle" :color="statusColor(c.status)">{{ challanStatusLabel(c.status) }}</UBadge>
             </span>
           </div>
         </UCard>
 
         <UCard>
-          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Invoices</p></template>
-          <div v-if="!invoices.length" class="text-sm text-gray-400 py-3 text-center">None yet.</div>
+          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('sales.detail.invoices') }}</p></template>
+          <div v-if="!invoices.length" class="text-sm text-gray-400 py-3 text-center">{{ t('sales.detail.none_yet') }}</div>
           <div v-for="i in invoices" :key="i.id" class="flex justify-between py-1.5 text-[13px]">
             <NuxtLink :to="`/invoices/${i.id}`" class="num text-amber-600 dark:text-amber-400 hover:underline">{{ i.invoice_no }}</NuxtLink>
-            <span class="num text-gray-500 dark:text-zinc-500">{{ i.invoice_date }} · {{ money(i.total) }} · {{ i.status }}</span>
+            <span class="num text-gray-500 dark:text-zinc-500">{{ i.invoice_date }} · {{ money(i.total) }} · {{ invoiceStatusLabel(i.status) }}</span>
           </div>
         </UCard>
 
         <UCard v-if="linkedDocs.length">
-          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Quotations / PI / contracts</p></template>
+          <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('sales.detail.linked_docs') }}</p></template>
           <div v-for="d in linkedDocs" :key="d.id" class="flex justify-between py-1.5 text-[13px]">
             <NuxtLink :to="`/quotations/${d.id}`" class="num text-amber-600 dark:text-amber-400 hover:underline">{{ d.doc_no }}</NuxtLink>
-            <span class="text-gray-500 dark:text-zinc-500">{{ typeLabel[d.doc_type] }} · {{ d.status }}</span>
+            <span class="text-gray-500 dark:text-zinc-500">{{ typeLabel[d.doc_type] }} · {{ docStatusLabel(d.status) }}</span>
           </div>
         </UCard>
       </div>
     </div>
   </div>
-  <div v-else-if="!loading" class="text-sm text-gray-400 py-10 text-center">Sales order not found.</div>
+  <div v-else-if="!loading" class="text-sm text-gray-400 py-10 text-center">{{ t('sales.detail.not_found') }}</div>
 </template>

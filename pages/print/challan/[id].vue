@@ -7,6 +7,7 @@ definePageMeta({ layout: false })
 const route = useRoute()
 const client = useSupabaseClient()
 const { num } = useFmt()
+const { locale: printLocale, t, toggle: toggleLang } = usePrintLocale()
 
 const id = route.params.id as string
 const ch = ref<any>(null)
@@ -53,49 +54,54 @@ const totalQty = computed(() => lines.value.reduce((s, l) => s + Number(l.qty), 
 const fmtDate = (d?: string) => d
   ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
   : '—'
+
+const coveringTag = computed(() => t('print.challan.kind_covering', {
+  ref: ch.value?.covers ? t('print.challan.kind_covering_ref', { no: ch.value.covers.challan_no }) : ''
+}))
 </script>
 
 <template>
   <div class="print-root">
     <div class="no-print toolbar">
-      <NuxtLink to="/challans" class="back">← back to challans</NuxtLink>
+      <NuxtLink to="/challans" class="back">{{ t('print.challan.back') }}</NuxtLink>
       <PrintClausePicker v-model="clauses" :docs="['challan']" />
-      <button class="print-btn" @click="() => window.print()">🖨 Print</button>
+      <button class="lang-btn" @click="toggleLang">{{ t('print.toolbar.lang_toggle') }}</button>
+      <button class="print-btn" @click="() => window.print()">{{ t('print.toolbar.print_btn') }}</button>
     </div>
 
-    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">Loading…</div>
+    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">{{ t('print.toolbar.loading') }}</div>
 
-    <div v-else-if="ch && company" class="sheet">
+    <div v-else-if="ch && company" class="sheet" :lang="printLocale">
       <div class="letterhead">
         <img v-if="logoUrl(company)" :src="logoUrl(company)" class="co-logo" alt="Company logo">
         <div class="co-name">{{ company.legal_name || company.name }}</div>
         <div class="small">{{ company.address || '' }}</div>
       </div>
       <div class="doc-title">
-        DELIVERY CHALLAN
-        <span v-if="ch.challan_kind === 'covering'" class="kind-tag">(Covering Set{{ ch.covers ? ' — covers ' + ch.covers.challan_no : '' }})</span>
-        <span v-else-if="ch.challan_kind === 'original'" class="kind-tag">(Pre-LC Original — internal series)</span>
+        {{ t('print.challan.title') }}
+        <span v-if="ch.challan_kind === 'covering'" class="kind-tag">{{ coveringTag }}</span>
+        <span v-else-if="ch.challan_kind === 'original'" class="kind-tag">{{ t('print.challan.kind_original') }}</span>
       </div>
 
       <table class="meta">
         <tbody>
           <tr>
             <td>
-              <div class="small">Consignee / Buyer</div>
+              <div class="small">{{ t('print.challan.consignee') }}</div>
               <b>{{ ch.parties?.name }}</b>
               <div class="small">{{ ch.parties?.address || '' }}</div>
             </td>
             <td>
-              <div>Challan No: <b class="mono">{{ ch.challan_no }}</b></div>
-              <div>Date: <b>{{ fmtDate(ch.document_date) }}</b></div>
+              <div>{{ t('print.challan.challan_no') }} <b class="mono">{{ ch.challan_no }}</b></div>
+              <div>{{ t('print.challan.date') }} <b>{{ fmtDate(ch.document_date) }}</b></div>
               <div v-if="ch.actual_delivery_date !== ch.document_date" class="small">
-                Actual delivery: {{ fmtDate(ch.actual_delivery_date) }}
+                {{ t('print.challan.actual_delivery', { date: fmtDate(ch.actual_delivery_date) }) }}
               </div>
-              <div v-if="ch.sales_orders">Order Ref: <b class="mono">{{ ch.sales_orders.so_no }}</b></div>
+              <div v-if="ch.sales_orders">{{ t('print.challan.order_ref') }} <b class="mono">{{ ch.sales_orders.so_no }}</b></div>
             </td>
             <td>
-              <div>L/C No: <b class="mono">{{ ch.lcs?.lc_no ?? 'Not yet assigned' }}</b></div>
-              <div>Status: <b>{{ ch.status.replace(/_/g, ' ') }}</b></div>
+              <div>{{ t('print.challan.lc_no') }} <b class="mono">{{ ch.lcs?.lc_no ?? t('print.challan.lc_not_assigned') }}</b></div>
+              <div>{{ t('print.challan.status') }} <b>{{ ch.status.replace(/_/g, ' ') }}</b></div>
             </td>
           </tr>
         </tbody>
@@ -104,8 +110,8 @@ const fmtDate = (d?: string) => d
       <table class="lines">
         <thead>
           <tr>
-            <th style="width: 30px;">SL</th><th>Description of Goods</th>
-            <th>Size / Spec</th><th>Batch / Roll</th><th class="right">Quantity (Pcs)</th>
+            <th style="width: 30px;">{{ t('print.challan.col_sl') }}</th><th>{{ t('print.challan.col_description') }}</th>
+            <th>{{ t('print.challan.col_size_spec') }}</th><th>{{ t('print.challan.col_batch') }}</th><th class="right">{{ t('print.challan.col_qty') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -117,7 +123,7 @@ const fmtDate = (d?: string) => d
             <td class="right mono">{{ num(l.qty, 0) }}</td>
           </tr>
           <tr class="total-row">
-            <td colspan="4"><b>TOTAL</b></td>
+            <td colspan="4"><b>{{ t('print.challan.total') }}</b></td>
             <td class="right mono"><b>{{ num(totalQty, 0) }}</b></td>
           </tr>
         </tbody>
@@ -126,9 +132,9 @@ const fmtDate = (d?: string) => d
       <table class="meta" style="margin-top: 4px;">
         <tbody>
           <tr>
-            <td><div class="small">Vehicle No.</div><div class="cell-line">&nbsp;</div></td>
-            <td><div class="small">Driver Name</div><div class="cell-line">&nbsp;</div></td>
-            <td><div class="small">Gate Pass No.</div><div class="cell-line">&nbsp;</div></td>
+            <td><div class="small">{{ t('print.challan.vehicle_no') }}</div><div class="cell-line">&nbsp;</div></td>
+            <td><div class="small">{{ t('print.challan.driver_name') }}</div><div class="cell-line">&nbsp;</div></td>
+            <td><div class="small">{{ t('print.challan.gate_pass_no') }}</div><div class="cell-line">&nbsp;</div></td>
           </tr>
         </tbody>
       </table>
@@ -136,12 +142,12 @@ const fmtDate = (d?: string) => d
       <PrintClauseBlock :selected-keys="clauses" doc="challan" />
 
       <div class="row spread sig-block">
-        <div class="sig"><div class="sig-line" /><div class="small">Dispatched by</div></div>
-        <div class="sig"><div class="sig-line" /><div class="small">Received by (Buyer's Signature &amp; Seal)</div></div>
+        <div class="sig"><div class="sig-line" /><div class="small">{{ t('print.challan.dispatched_by') }}</div></div>
+        <div class="sig"><div class="sig-line" /><div class="small">{{ t('print.challan.received_by') }}</div></div>
       </div>
     </div>
 
-    <div v-else-if="!loading" class="no-print" style="padding: 40px; text-align: center;">Challan not found.</div>
+    <div v-else-if="!loading" class="no-print" style="padding: 40px; text-align: center;">{{ t('print.challan.not_found') }}</div>
   </div>
 </template>
 
@@ -154,6 +160,7 @@ const fmtDate = (d?: string) => d
 }
 .toolbar .back { color: #fbbf24; text-decoration: none; }
 .print-btn { background: #f59e0b; color: #000; border: 0; border-radius: 4px; padding: 6px 16px; font-weight: 600; cursor: pointer; }
+.lang-btn { background: transparent; color: #e4e4e7; border: 1px solid #52525b; border-radius: 4px; padding: 5px 14px; font-weight: 500; cursor: pointer; }
 
 .sheet {
   width: 210mm; min-height: 280mm; margin: 0 auto 20px; background: #fff; color: #111;

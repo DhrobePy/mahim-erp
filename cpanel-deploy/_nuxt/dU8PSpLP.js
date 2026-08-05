@@ -1,0 +1,1 @@
+import{h as u,m as r}from"./DVL6TsG7.js";const g=()=>{const a=r("en"),{t:s,locale:n,setLocale:t}=u(),l=new Set([n.value]),c=async e=>{if(l.has(e))return;const o=n.value;await t(e),await t(o),l.add(e)};return{locale:a,t:(e,o)=>s(e,o??{},{locale:a.value}),toggle:async()=>{const e=a.value==="en"?"bn":"en";await c(e),a.value=e}}};export{g as u};

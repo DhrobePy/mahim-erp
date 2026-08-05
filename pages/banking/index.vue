@@ -3,6 +3,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { deleteRecord } = useRecycleBin()
+const { t } = useI18n()
 
 const facilities = ref<any[]>([])
 const bills = ref<any[]>([])
@@ -39,15 +40,15 @@ const facOpen = ref(false)
 const facForm = reactive({ bank_party_id: null as string | null, name: '', facility_type: 'lbpd', limit_amount: 0, interest_rate: 12 })
 const saveFacility = async () => {
   const { error } = await client.from('bank_facilities').insert({ ...facForm } as any)
-  if (error) toast.add({ title: 'Facility failed', description: error.message, color: 'red' })
-  else { toast.add({ title: 'Facility added' }); facOpen.value = false; await load() }
+  if (error) toast.add({ title: t('banking.toasts.facility_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('banking.toasts.facility_added') }); facOpen.value = false; await load() }
 }
 
 // --- Bill actions ---
 const acceptBill = async (row: any) => {
   const { error } = await client.rpc('accept_bill', { p_bill_id: row.id } as any)
-  if (error) toast.add({ title: 'Acceptance failed', description: error.message, color: 'red' })
-  else { toast.add({ title: `${row.bill_no} accepted — maturity set from usance` }); await load() }
+  if (error) toast.add({ title: t('banking.toasts.acceptance_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('banking.toasts.bill_accepted', { bill: row.bill_no }) }); await load() }
 }
 
 const discOpen = ref(false)
@@ -65,8 +66,8 @@ const saveDiscount = async () => {
     p_advance_pct: discForm.advance_pct,
     p_cash_bank_account_id: discForm.cash_bank_account_id
   } as any)
-  if (error) toast.add({ title: 'Disbursement failed', description: error.message, color: 'red' })
-  else { toast.add({ title: 'LBPD disbursed — cash in bank' }); discOpen.value = false; await load() }
+  if (error) toast.add({ title: t('banking.toasts.disbursement_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('banking.toasts.lbpd_disbursed') }); discOpen.value = false; await load() }
 }
 
 // --- Settlement / forced PAD ---
@@ -78,13 +79,13 @@ const saveSettle = async () => {
   const { error } = await client.rpc('settle_lbpd', {
     p_disbursement_id: setTarget.value.id, p_interest: setForm.interest
   } as any)
-  if (error) toast.add({ title: 'Settlement failed', description: error.message, color: 'red' })
-  else { toast.add({ title: 'Settled — margin credited, bill realized' }); setOpen.value = false; await load() }
+  if (error) toast.add({ title: t('banking.toasts.settlement_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('banking.toasts.settled') }); setOpen.value = false; await load() }
 }
 const forcePad = async (row: any) => {
   const { error } = await client.rpc('convert_to_forced_pad', { p_disbursement_id: row.id } as any)
-  if (error) toast.add({ title: 'Conversion failed', description: error.message, color: 'red' })
-  else { toast.add({ title: 'Converted to forced PAD (penalty profile)', color: 'amber' }); await load() }
+  if (error) toast.add({ title: t('banking.toasts.conversion_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('banking.toasts.converted_forced_pad'), color: 'amber' }); await load() }
 }
 
 const removeFacility = async (row: any) => {
@@ -105,18 +106,18 @@ const disbColor = (s: string) =>
 
 <template>
   <div>
-    <PageHeader kicker="Finance" title="Banking / LBPD" subtitle="Facilities → bill acceptance → discounting → maturity settlement (or forced PAD)">
-      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="facOpen = true">New facility</UButton>
+    <PageHeader :kicker="t('banking.kicker')" :title="t('banking.title')" :subtitle="t('banking.subtitle')">
+      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="facOpen = true">{{ t('banking.new_facility') }}</UButton>
     </PageHeader>
 
     <UCard class="mb-6">
-      <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Facilities</p></template>
+      <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('banking.facilities.header') }}</p></template>
       <UTable
         :rows="facilities" :loading="loading"
         :columns="[
-          { key: 'name', label: 'Facility' }, { key: 'bank', label: 'Bank' },
-          { key: 'facility_type', label: 'Type' }, { key: 'limit_amount', label: 'Limit (৳)' },
-          { key: 'exposure', label: 'Exposure (৳)' }, { key: 'interest_rate', label: 'Rate %' },
+          { key: 'name', label: t('banking.facilities.columns.facility') }, { key: 'bank', label: t('banking.facilities.columns.bank') },
+          { key: 'facility_type', label: t('common.type') }, { key: 'limit_amount', label: t('banking.facilities.columns.limit') },
+          { key: 'exposure', label: t('banking.facilities.columns.exposure') }, { key: 'interest_rate', label: t('banking.facilities.columns.rate') },
           { key: 'actions', label: '' }
         ]"
       >
@@ -136,18 +137,18 @@ const disbColor = (s: string) =>
             <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="removeFacility(row)" />
           </div>
         </template>
-        <template #empty-state><div class="text-center py-4 text-sm text-gray-400">No facilities.</div></template>
+        <template #empty-state><div class="text-center py-4 text-sm text-gray-400">{{ t('banking.facilities.empty') }}</div></template>
       </UTable>
     </UCard>
 
     <UCard class="mb-6">
-      <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Bills under LC</p></template>
+      <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('banking.bills.header') }}</p></template>
       <UTable
         :rows="bills" :loading="loading"
         :columns="[
-          { key: 'bill_no', label: 'Bill' }, { key: 'invoice', label: 'Invoice' },
-          { key: 'lc', label: 'LC' }, { key: 'amount', label: 'Amount (৳)' },
-          { key: 'maturity_date', label: 'Maturity' }, { key: 'status', label: 'Status' },
+          { key: 'bill_no', label: t('banking.bills.columns.bill') }, { key: 'invoice', label: t('banking.bills.columns.invoice') },
+          { key: 'lc', label: t('banking.bills.columns.lc') }, { key: 'amount', label: t('banking.bills.columns.amount') },
+          { key: 'maturity_date', label: t('banking.bills.columns.maturity') }, { key: 'status', label: t('common.status') },
           { key: 'actions', label: '' }
         ]"
       >
@@ -169,23 +170,23 @@ const disbColor = (s: string) =>
         </template>
         <template #actions-data="{ row }">
           <div class="flex gap-1 justify-end">
-            <UButton v-if="canWrite && row.status === 'submitted'" size="xs" variant="soft" @click="acceptBill(row)">Accept</UButton>
-            <UButton v-if="canWrite && row.status === 'accepted'" size="xs" variant="soft" color="purple" @click="openDiscount(row)">Discount (LBPD)</UButton>
+            <UButton v-if="canWrite && row.status === 'submitted'" size="xs" variant="soft" @click="acceptBill(row)">{{ t('banking.bills.accept') }}</UButton>
+            <UButton v-if="canWrite && row.status === 'accepted'" size="xs" variant="soft" color="purple" @click="openDiscount(row)">{{ t('banking.bills.discount') }}</UButton>
             <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="removeBill(row)" />
           </div>
         </template>
-        <template #empty-state><div class="text-center py-4 text-sm text-gray-400">No bills submitted.</div></template>
+        <template #empty-state><div class="text-center py-4 text-sm text-gray-400">{{ t('banking.bills.empty') }}</div></template>
       </UTable>
     </UCard>
 
     <UCard>
-      <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">LBPD disbursements</p></template>
+      <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('banking.disbursements.header') }}</p></template>
       <UTable
         :rows="disbursements" :loading="loading"
         :columns="[
-          { key: 'bill', label: 'Bill' }, { key: 'principal', label: 'Advance (৳)' },
-          { key: 'advance_pct', label: '%' }, { key: 'disbursed_at', label: 'Disbursed' },
-          { key: 'status', label: 'Status' }, { key: 'actions', label: '' }
+          { key: 'bill', label: t('banking.disbursements.columns.bill') }, { key: 'principal', label: t('banking.disbursements.columns.advance') },
+          { key: 'advance_pct', label: t('banking.disbursements.columns.pct') }, { key: 'disbursed_at', label: t('banking.disbursements.columns.disbursed') },
+          { key: 'status', label: t('common.status') }, { key: 'actions', label: '' }
         ]"
       >
         <template #bill-data="{ row }">
@@ -199,33 +200,33 @@ const disbColor = (s: string) =>
         </template>
         <template #actions-data="{ row }">
           <div class="flex gap-1 justify-end">
-            <UButton v-if="canWrite && row.status !== 'settled'" size="xs" variant="soft" color="green" @click="openSettle(row)">Settle</UButton>
-            <UButton v-if="canWrite && row.status === 'open'" size="xs" variant="soft" color="red" @click="forcePad(row)">Forced PAD</UButton>
+            <UButton v-if="canWrite && row.status !== 'settled'" size="xs" variant="soft" color="green" @click="openSettle(row)">{{ t('banking.disbursements.settle') }}</UButton>
+            <UButton v-if="canWrite && row.status === 'open'" size="xs" variant="soft" color="red" @click="forcePad(row)">{{ t('banking.disbursements.forced_pad') }}</UButton>
             <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="removeDisbursement(row)" />
           </div>
         </template>
-        <template #empty-state><div class="text-center py-4 text-sm text-gray-400">No disbursements.</div></template>
+        <template #empty-state><div class="text-center py-4 text-sm text-gray-400">{{ t('banking.disbursements.empty') }}</div></template>
       </UTable>
     </UCard>
 
     <USlideover v-model="facOpen">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">New bank facility</p></template>
+        <template #header><p class="font-medium">{{ t('banking.facility_dialog.title') }}</p></template>
         <div class="grid grid-cols-2 gap-4">
-          <UFormGroup label="Bank" required>
+          <UFormGroup :label="t('banking.facility_dialog.bank')" required>
             <USelect v-model="facForm.bank_party_id" :options="banks" option-attribute="name" value-attribute="id" placeholder="—" />
           </UFormGroup>
-          <UFormGroup label="Name" required><UInput v-model="facForm.name" /></UFormGroup>
-          <UFormGroup label="Type">
+          <UFormGroup :label="t('common.name')" required><UInput v-model="facForm.name" /></UFormGroup>
+          <UFormGroup :label="t('banking.facility_dialog.type')">
             <USelect v-model="facForm.facility_type" :options="['lbpd', 'od', 'cc', 'term']" />
           </UFormGroup>
-          <UFormGroup label="Limit (৳)"><UInput v-model.number="facForm.limit_amount" type="number" /></UFormGroup>
-          <UFormGroup label="Interest rate % (annual)"><UInput v-model.number="facForm.interest_rate" type="number" /></UFormGroup>
+          <UFormGroup :label="t('banking.facility_dialog.limit')"><UInput v-model.number="facForm.limit_amount" type="number" /></UFormGroup>
+          <UFormGroup :label="t('banking.facility_dialog.interest_rate')"><UInput v-model.number="facForm.interest_rate" type="number" /></UFormGroup>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="facOpen = false">Cancel</UButton>
-            <UButton @click="saveFacility">Add facility</UButton>
+            <UButton color="gray" variant="ghost" @click="facOpen = false">{{ t('common.cancel') }}</UButton>
+            <UButton @click="saveFacility">{{ t('banking.facility_dialog.add') }}</UButton>
           </div>
         </template>
       </UCard>
@@ -233,25 +234,25 @@ const disbColor = (s: string) =>
 
     <USlideover v-model="discOpen">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">Discount {{ discTarget?.bill_no }} <span class="num text-amber-500">(৳{{ Number(discTarget?.amount).toLocaleString('en-IN') }})</span></p></template>
+        <template #header><p class="font-medium">{{ t('banking.discount_dialog.title', { bill: discTarget?.bill_no }) }} <span class="num text-amber-500">(৳{{ Number(discTarget?.amount).toLocaleString('en-IN') }})</span></p></template>
         <div class="space-y-4">
-          <UFormGroup label="Facility" required>
+          <UFormGroup :label="t('banking.discount_dialog.facility')" required>
             <USelect v-model="discForm.facility_id" :options="facilities" option-attribute="name" value-attribute="id" />
           </UFormGroup>
-          <UFormGroup label="Advance %" hint="80–90% typical">
+          <UFormGroup :label="t('banking.discount_dialog.advance_pct')" :hint="t('banking.discount_dialog.advance_pct_hint')">
             <UInput v-model.number="discForm.advance_pct" type="number" />
           </UFormGroup>
-          <UFormGroup label="Credit to account" hint="which bank account receives the advance">
-            <USelect v-model="discForm.cash_bank_account_id" :options="cashBankAccounts" option-attribute="name" value-attribute="id" placeholder="— default bank account —" />
+          <UFormGroup :label="t('banking.discount_dialog.credit_account')" :hint="t('banking.discount_dialog.credit_account_hint')">
+            <USelect v-model="discForm.cash_bank_account_id" :options="cashBankAccounts" option-attribute="name" value-attribute="id" :placeholder="t('banking.discount_dialog.credit_account_placeholder')" />
           </UFormGroup>
           <p class="text-sm text-gray-500">
-            Cash now: <span class="num font-semibold text-emerald-600 dark:text-emerald-400">৳{{ (Math.round((discTarget?.amount ?? 0) * discForm.advance_pct) / 100).toLocaleString('en-IN') }}</span>
+            {{ t('banking.discount_dialog.cash_now_label') }} <span class="num font-semibold text-emerald-600 dark:text-emerald-400">৳{{ (Math.round((discTarget?.amount ?? 0) * discForm.advance_pct) / 100).toLocaleString('en-IN') }}</span>
           </p>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="discOpen = false">Cancel</UButton>
-            <UButton color="purple" @click="saveDiscount">Disburse</UButton>
+            <UButton color="gray" variant="ghost" @click="discOpen = false">{{ t('common.cancel') }}</UButton>
+            <UButton color="purple" @click="saveDiscount">{{ t('banking.discount_dialog.disburse') }}</UButton>
           </div>
         </template>
       </UCard>
@@ -260,22 +261,20 @@ const disbColor = (s: string) =>
     <USlideover v-model="setOpen">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
         <template #header>
-          <p class="font-medium">Settle {{ setTarget?.bills?.bill_no }} at maturity</p>
+          <p class="font-medium">{{ t('banking.settle_dialog.title', { bill: setTarget?.bills?.bill_no }) }}</p>
         </template>
         <div class="space-y-4">
           <p class="text-sm text-gray-500">
-            Bank remits ৳{{ setTarget?.bills?.amount }} — loan of ৳{{ setTarget?.principal }} closes,
-            interest is charged{{ setTarget?.status === 'forced_pad' ? ' at the PENALTY account (5420)' : '' }},
-            net margin lands in the bank account.
+            {{ t('banking.settle_dialog.body', { amount: setTarget?.bills?.amount, principal: setTarget?.principal, penalty: setTarget?.status === 'forced_pad' ? t('banking.settle_dialog.penalty_suffix') : '' }) }}
           </p>
-          <UFormGroup label="Interest charged (৳)">
+          <UFormGroup :label="t('banking.settle_dialog.interest_charged')">
             <UInput v-model.number="setForm.interest" type="number" />
           </UFormGroup>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="setOpen = false">Cancel</UButton>
-            <UButton color="green" @click="saveSettle">Settle</UButton>
+            <UButton color="gray" variant="ghost" @click="setOpen = false">{{ t('common.cancel') }}</UButton>
+            <UButton color="green" @click="saveSettle">{{ t('banking.settle_dialog.settle') }}</UButton>
           </div>
         </template>
       </UCard>

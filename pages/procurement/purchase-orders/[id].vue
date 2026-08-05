@@ -3,6 +3,7 @@ const route = useRoute()
 const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
+const { t } = useI18n()
 const id = route.params.id as string
 
 const po = ref<any>(null)
@@ -35,40 +36,40 @@ const totalLanded = computed(() => po.value ? po.value.freight_cost + po.value.c
 
 const approve = async () => {
   const { error } = await client.rpc('approve_purchase_order', { p_po_id: id } as any)
-  if (error) toast.add({ title: 'Approve failed', description: error.message, color: 'red' })
-  else { toast.add({ title: 'Approved' }); await load() }
+  if (error) toast.add({ title: t('procurement.po.detail.approve_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('procurement.po.detail.approved_toast') }); await load() }
 }
 const cancel = async () => {
-  if (!confirm(`Cancel ${po.value.po_no}?`)) return
+  if (!confirm(t('procurement.po.detail.cancel_confirm', { po: po.value.po_no }))) return
   const { error } = await client.rpc('cancel_purchase_order', { p_po_id: id } as any)
-  if (error) toast.add({ title: 'Cancel failed', description: error.message, color: 'red' })
-  else { toast.add({ title: 'Cancelled' }); await load() }
+  if (error) toast.add({ title: t('procurement.po.detail.cancel_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('procurement.po.detail.cancelled_toast') }); await load() }
 }
 </script>
 
 <template>
-  <div v-if="loading" class="text-sm text-gray-400">Loading…</div>
-  <div v-else-if="!po" class="text-sm text-gray-400">Purchase order not found.</div>
+  <div v-if="loading" class="text-sm text-gray-400">{{ t('common.loading') }}</div>
+  <div v-else-if="!po" class="text-sm text-gray-400">{{ t('procurement.po.detail.not_found') }}</div>
   <div v-else>
-    <PageHeader kicker="Procurement" :title="po.po_no" :subtitle="`${po.parties?.name} · ordered ${po.order_date}`">
-      <UBadge size="sm" :color="statusColor[po.status]" variant="subtle">{{ po.status.replace('_', ' ') }}</UBadge>
-      <UButton v-if="canWrite && po.status === 'draft'" size="sm" variant="soft" @click="approve">Approve</UButton>
-      <UButton v-if="canWrite && ['draft','approved'].includes(po.status)" size="sm" variant="soft" color="red" @click="cancel">Cancel</UButton>
+    <PageHeader :kicker="t('procurement.po.kicker')" :title="po.po_no" :subtitle="`${po.parties?.name} · ${t('procurement.po.detail.ordered_prefix')} ${po.order_date}`">
+      <UBadge size="sm" :color="statusColor[po.status]" variant="subtle">{{ t(`procurement.statuses.${po.status}`) }}</UBadge>
+      <UButton v-if="canWrite && po.status === 'draft'" size="sm" variant="soft" @click="approve">{{ t('procurement.po.approve') }}</UButton>
+      <UButton v-if="canWrite && ['draft','approved'].includes(po.status)" size="sm" variant="soft" color="red" @click="cancel">{{ t('procurement.po.cancel') }}</UButton>
     </PageHeader>
 
     <div class="grid gap-4 md:grid-cols-3 mb-4">
-      <StatCard label="Ex-factory value" :value="`৳${totalValue.toFixed(2)}`" />
-      <StatCard label="Landed costs" :value="`৳${totalLanded.toFixed(2)}`" />
-      <StatCard label="Total landed value" :value="`৳${(totalValue + totalLanded).toFixed(2)}`" />
+      <StatCard :label="t('procurement.po.detail.ex_factory_value')" :value="`৳${totalValue.toFixed(2)}`" />
+      <StatCard :label="t('procurement.po.detail.landed_costs')" :value="`৳${totalLanded.toFixed(2)}`" />
+      <StatCard :label="t('procurement.po.detail.total_landed_value')" :value="`৳${(totalValue + totalLanded).toFixed(2)}`" />
     </div>
 
     <UCard class="mb-4">
-      <template #header><p class="text-sm font-medium">Line items</p></template>
+      <template #header><p class="text-sm font-medium">{{ t('procurement.po.detail.line_items') }}</p></template>
       <UTable
         :rows="lines"
         :columns="[
-          { key: 'item', label: 'Item' }, { key: 'qty', label: 'Ordered' }, { key: 'unit_price', label: 'Ex-factory price' },
-          { key: 'landed_unit_cost', label: 'Landed unit cost' }, { key: 'received_qty', label: 'Received' }
+          { key: 'item', label: t('procurement.po.detail.columns.item') }, { key: 'qty', label: t('procurement.po.detail.columns.ordered') }, { key: 'unit_price', label: t('procurement.po.detail.columns.ex_factory_price') },
+          { key: 'landed_unit_cost', label: t('procurement.po.detail.columns.landed_unit_cost') }, { key: 'received_qty', label: t('procurement.po.detail.columns.received') }
         ]"
       >
         <template #item-data="{ row }">{{ row.items?.sku }} — {{ row.items?.name }}</template>
@@ -86,16 +87,16 @@ const cancel = async () => {
     </UCard>
 
     <UCard v-if="po.note">
-      <template #header><p class="text-sm font-medium">Note</p></template>
+      <template #header><p class="text-sm font-medium">{{ t('procurement.po.detail.note') }}</p></template>
       <p class="text-sm text-gray-600 dark:text-zinc-400">{{ po.note }}</p>
     </UCard>
 
     <UCard v-if="grns.length" class="mt-4">
-      <template #header><p class="text-sm font-medium">Received via</p></template>
+      <template #header><p class="text-sm font-medium">{{ t('procurement.po.detail.received_via') }}</p></template>
       <ul class="text-sm divide-y divide-gray-100 dark:divide-zinc-800/60">
         <li v-for="(g, i) in grns" :key="i" class="py-1.5 flex justify-between">
           <NuxtLink :to="`/procurement`" class="text-amber-600 dark:text-amber-400 hover:underline num">{{ g.grns?.grn_no }}</NuxtLink>
-          <span class="text-gray-500 dark:text-zinc-500">{{ g.grns?.grn_date }} · {{ g.accepted_qty ?? '—' }} accepted</span>
+          <span class="text-gray-500 dark:text-zinc-500">{{ g.grns?.grn_date }} · {{ g.accepted_qty ?? '—' }} {{ t('procurement.po.detail.accepted') }}</span>
         </li>
       </ul>
     </UCard>

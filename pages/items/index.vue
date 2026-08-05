@@ -3,6 +3,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { deleteRecord } = useRecycleBin()
+const { t } = useI18n()
 
 const items = ref<any[]>([])
 const uoms = ref<any[]>([])
@@ -10,23 +11,23 @@ const categories = ref<any[]>([])
 const loading = ref(true)
 const search = ref('')
 
-const typeOptions = [
-  { value: 'raw_material', label: 'Raw material' },
-  { value: 'wip', label: 'WIP' },
-  { value: 'finished_good', label: 'Finished good' },
-  { value: 'consumable', label: 'Consumable' },
-  { value: 'packaging', label: 'Packaging' }
-]
+const typeOptions = computed(() => [
+  { value: 'raw_material', label: t('items.types.raw_material') },
+  { value: 'wip', label: t('items.types.wip') },
+  { value: 'finished_good', label: t('items.types.finished_good') },
+  { value: 'consumable', label: t('items.types.consumable') },
+  { value: 'packaging', label: t('items.types.packaging') }
+])
 
-const columns = [
-  { key: 'sku', label: 'SKU' },
-  { key: 'name', label: 'Name' },
-  { key: 'item_type', label: 'Type' },
-  { key: 'category', label: 'Category' },
-  { key: 'uom', label: 'UOM' },
-  { key: 'reorder_level', label: 'Reorder' },
+const columns = computed(() => [
+  { key: 'sku', label: t('items.columns.sku') },
+  { key: 'name', label: t('common.name') },
+  { key: 'item_type', label: t('common.type') },
+  { key: 'category', label: t('items.columns.category') },
+  { key: 'uom', label: t('items.columns.uom') },
+  { key: 'reorder_level', label: t('items.columns.reorder') },
   { key: 'actions', label: '' }
-]
+])
 
 const load = async () => {
   loading.value = true
@@ -98,11 +99,11 @@ const save = async () => {
       ? await client.from('items').update(payload).eq('id', form.id)
       : await client.from('items').insert(payload)
     if (res.error) throw res.error
-    toast.add({ title: form.id ? 'Item updated' : 'Item created' })
+    toast.add({ title: form.id ? t('items.item_updated') : t('items.item_created') })
     open.value = false
     await load()
   } catch (e: any) {
-    toast.add({ title: 'Save failed', description: e.message, color: 'red' })
+    toast.add({ title: t('common.save_failed'), description: e.message, color: 'red' })
   } finally {
     saving.value = false
   }
@@ -111,13 +112,13 @@ const save = async () => {
 
 <template>
   <div>
-    <PageHeader kicker="Operations" title="Items" subtitle="Raw materials, finished goods &amp; consumables">
-      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">New item</UButton>
+    <PageHeader :kicker="t('items.kicker')" :title="t('items.title')" :subtitle="t('items.subtitle')">
+      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">{{ t('items.new_item') }}</UButton>
     </PageHeader>
 
     <UCard>
       <template #header>
-        <UInput v-model="search" icon="i-heroicons-magnifying-glass" placeholder="Search SKU or name…" />
+        <UInput v-model="search" icon="i-heroicons-magnifying-glass" :placeholder="t('items.search_placeholder')" />
       </template>
 
       <UTable :rows="filtered" :columns="columns" :loading="loading">
@@ -139,7 +140,7 @@ const save = async () => {
           />
         </template>
         <template #empty-state>
-          <div class="text-center py-6 text-sm text-gray-400">No items found.</div>
+          <div class="text-center py-6 text-sm text-gray-400">{{ t('items.no_items') }}</div>
         </template>
       </UTable>
     </UCard>
@@ -147,51 +148,51 @@ const save = async () => {
     <USlideover v-model="open">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
         <template #header>
-          <p class="font-medium">{{ form.id ? 'Edit item' : 'New item' }}</p>
+          <p class="font-medium">{{ form.id ? t('items.edit_item') : t('items.new_item') }}</p>
         </template>
 
         <div class="grid grid-cols-2 gap-4">
-          <UFormGroup label="SKU" required>
+          <UFormGroup :label="t('items.fields.sku')" required>
             <UInput v-model="form.sku" />
           </UFormGroup>
-          <UFormGroup label="Type">
+          <UFormGroup :label="t('common.type')">
             <USelect v-model="form.item_type" :options="typeOptions" option-attribute="label" value-attribute="value" />
           </UFormGroup>
-          <UFormGroup label="Name" required class="col-span-2">
+          <UFormGroup :label="t('common.name')" required class="col-span-2">
             <UInput v-model="form.name" />
           </UFormGroup>
-          <UFormGroup label="Category">
+          <UFormGroup :label="t('items.columns.category')">
             <USelect
               v-model="form.category_id" :options="categories"
               option-attribute="name" value-attribute="id"
               placeholder="—"
             />
           </UFormGroup>
-          <UFormGroup label="Unit of measure">
+          <UFormGroup :label="t('items.fields.uom')">
             <USelect
               v-model="form.uom_id" :options="uoms"
               option-attribute="code" value-attribute="id"
               placeholder="—"
             />
           </UFormGroup>
-          <UFormGroup label="GSM">
+          <UFormGroup :label="t('items.fields.gsm')">
             <UInput v-model.number="form.gsm" type="number" />
           </UFormGroup>
-          <UFormGroup label="Size / spec">
+          <UFormGroup :label="t('items.fields.size_spec')">
             <UInput v-model="form.size_spec" />
           </UFormGroup>
-          <UFormGroup label="Reorder level">
+          <UFormGroup :label="t('items.fields.reorder_level')">
             <UInput v-model.number="form.reorder_level" type="number" />
           </UFormGroup>
-          <UFormGroup label="Standard cost (৳)">
+          <UFormGroup :label="t('items.fields.standard_cost')">
             <UInput v-model.number="form.standard_cost" type="number" />
           </UFormGroup>
         </div>
 
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="open = false">Cancel</UButton>
-            <UButton :loading="saving" @click="save">Save</UButton>
+            <UButton color="gray" variant="ghost" @click="open = false">{{ t('common.cancel') }}</UButton>
+            <UButton :loading="saving" @click="save">{{ t('common.save') }}</UButton>
           </div>
         </template>
       </UCard>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const client = useSupabaseClient()
 const { num, money } = useFmt()
+const { t } = useI18n()
 
 const stats = reactive({
   bank: 0, receivables: 0, lbpd: 0, stockValue: 0,
@@ -62,26 +63,26 @@ onMounted(load)
 
 <template>
   <div>
-    <PageHeader kicker="Operations" title="Dashboard" subtitle="Live position across stock, receivables and bank exposure" />
+    <PageHeader :kicker="t('dashboard.kicker')" :title="t('dashboard.title')" :subtitle="t('dashboard.subtitle')" />
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
-      <StatCard label="Bank + cash" :value="money(stats.bank)" :tone="stats.bank < 0 ? 'red' : 'default'" />
-      <StatCard label="Receivables (AR + LC + GDNI)" :value="money(stats.receivables)" />
-      <StatCard label="LBPD / PAD exposure" :value="money(stats.lbpd)" :tone="stats.lbpd > 0 ? 'amber' : 'default'" />
-      <StatCard label="Stock value" :value="money(stats.stockValue)" />
+      <StatCard :label="t('dashboard.stats.bank')" :value="money(stats.bank)" :tone="stats.bank < 0 ? 'red' : 'default'" />
+      <StatCard :label="t('dashboard.stats.receivables')" :value="money(stats.receivables)" />
+      <StatCard :label="t('dashboard.stats.lbpd')" :value="money(stats.lbpd)" :tone="stats.lbpd > 0 ? 'amber' : 'default'" />
+      <StatCard :label="t('dashboard.stats.stock_value')" :value="money(stats.stockValue)" />
     </div>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-      <StatCard label="Active items" :value="num(stats.items, 0)" />
-      <StatCard label="Low stock" :value="num(stats.lowStock, 0)" :tone="stats.lowStock ? 'red' : 'green'" />
-      <StatCard label="Open production" :value="num(stats.openOrders, 0)" />
-      <StatCard label="Delivered, unbilled (pre-LC)" :value="num(stats.unbilled, 0)" :tone="stats.unbilled ? 'amber' : 'default'" />
+      <StatCard :label="t('dashboard.stats.active_items')" :value="num(stats.items, 0)" />
+      <StatCard :label="t('dashboard.stats.low_stock')" :value="num(stats.lowStock, 0)" :tone="stats.lowStock ? 'red' : 'green'" />
+      <StatCard :label="t('dashboard.stats.open_production')" :value="num(stats.openOrders, 0)" />
+      <StatCard :label="t('dashboard.stats.unbilled')" :value="num(stats.unbilled, 0)" :tone="stats.unbilled ? 'amber' : 'default'" />
     </div>
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-3">
       <UCard class="xl:col-span-2">
-        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Stock movements</p></template>
-        <div v-if="loading" class="text-sm text-gray-400 py-6 text-center">Loading…</div>
-        <div v-else-if="!recent.length" class="text-sm text-gray-400 py-6 text-center">No movements yet.</div>
+        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('dashboard.stock_movements') }}</p></template>
+        <div v-if="loading" class="text-sm text-gray-400 py-6 text-center">{{ t('common.loading') }}</div>
+        <div v-else-if="!recent.length" class="text-sm text-gray-400 py-6 text-center">{{ t('dashboard.no_movements') }}</div>
         <ul v-else class="divide-y divide-gray-100 dark:divide-zinc-800/60 -my-1">
           <li v-for="m in recent" :key="m.id" class="py-[7px] flex items-center justify-between gap-3 text-[13px]">
             <div class="min-w-0 flex items-center gap-2">
@@ -99,7 +100,7 @@ onMounted(load)
       </UCard>
 
       <UCard>
-        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Latest journals</p></template>
+        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('dashboard.latest_journals') }}</p></template>
         <ul class="divide-y divide-gray-100 dark:divide-zinc-800/60 -my-1">
           <li v-for="j in journals" :key="j.id" class="py-[7px] text-[12px]">
             <div class="flex items-center justify-between">
@@ -108,7 +109,7 @@ onMounted(load)
             </div>
             <p class="text-gray-500 dark:text-zinc-400 truncate">{{ j.memo }}</p>
           </li>
-          <li v-if="!journals.length" class="py-4 text-center text-sm text-gray-400">Nothing posted yet.</li>
+          <li v-if="!journals.length" class="py-4 text-center text-sm text-gray-400">{{ t('dashboard.nothing_posted') }}</li>
         </ul>
       </UCard>
     </div>

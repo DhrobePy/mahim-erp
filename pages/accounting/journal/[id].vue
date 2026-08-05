@@ -3,6 +3,7 @@ const route = useRoute()
 const client = useSupabaseClient()
 const { money } = useFmt()
 const { docLink } = useDocLink()
+const { t } = useI18n()
 
 const id = route.params.id as string
 const journal = ref<any>(null)
@@ -27,31 +28,31 @@ const sourceLink = computed(() => docLink(journal.value?.ref_table, journal.valu
 
 <template>
   <div v-if="journal">
-    <PageHeader kicker="Finance" :title="journal.journal_no" :subtitle="`${journal.journal_date} · ${journal.memo ?? ''}`">
+    <PageHeader :kicker="t('accounting.kicker')" :title="journal.journal_no" :subtitle="`${journal.journal_date} · ${journal.memo ?? ''}`">
       <NuxtLink
         v-if="sourceLink"
         :to="sourceLink"
         class="text-[12.5px] text-amber-600 dark:text-amber-400 hover:underline self-center"
-      >→ source: {{ journal.ref_table?.replace(/_/g, ' ') }}</NuxtLink>
+      >{{ t('accounting.journal_detail.source_link', { table: journal.ref_table?.replace(/_/g, ' ') }) }}</NuxtLink>
     </PageHeader>
 
     <UCard>
       <template #header>
         <div class="flex justify-between">
-          <p class="microlabel text-gray-400 dark:text-zinc-500">Voucher lines</p>
+          <p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('accounting.journal_detail.header') }}</p>
           <span class="num text-xs" :class="Math.abs(totals.d - totals.c) < 0.01 ? 'text-emerald-500' : 'text-red-500'">
-            Dr {{ money(totals.d) }} / Cr {{ money(totals.c) }}
+            {{ t('accounting.journal_detail.balance_line', { debit: money(totals.d), credit: money(totals.c) }) }}
           </span>
         </div>
       </template>
       <table class="w-full text-[13px]">
         <thead>
           <tr class="text-left microlabel text-gray-400 dark:text-zinc-500">
-            <th class="py-1.5 pr-3">Account</th>
-            <th class="pr-3">Party</th>
-            <th class="pr-3">Cost center</th>
-            <th class="text-right pr-3">Debit (৳)</th>
-            <th class="text-right">Credit (৳)</th>
+            <th class="py-1.5 pr-3">{{ t('accounting.journal_detail.columns.account') }}</th>
+            <th class="pr-3">{{ t('accounting.journal_detail.columns.party') }}</th>
+            <th class="pr-3">{{ t('accounting.journal_detail.columns.cost_center') }}</th>
+            <th class="text-right pr-3">{{ t('accounting.journal_detail.columns.debit') }}</th>
+            <th class="text-right">{{ t('accounting.journal_detail.columns.credit') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -75,5 +76,5 @@ const sourceLink = computed(() => docLink(journal.value?.ref_table, journal.valu
       </table>
     </UCard>
   </div>
-  <div v-else-if="!loading" class="text-sm text-gray-400 py-10 text-center">Journal not found.</div>
+  <div v-else-if="!loading" class="text-sm text-gray-400 py-10 text-center">{{ t('accounting.journal_detail.not_found') }}</div>
 </template>

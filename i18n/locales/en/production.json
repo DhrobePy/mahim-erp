@@ -1,0 +1,32 @@
+{
+  "production": {
+    "kicker": "Operations",
+    "title": "Production orders",
+    "subtitle": "Complete an order to auto-post output and BOM consumption",
+    "new_order": "New order",
+    "columns": {
+      "order_no": "Order #",
+      "item": "Finished item",
+      "planned": "Planned",
+      "produced": "Produced"
+    },
+    "no_orders": "No production orders yet.",
+    "complete": "Complete",
+    "select_finished_item": "Select a finished item",
+    "order_created": "Production order created",
+    "order_completed": "{order_no} completed",
+    "stock_posted": "Stock movements posted.",
+    "completion_failed": "Completion failed",
+    "new_order_title": "New production order",
+    "fields": {
+      "finished_item": "Finished item",
+      "select": "Select",
+      "bom": "BOM (drives material consumption)",
+      "optional": "Optional",
+      "planned_qty": "Planned qty",
+      "output_warehouse": "Output warehouse",
+      "planned_date": "Planned date"
+    },
+    "create": "Create"
+  }
+}

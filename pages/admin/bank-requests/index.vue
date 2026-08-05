@@ -5,6 +5,7 @@ const { canWrite } = useProfile()
 const { money } = useFmt()
 const { all: serviceTemplates, byValue } = useBankRequestTemplates()
 const { deleteRecord } = useRecycleBin()
+const { t } = useI18n()
 
 const branches = ref<any[]>([])
 const banks = ref<any[]>([])
@@ -13,7 +14,13 @@ const resolutions = ref<any[]>([])
 const loading = ref(true)
 
 const statusColor: Record<string, string> = { draft: 'gray', submitted: 'blue', acknowledged: 'amber', completed: 'green' }
-const serviceLabel: Record<string, string> = Object.fromEntries(serviceTemplates.map((t) => [t.value, t.label]))
+const serviceLabel: Record<string, string> = Object.fromEntries(serviceTemplates.map((tpl) => [tpl.value, tpl.label]))
+const statusLabel = computed<Record<string, string>>(() => ({
+  draft: t('admin.bank_requests.status.draft'),
+  submitted: t('admin.bank_requests.status.submitted'),
+  acknowledged: t('admin.bank_requests.status.acknowledged'),
+  completed: t('admin.bank_requests.status.completed')
+}))
 
 const load = async () => {
   loading.value = true
@@ -39,10 +46,10 @@ const openBranch = () => {
   branchOpen.value = true
 }
 const saveBranch = async () => {
-  if (!branchForm.bank_party_id || !branchForm.branch_name) { toast.add({ title: 'Bank and branch name are required', color: 'red' }); return }
+  if (!branchForm.bank_party_id || !branchForm.branch_name) { toast.add({ title: t('admin.bank_requests.validation.branch_name_required'), color: 'red' }); return }
   const { error } = await client.from('bank_branches').insert({ ...branchForm } as any)
-  if (error) toast.add({ title: 'Failed', description: error.message, color: 'red' })
-  else { toast.add({ title: 'Branch added' }); branchOpen.value = false; await load() }
+  if (error) toast.add({ title: t('admin.bank_requests.toasts.failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('admin.bank_requests.toasts.branch_added') }); branchOpen.value = false; await load() }
 }
 
 // --- New request ---
@@ -55,24 +62,24 @@ const form = reactive({
   statement_period_from: '', statement_period_to: ''
 })
 const openNew = () => {
-  const t = byValue('lc_issue')
+  const tpl = byValue('lc_issue')
   Object.assign(form, {
-    branch_id: null, service_type: 'lc_issue', reference_no: '', subject: t?.subject ?? '', body: t?.body ?? '',
+    branch_id: null, service_type: 'lc_issue', reference_no: '', subject: tpl?.subject ?? '', body: tpl?.body ?? '',
     amount: null, tenor_or_period: '', board_resolution_id: null, request_date: new Date().toISOString().slice(0, 10),
     statement_period_from: '', statement_period_to: ''
   })
   open.value = true
 }
 const onServiceChange = (v: string) => {
-  const t = byValue(v)
-  if (t) { form.subject = t.subject; form.body = t.body }
+  const tpl = byValue(v)
+  if (tpl) { form.subject = tpl.subject; form.body = tpl.body }
 }
 
 const save = async () => {
-  if (!form.branch_id) { toast.add({ title: 'Pick a branch', color: 'red' }); return }
-  if (!form.subject) { toast.add({ title: 'Subject is required', color: 'red' }); return }
+  if (!form.branch_id) { toast.add({ title: t('admin.bank_requests.validation.pick_branch'), color: 'red' }); return }
+  if (!form.subject) { toast.add({ title: t('admin.bank_requests.validation.subject_required'), color: 'red' }); return }
   if (form.service_type === 'bank_statement' && (!form.statement_period_from || !form.statement_period_to)) {
-    toast.add({ title: 'Statement period (from and to) is required', color: 'red' }); return
+    toast.add({ title: t('admin.bank_requests.validation.statement_period_required'), color: 'red' }); return
   }
   saving.value = true
   const payload: any = {
@@ -81,14 +88,14 @@ const save = async () => {
     statement_period_to: form.statement_period_to || null
   }
   const { error } = await client.from('bank_service_requests').insert(payload)
-  if (error) toast.add({ title: 'Save failed', description: error.message, color: 'red' })
-  else { toast.add({ title: 'Bank service request created' }); open.value = false; await load() }
+  if (error) toast.add({ title: t('common.save_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('admin.bank_requests.toasts.request_created') }); open.value = false; await load() }
   saving.value = false
 }
 
 const setStatus = async (row: any, status: string) => {
   const { error } = await client.from('bank_service_requests').update({ status } as any).eq('id', row.id)
-  if (error) toast.add({ title: 'Update failed', description: error.message, color: 'red' })
+  if (error) toast.add({ title: t('admin.bank_requests.toasts.update_failed'), description: error.message, color: 'red' })
   else await load()
 }
 
@@ -102,14 +109,14 @@ const removeRequest = async (row: any) => {
 
 <template>
   <div>
-    <PageHeader kicker="Admin" title="Bank service requests" subtitle="Approach a branch for LC issue, collection, discrepancy, statements, LBPD, FDR, DPS or any other service">
-      <UButton v-if="canWrite" variant="soft" icon="i-heroicons-building-library" @click="openBranch">New branch</UButton>
-      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">New request</UButton>
+    <PageHeader :kicker="t('admin.bank_requests.kicker')" :title="t('admin.bank_requests.title')" :subtitle="t('admin.bank_requests.subtitle')">
+      <UButton v-if="canWrite" variant="soft" icon="i-heroicons-building-library" @click="openBranch">{{ t('admin.bank_requests.new_branch_btn') }}</UButton>
+      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">{{ t('admin.bank_requests.new_request_btn') }}</UButton>
     </PageHeader>
 
     <UCard class="mb-4">
-      <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Bank branches</p></template>
-      <div v-if="!branches.length" class="text-sm text-gray-400 py-3 text-center">No branches registered yet.</div>
+      <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('admin.bank_requests.branches.card_title') }}</p></template>
+      <div v-if="!branches.length" class="text-sm text-gray-400 py-3 text-center">{{ t('admin.bank_requests.branches.empty') }}</div>
       <div v-for="b in branches" :key="b.id" class="flex justify-between items-center py-1.5 text-[13px] border-b border-gray-100 dark:border-zinc-800/60 last:border-0">
         <span class="dark:text-zinc-200">{{ b.parties?.name }} — {{ b.branch_name }}</span>
         <span class="flex items-center gap-2">
@@ -120,13 +127,13 @@ const removeRequest = async (row: any) => {
     </UCard>
 
     <UCard>
-      <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Requests</p></template>
+      <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('admin.bank_requests.requests.card_title') }}</p></template>
       <UTable
         :rows="requests" :loading="loading"
         :columns="[
-          { key: 'request_no', label: 'No.' }, { key: 'service_type', label: 'Service' },
-          { key: 'branch', label: 'Branch' }, { key: 'subject', label: 'Subject' },
-          { key: 'amount', label: 'Amount / Period' }, { key: 'status', label: 'Status' }, { key: 'actions', label: '' }
+          { key: 'request_no', label: t('admin.bank_requests.requests.columns.no') }, { key: 'service_type', label: t('admin.bank_requests.requests.columns.service') },
+          { key: 'branch', label: t('admin.bank_requests.requests.columns.branch') }, { key: 'subject', label: t('admin.bank_requests.requests.columns.subject') },
+          { key: 'amount', label: t('admin.bank_requests.requests.columns.amount_period') }, { key: 'status', label: t('admin.bank_requests.requests.columns.status') }, { key: 'actions', label: '' }
         ]"
       >
         <template #request_no-data="{ row }"><span class="num font-medium text-amber-600 dark:text-amber-400">{{ row.request_no }}</span></template>
@@ -138,39 +145,39 @@ const removeRequest = async (row: any) => {
           </span>
           <span v-else class="num">{{ row.amount ? money(row.amount) : '—' }}</span>
         </template>
-        <template #status-data="{ row }"><UBadge size="xs" variant="subtle" :color="statusColor[row.status]">{{ row.status }}</UBadge></template>
+        <template #status-data="{ row }"><UBadge size="xs" variant="subtle" :color="statusColor[row.status]">{{ statusLabel[row.status] }}</UBadge></template>
         <template #actions-data="{ row }">
           <div class="flex gap-1 justify-end">
-            <UButton icon="i-heroicons-printer" size="xs" color="gray" variant="ghost" :to="`/print/bankrequest/${row.id}`" target="_blank" aria-label="Print" />
-            <UButton v-if="canWrite && row.status === 'draft'" size="2xs" variant="soft" @click="setStatus(row, 'submitted')">Submitted</UButton>
-            <UButton v-if="canWrite && row.status === 'submitted'" size="2xs" variant="soft" color="amber" @click="setStatus(row, 'acknowledged')">Acknowledged</UButton>
-            <UButton v-if="canWrite && row.status === 'acknowledged'" size="2xs" variant="soft" color="green" @click="setStatus(row, 'completed')">Completed</UButton>
+            <UButton icon="i-heroicons-printer" size="xs" color="gray" variant="ghost" :to="`/print/bankrequest/${row.id}`" target="_blank" :aria-label="t('admin.bank_requests.requests.print_aria')" />
+            <UButton v-if="canWrite && row.status === 'draft'" size="2xs" variant="soft" @click="setStatus(row, 'submitted')">{{ t('admin.bank_requests.requests.mark_submitted') }}</UButton>
+            <UButton v-if="canWrite && row.status === 'submitted'" size="2xs" variant="soft" color="amber" @click="setStatus(row, 'acknowledged')">{{ t('admin.bank_requests.requests.mark_acknowledged') }}</UButton>
+            <UButton v-if="canWrite && row.status === 'acknowledged'" size="2xs" variant="soft" color="green" @click="setStatus(row, 'completed')">{{ t('admin.bank_requests.requests.mark_completed') }}</UButton>
             <UButton v-if="canWrite" icon="i-heroicons-trash" size="xs" color="red" variant="ghost" @click="removeRequest(row)" />
           </div>
         </template>
         <template #empty-state>
-          <div class="text-center py-6 text-sm text-gray-400">No bank service requests yet.</div>
+          <div class="text-center py-6 text-sm text-gray-400">{{ t('admin.bank_requests.requests.empty') }}</div>
         </template>
       </UTable>
     </UCard>
 
     <USlideover v-model="branchOpen">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">New bank branch</p></template>
+        <template #header><p class="font-medium">{{ t('admin.bank_requests.new_branch.title') }}</p></template>
         <div class="space-y-3">
-          <UFormGroup label="Bank" required>
-            <USelect v-model="branchForm.bank_party_id" :options="banks" option-attribute="name" value-attribute="id" placeholder="—" />
+          <UFormGroup :label="t('admin.bank_requests.new_branch.bank')" required>
+            <USelect v-model="branchForm.bank_party_id" :options="banks" option-attribute="name" value-attribute="id" :placeholder="t('admin.bank_requests.select_placeholder')" />
           </UFormGroup>
-          <UFormGroup label="Branch name" required><UInput v-model="branchForm.branch_name" placeholder="e.g. Narayanganj Branch" /></UFormGroup>
-          <UFormGroup label="Address"><UInput v-model="branchForm.branch_address" /></UFormGroup>
-          <UFormGroup label="Routing no."><UInput v-model="branchForm.routing_no" /></UFormGroup>
-          <UFormGroup label="Contact person"><UInput v-model="branchForm.contact_person" /></UFormGroup>
-          <UFormGroup label="Phone"><UInput v-model="branchForm.phone" /></UFormGroup>
+          <UFormGroup :label="t('admin.bank_requests.new_branch.branch_name')" required><UInput v-model="branchForm.branch_name" :placeholder="t('admin.bank_requests.new_branch.branch_name_placeholder')" /></UFormGroup>
+          <UFormGroup :label="t('admin.bank_requests.new_branch.address')"><UInput v-model="branchForm.branch_address" /></UFormGroup>
+          <UFormGroup :label="t('admin.bank_requests.new_branch.routing_no')"><UInput v-model="branchForm.routing_no" /></UFormGroup>
+          <UFormGroup :label="t('admin.bank_requests.new_branch.contact_person')"><UInput v-model="branchForm.contact_person" /></UFormGroup>
+          <UFormGroup :label="t('admin.bank_requests.new_branch.phone')"><UInput v-model="branchForm.phone" /></UFormGroup>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="branchOpen = false">Cancel</UButton>
-            <UButton @click="saveBranch">Add branch</UButton>
+            <UButton color="gray" variant="ghost" @click="branchOpen = false">{{ t('common.cancel') }}</UButton>
+            <UButton @click="saveBranch">{{ t('admin.bank_requests.new_branch.add_branch') }}</UButton>
           </div>
         </template>
       </UCard>
@@ -178,36 +185,36 @@ const removeRequest = async (row: any) => {
 
     <USlideover v-model="open" :ui="{ width: 'w-screen max-w-2xl' }">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">New bank service request</p></template>
+        <template #header><p class="font-medium">{{ t('admin.bank_requests.new_request.title') }}</p></template>
         <div class="space-y-3">
-          <UFormGroup label="Branch" required>
-            <USelect v-model="form.branch_id" :options="branches.map(b => ({ id: b.id, label: `${b.parties?.name} — ${b.branch_name}` }))" option-attribute="label" value-attribute="id" placeholder="—" />
+          <UFormGroup :label="t('admin.bank_requests.new_request.branch')" required>
+            <USelect v-model="form.branch_id" :options="branches.map(b => ({ id: b.id, label: `${b.parties?.name} — ${b.branch_name}` }))" option-attribute="label" value-attribute="id" :placeholder="t('admin.bank_requests.select_placeholder')" />
           </UFormGroup>
-          <UFormGroup label="Service">
+          <UFormGroup :label="t('admin.bank_requests.new_request.service')">
             <USelect v-model="form.service_type" :options="serviceTemplates" option-attribute="label" value-attribute="value" @update:model-value="onServiceChange" />
           </UFormGroup>
           <div class="grid grid-cols-2 gap-3">
-            <UFormGroup label="Date"><UInput v-model="form.request_date" type="date" /></UFormGroup>
-            <UFormGroup label="Reference no." hint="LC/bill/facility/account no. being referenced"><UInput v-model="form.reference_no" /></UFormGroup>
+            <UFormGroup :label="t('admin.bank_requests.new_request.date')"><UInput v-model="form.request_date" type="date" /></UFormGroup>
+            <UFormGroup :label="t('admin.bank_requests.new_request.reference_no')" :hint="t('admin.bank_requests.new_request.reference_no_hint')"><UInput v-model="form.reference_no" /></UFormGroup>
           </div>
           <div v-if="form.service_type === 'bank_statement'" class="grid grid-cols-2 gap-3">
-            <UFormGroup label="Statement period — from" required><UInput v-model="form.statement_period_from" type="date" /></UFormGroup>
-            <UFormGroup label="Statement period — to" required><UInput v-model="form.statement_period_to" type="date" /></UFormGroup>
+            <UFormGroup :label="t('admin.bank_requests.new_request.statement_from')" required><UInput v-model="form.statement_period_from" type="date" /></UFormGroup>
+            <UFormGroup :label="t('admin.bank_requests.new_request.statement_to')" required><UInput v-model="form.statement_period_to" type="date" /></UFormGroup>
           </div>
           <div v-else class="grid grid-cols-2 gap-3">
-            <UFormGroup label="Amount (৳)"><UInput v-model.number="form.amount" type="number" /></UFormGroup>
-            <UFormGroup label="Tenor / period"><UInput v-model="form.tenor_or_period" placeholder="e.g. 12 months" /></UFormGroup>
+            <UFormGroup :label="t('admin.bank_requests.new_request.amount')"><UInput v-model.number="form.amount" type="number" /></UFormGroup>
+            <UFormGroup :label="t('admin.bank_requests.new_request.tenor_period')"><UInput v-model="form.tenor_or_period" :placeholder="t('admin.bank_requests.new_request.tenor_period_placeholder')" /></UFormGroup>
           </div>
-          <UFormGroup label="Subject" required><UInput v-model="form.subject" /></UFormGroup>
-          <UFormGroup label="Body"><UTextarea v-model="form.body" :rows="4" /></UFormGroup>
-          <UFormGroup label="Authorizing board resolution" hint="optional">
-            <USelect v-model="form.board_resolution_id" :options="resolutions" option-attribute="resolution_no" value-attribute="id" placeholder="—" />
+          <UFormGroup :label="t('admin.bank_requests.new_request.subject')" required><UInput v-model="form.subject" /></UFormGroup>
+          <UFormGroup :label="t('admin.bank_requests.new_request.body')"><UTextarea v-model="form.body" :rows="4" /></UFormGroup>
+          <UFormGroup :label="t('admin.bank_requests.new_request.board_resolution')" :hint="t('admin.bank_requests.new_request.board_resolution_hint')">
+            <USelect v-model="form.board_resolution_id" :options="resolutions" option-attribute="resolution_no" value-attribute="id" :placeholder="t('admin.bank_requests.select_placeholder')" />
           </UFormGroup>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="open = false">Cancel</UButton>
-            <UButton :loading="saving" @click="save">Create</UButton>
+            <UButton color="gray" variant="ghost" @click="open = false">{{ t('common.cancel') }}</UButton>
+            <UButton :loading="saving" @click="save">{{ t('admin.bank_requests.new_request.create') }}</UButton>
           </div>
         </template>
       </UCard>

@@ -1,0 +1,32 @@
+{
+  "production": {
+    "kicker": "কার্যক্রম",
+    "title": "উৎপাদন আদেশ",
+    "subtitle": "আউটপুট ও BOM অনুযায়ী কাঁচামাল খরচ স্বয়ংক্রিয়ভাবে পোস্ট করতে আদেশ সম্পন্ন করুন",
+    "new_order": "নতুন আদেশ",
+    "columns": {
+      "order_no": "আদেশ নং",
+      "item": "সমাপ্ত পণ্য",
+      "planned": "পরিকল্পিত",
+      "produced": "উৎপাদিত"
+    },
+    "no_orders": "এখনো কোনো উৎপাদন আদেশ নেই।",
+    "complete": "সম্পন্ন করুন",
+    "select_finished_item": "একটি সমাপ্ত পণ্য নির্বাচন করুন",
+    "order_created": "উৎপাদন আদেশ তৈরি হয়েছে",
+    "order_completed": "{order_no} সম্পন্ন হয়েছে",
+    "stock_posted": "স্টক মুভমেন্ট পোস্ট করা হয়েছে।",
+    "completion_failed": "সম্পন্ন করা যায়নি",
+    "new_order_title": "নতুন উৎপাদন আদেশ",
+    "fields": {
+      "finished_item": "সমাপ্ত পণ্য",
+      "select": "নির্বাচন করুন",
+      "bom": "BOM (কাঁচামাল খরচ নির্ধারণ করে)",
+      "optional": "ঐচ্ছিক",
+      "planned_qty": "পরিকল্পিত পরিমাণ",
+      "output_warehouse": "আউটপুট গুদাম",
+      "planned_date": "পরিকল্পিত তারিখ"
+    },
+    "create": "তৈরি করুন"
+  }
+}

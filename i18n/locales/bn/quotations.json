@@ -1,0 +1,89 @@
+{
+  "quotations": {
+    "kicker": "বিক্রয় ও লোকাল এলসি",
+    "doc_types": {
+      "quotation": "কোটেশন",
+      "pi": "প্রোফর্মা ইনভয়েস",
+      "contract": "বিক্রয় চুক্তি"
+    },
+    "statuses": {
+      "sent": "প্রেরিত",
+      "accepted": "গৃহীত",
+      "expired": "মেয়াদোত্তীর্ণ",
+      "converted": "রূপান্তরিত",
+      "cancelled": "বাতিল"
+    },
+    "index": {
+      "title": "কোটেশন, পিআই ও চুক্তি",
+      "subtitle": "প্রি-অর্ডার কাগজপত্র — ডিল পাকা হওয়ার সাথে সাথে সামনে এগিয়ে নিন, অথবা বিদ্যমান অর্ডার থেকে পিআই তৈরি করুন",
+      "new_document": "নতুন ডকুমেন্ট",
+      "columns": {
+        "doc": "ডকুমেন্ট",
+        "type": "ধরন",
+        "buyer": "ক্রেতা",
+        "dates": "তারিখ / মেয়াদ",
+        "total": "মোট (৳)",
+        "status": "অবস্থা"
+      },
+      "from": "{doc} থেকে",
+      "valid": "মেয়াদ {date}",
+      "print_aria": "প্রিন্ট",
+      "sent": "প্রেরিত",
+      "accepted": "গৃহীত",
+      "to_pi": "→ পিআই",
+      "to_contract": "→ চুক্তি",
+      "to_order": "→ অর্ডার",
+      "cancel": "বাতিল",
+      "delete_aria": "মুছুন",
+      "empty": "এখনো কোনো কোটেশন, পিআই বা চুক্তি নেই।",
+      "modal_title": "নতুন ডকুমেন্ট",
+      "type_label": "ধরন",
+      "buyer_label": "ক্রেতা",
+      "buyer_placeholder": "—",
+      "valid_until_label": "মেয়াদ শেষ",
+      "deemed_export_label": "ডিমড এক্সপোর্ট",
+      "zero_rated": "শূন্য-হার (মুশক ৬.৩)",
+      "payment_terms_label": "পেমেন্ট শর্তাবলী",
+      "delivery_terms_label": "ডেলিভারি শর্তাবলী",
+      "item_label": "পণ্য",
+      "item_placeholder": "—",
+      "qty_label": "পরিমাণ",
+      "unit_price_label": "একক মূল্য (৳)",
+      "add_line": "লাইন যোগ করুন",
+      "create": "তৈরি করুন",
+      "toast": {
+        "pick_buyer": "একজন ক্রেতা নির্বাচন করুন",
+        "add_line": "অন্তত একটি লাইন যোগ করুন",
+        "created": "{type} তৈরি হয়েছে",
+        "save_failed": "সংরক্ষণ ব্যর্থ হয়েছে",
+        "update_failed": "আপডেট ব্যর্থ হয়েছে",
+        "conversion_failed": "রূপান্তর ব্যর্থ হয়েছে",
+        "converted": "{type}-এ রূপান্তরিত হয়েছে",
+        "order_created": "বিক্রয় আদেশ তৈরি হয়েছে"
+      }
+    },
+    "detail": {
+      "buyer_profile": "→ ক্রেতার প্রোফাইল",
+      "generated_from": "→ {type} {no} থেকে তৈরি",
+      "converted_child": "→ {type} {no} ({status})",
+      "sales_order_link": "→ বিক্রয় আদেশ {no}",
+      "lines": "লাইন",
+      "total": "মোট",
+      "terms": "শর্তাবলী",
+      "payment": "পেমেন্ট:",
+      "delivery": "ডেলিভারি:",
+      "basis": "ভিত্তি:",
+      "notes": "নোট:",
+      "deemed_export_basis": "ডিমড এক্সপোর্ট (০% ভ্যাট)",
+      "domestic_basis": "লোকাল (১৫% ভ্যাট)",
+      "legal": "লিগ্যাল",
+      "print": "প্রিন্ট",
+      "mark_sent": "প্রেরিত হিসেবে চিহ্নিত করুন",
+      "mark_accepted": "গৃহীত হিসেবে চিহ্নিত করুন",
+      "convert_to_pi": "রূপান্তর → পিআই",
+      "convert_to_contract": "রূপান্তর → চুক্তি",
+      "convert_to_order": "রূপান্তর → বিক্রয় আদেশ",
+      "not_found": "ডকুমেন্ট পাওয়া যায়নি।"
+    }
+  }
+}

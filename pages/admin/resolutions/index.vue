@@ -4,19 +4,25 @@ const toast = useToast()
 const { canWrite } = useProfile()
 const { grouped } = useBoardAgendas()
 const { deleteRecord } = useRecycleBin()
+const { t } = useI18n()
 
 const resolutions = ref<any[]>([])
 const directors = ref<any[]>([])
 const loading = ref(true)
 
-const meetingTypeOptions = [
-  { value: 'board_meeting', label: 'Board Meeting' },
-  { value: 'agm', label: 'Annual General Meeting (AGM)' },
-  { value: 'egm', label: 'Extraordinary General Meeting (EGM)' },
-  { value: 'circular_resolution', label: 'Circular Resolution' }
-]
-const meetingTypeLabel: Record<string, string> = Object.fromEntries(meetingTypeOptions.map((o) => [o.value, o.label]))
+const meetingTypeOptions = computed(() => [
+  { value: 'board_meeting', label: t('admin.resolutions.meeting_types.board_meeting') },
+  { value: 'agm', label: t('admin.resolutions.meeting_types.agm') },
+  { value: 'egm', label: t('admin.resolutions.meeting_types.egm') },
+  { value: 'circular_resolution', label: t('admin.resolutions.meeting_types.circular_resolution') }
+])
+const meetingTypeLabel = computed<Record<string, string>>(() => Object.fromEntries(meetingTypeOptions.value.map((o) => [o.value, o.label])))
 const statusColor: Record<string, string> = { draft: 'gray', passed: 'green', circulated: 'blue' }
+const statusLabel = computed<Record<string, string>>(() => ({
+  draft: t('admin.resolutions.status.draft'),
+  passed: t('admin.resolutions.status.passed'),
+  circulated: t('admin.resolutions.status.circulated')
+}))
 
 const load = async () => {
   loading.value = true
@@ -35,7 +41,7 @@ onMounted(load)
 
 const setStatus = async (row: any, status: string) => {
   const { error } = await client.from('board_resolutions').update({ status } as any).eq('id', row.id)
-  if (error) toast.add({ title: 'Update failed', description: error.message, color: 'red' })
+  if (error) toast.add({ title: t('admin.resolutions.toasts.update_failed'), description: error.message, color: 'red' })
   else await load()
 }
 
@@ -65,13 +71,13 @@ const toggleAttendee = (id: string) => {
 }
 const applyTemplate = (agenda: any, key: string) => {
   const { byKey } = useBoardAgendas()
-  const t = byKey(key)
-  if (t) { agenda.title = t.title; agenda.resolution_text = t.text; agenda.is_standard = true }
+  const tpl = byKey(key)
+  if (tpl) { agenda.title = tpl.title; agenda.resolution_text = tpl.text; agenda.is_standard = true }
 }
 
 const save = async () => {
   const validAgendas = agendas.value.filter((a) => a.title && a.resolution_text)
-  if (!validAgendas.length) { toast.add({ title: 'Add at least one agenda item', color: 'red' }); return }
+  if (!validAgendas.length) { toast.add({ title: t('admin.resolutions.validation.agenda_required'), color: 'red' }); return }
   saving.value = true
   try {
     const { data: res, error } = await client.from('board_resolutions').insert({ ...form } as any).select('id').single()
@@ -87,11 +93,11 @@ const save = async () => {
       )
       if (tRes.error) throw tRes.error
     }
-    toast.add({ title: 'Board resolution created' })
+    toast.add({ title: t('admin.resolutions.toasts.resolution_created') })
     open.value = false
     await load()
   } catch (e: any) {
-    toast.add({ title: 'Save failed', description: e.message, color: 'red' })
+    toast.add({ title: t('common.save_failed'), description: e.message, color: 'red' })
   } finally {
     saving.value = false
   }
@@ -104,17 +110,17 @@ const remove = async (row: any) => {
 
 <template>
   <div>
-    <PageHeader kicker="Admin" title="Board resolutions" subtitle="Minutes with choosable or manual agenda items — doubles as the bank's mandate paper trail">
-      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">New resolution</UButton>
+    <PageHeader :kicker="t('admin.resolutions.kicker')" :title="t('admin.resolutions.title')" :subtitle="t('admin.resolutions.subtitle')">
+      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">{{ t('admin.resolutions.new_resolution_btn') }}</UButton>
     </PageHeader>
 
     <UCard>
       <UTable
         :rows="resolutions" :loading="loading"
         :columns="[
-          { key: 'resolution_no', label: 'No.' }, { key: 'meeting_no', label: 'Meeting' },
-          { key: 'meeting_date', label: 'Date' }, { key: 'agendas', label: 'Agendas' },
-          { key: 'status', label: 'Status' }, { key: 'actions', label: '' }
+          { key: 'resolution_no', label: t('admin.resolutions.columns.no') }, { key: 'meeting_no', label: t('admin.resolutions.columns.meeting') },
+          { key: 'meeting_date', label: t('admin.resolutions.columns.date') }, { key: 'agendas', label: t('admin.resolutions.columns.agendas') },
+          { key: 'status', label: t('admin.resolutions.columns.status') }, { key: 'actions', label: '' }
         ]"
       >
         <template #resolution_no-data="{ row }"><span class="num font-medium text-amber-600 dark:text-amber-400">{{ row.resolution_no }}</span></template>
@@ -125,37 +131,37 @@ const remove = async (row: any) => {
         <template #meeting_date-data="{ row }"><span class="num">{{ row.meeting_date }}</span></template>
         <template #agendas-data="{ row }"><span class="num">{{ row.board_resolution_agendas?.length ?? 0 }}</span></template>
         <template #status-data="{ row }">
-          <UBadge size="xs" variant="subtle" :color="statusColor[row.status]">{{ row.status }}</UBadge>
+          <UBadge size="xs" variant="subtle" :color="statusColor[row.status]">{{ statusLabel[row.status] }}</UBadge>
         </template>
         <template #actions-data="{ row }">
           <div class="flex gap-1 justify-end">
-            <UButton icon="i-heroicons-printer" size="xs" color="gray" variant="ghost" :to="`/print/resolution/${row.id}`" target="_blank" aria-label="Print" />
-            <UButton v-if="canWrite && row.status === 'draft'" size="2xs" variant="soft" color="green" @click="setStatus(row, 'passed')">Mark passed</UButton>
+            <UButton icon="i-heroicons-printer" size="xs" color="gray" variant="ghost" :to="`/print/resolution/${row.id}`" target="_blank" :aria-label="t('admin.resolutions.print_aria')" />
+            <UButton v-if="canWrite && row.status === 'draft'" size="2xs" variant="soft" color="green" @click="setStatus(row, 'passed')">{{ t('admin.resolutions.mark_passed_btn') }}</UButton>
             <UButton v-if="canWrite" icon="i-heroicons-trash" size="xs" color="red" variant="ghost" @click="remove(row)" />
           </div>
         </template>
         <template #empty-state>
-          <div class="text-center py-6 text-sm text-gray-400">No board resolutions yet.</div>
+          <div class="text-center py-6 text-sm text-gray-400">{{ t('admin.resolutions.empty') }}</div>
         </template>
       </UTable>
     </UCard>
 
     <USlideover v-model="open" :ui="{ width: 'w-screen max-w-3xl' }">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">New board resolution</p></template>
+        <template #header><p class="font-medium">{{ t('admin.resolutions.form.title') }}</p></template>
         <div class="space-y-4">
           <div class="grid grid-cols-2 gap-3">
-            <UFormGroup label="Meeting type">
+            <UFormGroup :label="t('admin.resolutions.form.meeting_type')">
               <USelect v-model="form.meeting_type" :options="meetingTypeOptions" option-attribute="label" value-attribute="value" />
             </UFormGroup>
-            <UFormGroup label="Meeting no." hint="e.g. 18th Board Meeting"><UInput v-model="form.meeting_no" /></UFormGroup>
-            <UFormGroup label="Date"><UInput v-model="form.meeting_date" type="date" /></UFormGroup>
-            <UFormGroup label="Chairperson"><UInput v-model="form.chairperson" /></UFormGroup>
-            <UFormGroup label="Venue" class="col-span-2"><UInput v-model="form.venue" /></UFormGroup>
+            <UFormGroup :label="t('admin.resolutions.form.meeting_no')" :hint="t('admin.resolutions.form.meeting_no_hint')"><UInput v-model="form.meeting_no" /></UFormGroup>
+            <UFormGroup :label="t('admin.resolutions.form.date')"><UInput v-model="form.meeting_date" type="date" /></UFormGroup>
+            <UFormGroup :label="t('admin.resolutions.form.chairperson')"><UInput v-model="form.chairperson" /></UFormGroup>
+            <UFormGroup :label="t('admin.resolutions.form.venue')" class="col-span-2"><UInput v-model="form.venue" /></UFormGroup>
           </div>
 
           <div>
-            <p class="microlabel text-gray-400 dark:text-zinc-500 mb-1.5">Attendees</p>
+            <p class="microlabel text-gray-400 dark:text-zinc-500 mb-1.5">{{ t('admin.resolutions.form.attendees') }}</p>
             <div class="flex flex-wrap gap-3">
               <UCheckbox
                 v-for="d in directors" :key="d.id"
@@ -167,27 +173,27 @@ const remove = async (row: any) => {
 
           <div>
             <div class="flex items-center justify-between mb-2">
-              <p class="microlabel text-gray-400 dark:text-zinc-500">Agenda items</p>
-              <UButton size="xs" variant="soft" icon="i-heroicons-plus" @click="agendas.push(blankAgenda())">Add agenda</UButton>
+              <p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('admin.resolutions.form.agenda_items') }}</p>
+              <UButton size="xs" variant="soft" icon="i-heroicons-plus" @click="agendas.push(blankAgenda())">{{ t('admin.resolutions.form.add_agenda') }}</UButton>
             </div>
             <div v-for="(a, i) in agendas" :key="i" class="mb-3 p-2.5 rounded ring-1 ring-gray-100 dark:ring-zinc-800 space-y-2">
               <div class="flex items-center gap-2">
                 <span class="num text-xs text-gray-400 w-5">{{ i + 1 }}.</span>
                 <USelect
-                  :options="Object.entries(grouped).flatMap(([cat, items]) => items.map(t => ({ value: t.key, label: `${cat} — ${t.title}` })))"
-                  option-attribute="label" value-attribute="value" placeholder="Pick a standard template… (optional)"
+                  :options="Object.entries(grouped).flatMap(([cat, items]) => items.map(tpl => ({ value: tpl.key, label: `${cat} — ${tpl.title}` })))"
+                  option-attribute="label" value-attribute="value" :placeholder="t('admin.resolutions.form.template_placeholder')"
                   class="flex-1" @update:model-value="(k: string) => applyTemplate(a, k)"
                 />
               </div>
-              <UInput v-model="a.title" placeholder="Agenda title" />
-              <UTextarea v-model="a.resolution_text" :rows="2" placeholder="RESOLVED THAT…" />
+              <UInput v-model="a.title" :placeholder="t('admin.resolutions.form.agenda_title_placeholder')" />
+              <UTextarea v-model="a.resolution_text" :rows="2" :placeholder="t('admin.resolutions.form.resolution_text_placeholder')" />
             </div>
           </div>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="open = false">Cancel</UButton>
-            <UButton :loading="saving" @click="save">Create</UButton>
+            <UButton color="gray" variant="ghost" @click="open = false">{{ t('common.cancel') }}</UButton>
+            <UButton :loading="saving" @click="save">{{ t('admin.resolutions.form.create') }}</UButton>
           </div>
         </template>
       </UCard>

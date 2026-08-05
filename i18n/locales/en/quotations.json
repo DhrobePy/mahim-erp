@@ -1,0 +1,89 @@
+{
+  "quotations": {
+    "kicker": "Sales & Local LC",
+    "doc_types": {
+      "quotation": "Quotation",
+      "pi": "Proforma Invoice",
+      "contract": "Sales Contract"
+    },
+    "statuses": {
+      "sent": "Sent",
+      "accepted": "Accepted",
+      "expired": "Expired",
+      "converted": "Converted",
+      "cancelled": "Cancelled"
+    },
+    "index": {
+      "title": "Quotations, PI & contracts",
+      "subtitle": "Pre-order paper trail — convert forward as the deal firms up, or generate a PI from an existing order",
+      "new_document": "New document",
+      "columns": {
+        "doc": "Doc",
+        "type": "Type",
+        "buyer": "Buyer",
+        "dates": "Date / valid until",
+        "total": "Total (৳)",
+        "status": "Status"
+      },
+      "from": "from {doc}",
+      "valid": "valid {date}",
+      "print_aria": "Print",
+      "sent": "Sent",
+      "accepted": "Accepted",
+      "to_pi": "→ PI",
+      "to_contract": "→ Contract",
+      "to_order": "→ Order",
+      "cancel": "Cancel",
+      "delete_aria": "Delete",
+      "empty": "No quotations, PIs or contracts yet.",
+      "modal_title": "New document",
+      "type_label": "Type",
+      "buyer_label": "Buyer",
+      "buyer_placeholder": "—",
+      "valid_until_label": "Valid until",
+      "deemed_export_label": "Deemed export",
+      "zero_rated": "Zero-rated (Mushak 6.3)",
+      "payment_terms_label": "Payment terms",
+      "delivery_terms_label": "Delivery terms",
+      "item_label": "Item",
+      "item_placeholder": "—",
+      "qty_label": "Qty",
+      "unit_price_label": "Unit price (৳)",
+      "add_line": "Add line",
+      "create": "Create",
+      "toast": {
+        "pick_buyer": "Pick a buyer",
+        "add_line": "Add at least one line",
+        "created": "{type} created",
+        "save_failed": "Save failed",
+        "update_failed": "Update failed",
+        "conversion_failed": "Conversion failed",
+        "converted": "Converted to {type}",
+        "order_created": "Sales order created"
+      }
+    },
+    "detail": {
+      "buyer_profile": "→ buyer profile",
+      "generated_from": "→ generated from {type} {no}",
+      "converted_child": "→ {type} {no} ({status})",
+      "sales_order_link": "→ sales order {no}",
+      "lines": "Lines",
+      "total": "Total",
+      "terms": "Terms",
+      "payment": "Payment:",
+      "delivery": "Delivery:",
+      "basis": "Basis:",
+      "notes": "Notes:",
+      "deemed_export_basis": "Deemed export (0% VAT)",
+      "domestic_basis": "Domestic (15% VAT)",
+      "legal": "Legal",
+      "print": "Print",
+      "mark_sent": "Mark sent",
+      "mark_accepted": "Mark accepted",
+      "convert_to_pi": "Convert → PI",
+      "convert_to_contract": "Convert → Contract",
+      "convert_to_order": "Convert → Sales order",
+      "not_found": "Document not found."
+    }
+  }
+}

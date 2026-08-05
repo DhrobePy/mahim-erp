@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const client = useSupabaseClient()
 const { money } = useFmt()
+const { t } = useI18n()
 
 const loading = ref(true)
 const from = ref('')
@@ -70,57 +71,57 @@ const printUrl = computed(() => `/print/pnl?from=${from.value}&to=${to.value}`)
 
 <template>
   <div>
-    <PageHeader kicker="Finance" title="Profit &amp; Loss" subtitle="Revenue → COGS → gross profit → operating &amp; financial expenses → net profit">
-      <UButton icon="i-heroicons-printer" variant="soft" :to="printUrl" target="_blank">Print</UButton>
+    <PageHeader :kicker="t('accounting.kicker')" :title="t('accounting.pnl.title')" :subtitle="t('accounting.pnl.subtitle')">
+      <UButton icon="i-heroicons-printer" variant="soft" :to="printUrl" target="_blank">{{ t('common.print') }}</UButton>
     </PageHeader>
 
     <UCard class="mb-4">
       <div class="flex items-end gap-3">
-        <UFormGroup label="From" hint="leave blank for all-time"><UInput v-model="from" type="date" /></UFormGroup>
-        <UFormGroup label="To"><UInput v-model="to" type="date" /></UFormGroup>
+        <UFormGroup :label="t('accounting.pnl.filter.from')" :hint="t('accounting.pnl.filter.from_hint')"><UInput v-model="from" type="date" /></UFormGroup>
+        <UFormGroup :label="t('accounting.pnl.filter.to')"><UInput v-model="to" type="date" /></UFormGroup>
       </div>
     </UCard>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <StatCard label="Revenue" :value="money(revenue)" />
-      <StatCard label="Gross profit" :value="money(grossProfit)" tone="green" />
-      <StatCard label="Total expenses" :value="money(opex + finExpense + cogs)" tone="red" />
-      <StatCard label="Net profit" :value="money(netProfit)" :tone="netProfit >= 0 ? 'green' : 'red'" />
+      <StatCard :label="t('accounting.pnl.labels.revenue')" :value="money(revenue)" />
+      <StatCard :label="t('accounting.pnl.labels.gross_profit')" :value="money(grossProfit)" tone="green" />
+      <StatCard :label="t('accounting.pnl.labels.total_expenses')" :value="money(opex + finExpense + cogs)" tone="red" />
+      <StatCard :label="t('accounting.pnl.labels.net_profit')" :value="money(netProfit)" :tone="netProfit >= 0 ? 'green' : 'red'" />
     </div>
 
     <UCard :loading="loading">
       <table class="w-full text-sm">
         <tbody>
-          <tr class="font-semibold"><td class="py-1.5">Revenue</td><td class="text-right num">{{ money(revenue) }}</td></tr>
+          <tr class="font-semibold"><td class="py-1.5">{{ t('accounting.pnl.labels.revenue') }}</td><td class="text-right num">{{ money(revenue) }}</td></tr>
           <tr v-for="a in section('revenue')" :key="a.code" class="text-xs text-gray-500 dark:text-zinc-400">
             <td class="py-0.5 pl-4"><span class="num text-gray-400 mr-1">{{ a.code }}</span>{{ a.name }}</td>
             <td class="text-right num">{{ money(a.amount) }}</td>
           </tr>
 
-          <tr class="font-semibold border-t border-gray-100 dark:border-zinc-800"><td class="py-1.5 pt-3">Cost of goods sold</td><td class="text-right num">({{ money(cogs) }})</td></tr>
+          <tr class="font-semibold border-t border-gray-100 dark:border-zinc-800"><td class="py-1.5 pt-3">{{ t('accounting.pnl.labels.cogs') }}</td><td class="text-right num">({{ money(cogs) }})</td></tr>
           <tr v-for="a in section('cogs')" :key="a.code" class="text-xs text-gray-500 dark:text-zinc-400">
             <td class="py-0.5 pl-4"><span class="num text-gray-400 mr-1">{{ a.code }}</span>{{ a.name }}</td>
             <td class="text-right num">({{ money(a.amount) }})</td>
           </tr>
 
           <tr class="font-semibold border-t border-gray-200 dark:border-zinc-700">
-            <td class="py-1.5 pt-3">Gross profit</td><td class="text-right num text-emerald-600 dark:text-emerald-400">{{ money(grossProfit) }}</td>
+            <td class="py-1.5 pt-3">{{ t('accounting.pnl.labels.gross_profit') }}</td><td class="text-right num text-emerald-600 dark:text-emerald-400">{{ money(grossProfit) }}</td>
           </tr>
 
-          <tr class="font-semibold border-t border-gray-100 dark:border-zinc-800"><td class="py-1.5 pt-3">Operating expenses</td><td class="text-right num">({{ money(opex) }})</td></tr>
+          <tr class="font-semibold border-t border-gray-100 dark:border-zinc-800"><td class="py-1.5 pt-3">{{ t('accounting.pnl.labels.operating_expenses') }}</td><td class="text-right num">({{ money(opex) }})</td></tr>
           <tr v-for="a in section('operating_expense')" :key="a.code" class="text-xs text-gray-500 dark:text-zinc-400">
             <td class="py-0.5 pl-4"><span class="num text-gray-400 mr-1">{{ a.code }}</span>{{ a.name }}</td>
             <td class="text-right num">({{ money(a.amount) }})</td>
           </tr>
 
-          <tr class="font-semibold border-t border-gray-100 dark:border-zinc-800"><td class="py-1.5 pt-3">Financial expenses (bank charges, interest, legal)</td><td class="text-right num">({{ money(finExpense) }})</td></tr>
+          <tr class="font-semibold border-t border-gray-100 dark:border-zinc-800"><td class="py-1.5 pt-3">{{ t('accounting.pnl.labels.financial_expenses') }}</td><td class="text-right num">({{ money(finExpense) }})</td></tr>
           <tr v-for="a in section('financial_expense')" :key="a.code" class="text-xs text-gray-500 dark:text-zinc-400">
             <td class="py-0.5 pl-4"><span class="num text-gray-400 mr-1">{{ a.code }}</span>{{ a.name }}</td>
             <td class="text-right num">({{ money(a.amount) }})</td>
           </tr>
 
           <tr class="font-semibold border-t-2 border-gray-300 dark:border-zinc-600 text-base">
-            <td class="py-2 pt-3">Net profit</td>
+            <td class="py-2 pt-3">{{ t('accounting.pnl.labels.net_profit') }}</td>
             <td class="text-right num" :class="netProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'">{{ money(netProfit) }}</td>
           </tr>
         </tbody>

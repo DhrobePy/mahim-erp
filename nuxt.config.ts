@@ -10,7 +10,49 @@ export default defineNuxtConfig({
   },
   devtools: { enabled: true },
 
-  modules: ['@nuxt/ui', '@nuxtjs/supabase', '@pinia/nuxt'],
+  modules: ['@nuxt/ui', '@nuxtjs/supabase', '@pinia/nuxt', '@nuxtjs/i18n'],
+
+  // English/Bengali switcher. no_prefix keeps URLs unchanged (/items stays
+  // /items in either language) — this is an internal app, not something
+  // that needs per-locale SEO routes. Preference persists in a cookie.
+  i18n: {
+    locales: [
+      {
+        code: 'en',
+        name: 'English',
+        files: [
+          'en/common.json', 'en/nav.json', 'en/accounting.json', 'en/banking.json', 'en/boms.json',
+          'en/ceo.json', 'en/challans.json', 'en/dashboard.json', 'en/hr.json', 'en/invoices.json',
+          'en/items.json', 'en/lcs.json', 'en/parties.json', 'en/procurement.json', 'en/production.json',
+          'en/quotations.json', 'en/sales.json', 'en/stock.json', 'en/print.json', 'en/admin.json',
+          'en/system.json', 'en/print_trade.json', 'en/print_hr.json', 'en/print_gov.json'
+        ]
+      },
+      {
+        code: 'bn',
+        name: 'বাংলা',
+        files: [
+          'bn/common.json', 'bn/nav.json', 'bn/accounting.json', 'bn/banking.json', 'bn/boms.json',
+          'bn/ceo.json', 'bn/challans.json', 'bn/dashboard.json', 'bn/hr.json', 'bn/invoices.json',
+          'bn/items.json', 'bn/lcs.json', 'bn/parties.json', 'bn/procurement.json', 'bn/production.json',
+          'bn/quotations.json', 'bn/sales.json', 'bn/stock.json', 'bn/print.json', 'bn/admin.json',
+          'bn/system.json', 'bn/print_trade.json', 'bn/print_hr.json', 'bn/print_gov.json'
+        ]
+      }
+    ],
+    langDir: 'locales',
+    defaultLocale: 'en',
+    strategy: 'no_prefix',
+    // Remember an explicit switch-language click via cookie, but don't
+    // auto-redirect based on the browser's own Accept-Language header —
+    // staff share devices and the default should stay predictable.
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'erp_locale',
+      redirectOn: 'no prefix',
+      alwaysRedirect: false
+    }
+  },
 
   // @nuxtjs/supabase: guards every route by default and redirects
   // unauthenticated users to /login. Public routes are excluded below.

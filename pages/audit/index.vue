@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const client = useSupabaseClient()
 const { profile } = useProfile()
+const { t } = useI18n()
 
 const rows = ref<any[]>([])
 const users = ref<Map<string, string>>(new Map())
@@ -56,28 +57,28 @@ const actionColor = (a: string) =>
 
 <template>
   <div>
-    <PageHeader kicker="Admin" title="Audit trail" subtitle="Every insert, update and delete on business tables — who, when, what changed" />
+    <PageHeader :kicker="t('nav.sections.admin')" :title="t('system.audit.title')" :subtitle="t('system.audit.subtitle')" />
 
     <UCard v-if="profile?.role !== 'admin'">
-      <p class="text-sm text-gray-500 py-4 text-center">Only admins can view the audit trail.</p>
+      <p class="text-sm text-gray-500 py-4 text-center">{{ t('system.audit.admin_only') }}</p>
     </UCard>
 
     <UCard v-else>
       <template #header>
         <div class="flex gap-2">
-          <USelect v-model="tableFilter" :options="tables" placeholder="All tables" size="xs" class="w-44" clearable />
-          <USelect v-model="actionFilter" :options="['INSERT', 'UPDATE', 'DELETE']" placeholder="All actions" size="xs" class="w-36" />
+          <USelect v-model="tableFilter" :options="tables" :placeholder="t('system.audit.all_tables')" size="xs" class="w-44" clearable />
+          <USelect v-model="actionFilter" :options="['INSERT', 'UPDATE', 'DELETE']" :placeholder="t('system.audit.all_actions')" size="xs" class="w-36" />
           <UButton size="xs" variant="ghost" icon="i-heroicons-x-mark" @click="tableFilter = null; actionFilter = null" />
         </div>
       </template>
       <UTable
         :rows="rows" :loading="loading"
         :columns="[
-          { key: 'created_at', label: 'When' },
-          { key: 'actor', label: 'Who' },
-          { key: 'action', label: 'Action' },
-          { key: 'table_name', label: 'Table' },
-          { key: 'what', label: 'What changed' }
+          { key: 'created_at', label: t('system.audit.columns.when') },
+          { key: 'actor', label: t('system.audit.columns.who') },
+          { key: 'action', label: t('system.audit.columns.action') },
+          { key: 'table_name', label: t('system.audit.columns.table') },
+          { key: 'what', label: t('system.audit.columns.what_changed') }
         ]"
       >
         <template #created_at-data="{ row }">
@@ -86,7 +87,7 @@ const actionColor = (a: string) =>
           </span>
         </template>
         <template #actor-data="{ row }">
-          {{ row.actor ? (users.get(row.actor) || row.actor.slice(0, 8)) : 'system' }}
+          {{ row.actor ? (users.get(row.actor) || row.actor.slice(0, 8)) : t('system.audit.system_actor') }}
         </template>
         <template #action-data="{ row }">
           <UBadge size="xs" variant="subtle" :color="actionColor(row.action)">{{ row.action }}</UBadge>
@@ -98,7 +99,7 @@ const actionColor = (a: string) =>
           <span class="text-xs text-gray-500 dark:text-zinc-400">{{ changes(row) }}</span>
         </template>
         <template #empty-state>
-          <div class="text-center py-6 text-sm text-gray-400">No audit entries yet.</div>
+          <div class="text-center py-6 text-sm text-gray-400">{{ t('system.audit.no_entries') }}</div>
         </template>
       </UTable>
     </UCard>

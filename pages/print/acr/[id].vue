@@ -4,6 +4,7 @@ definePageMeta({ layout: false })
 const route = useRoute()
 const client = useSupabaseClient()
 const { logoUrl } = useCompanyLogo()
+const { locale: printLocale, t, toggle: toggleLang } = usePrintLocale()
 
 const id = route.params.id as string
 const acr = ref<any>(null)
@@ -11,9 +12,13 @@ const emp = ref<any>(null)
 const company = ref<any>(null)
 const loading = ref(true)
 
-const gradeLabel: Record<string, string> = {
-  outstanding: 'Outstanding', very_good: 'Very Good', good: 'Good', satisfactory: 'Satisfactory', poor: 'Poor'
-}
+const gradeLabel = computed<Record<string, string>>(() => ({
+  outstanding: t('printHr.acr.grade_outstanding'),
+  very_good: t('printHr.acr.grade_very_good'),
+  good: t('printHr.acr.grade_good'),
+  satisfactory: t('printHr.acr.grade_satisfactory'),
+  poor: t('printHr.acr.grade_poor')
+}))
 
 const load = async () => {
   loading.value = true
@@ -30,75 +35,76 @@ const load = async () => {
 onMounted(load)
 
 const ratings = computed(() => acr.value ? [
-  { label: 'Job knowledge', value: acr.value.job_knowledge_rating },
-  { label: 'Quality of work', value: acr.value.quality_of_work_rating },
-  { label: 'Integrity', value: acr.value.integrity_rating },
-  { label: 'Punctuality & attendance', value: acr.value.punctuality_rating },
-  { label: 'Initiative', value: acr.value.initiative_rating }
+  { label: t('printHr.acr.job_knowledge'), value: acr.value.job_knowledge_rating },
+  { label: t('printHr.acr.quality_of_work'), value: acr.value.quality_of_work_rating },
+  { label: t('printHr.acr.integrity'), value: acr.value.integrity_rating },
+  { label: t('printHr.acr.punctuality'), value: acr.value.punctuality_rating },
+  { label: t('printHr.acr.initiative'), value: acr.value.initiative_rating }
 ] : [])
 </script>
 
 <template>
   <div class="print-root">
     <div class="no-print toolbar">
-      <NuxtLink :to="`/hr/${acr?.employee_id}`" class="back">← back</NuxtLink>
-      <button class="print-btn" @click="() => window.print()">🖨 Print</button>
+      <NuxtLink :to="`/hr/${acr?.employee_id}`" class="back">{{ t('printHr.acr.back') }}</NuxtLink>
+      <button class="lang-btn" @click="toggleLang">{{ t('print.toolbar.lang_toggle') }}</button>
+      <button class="print-btn" @click="() => window.print()">{{ t('print.toolbar.print_btn') }}</button>
     </div>
 
-    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">Loading…</div>
+    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">{{ t('print.toolbar.loading') }}</div>
 
-    <div v-else-if="acr && emp && company" class="sheet">
+    <div v-else-if="acr && emp && company" class="sheet" :lang="printLocale">
       <div class="letterhead">
         <img v-if="logoUrl(company)" :src="logoUrl(company)" class="co-logo" alt="Company logo">
         <div class="co-name">{{ company.legal_name || company.name }}</div>
-        <div class="title">ANNUAL CONFIDENTIAL REPORT — {{ acr.review_year }}</div>
-        <div v-if="acr.status === 'draft'" class="draft-badge">DRAFT — NOT YET FINALIZED</div>
+        <div class="title">{{ t('printHr.acr.title', { year: acr.review_year }) }}</div>
+        <div v-if="acr.status === 'draft'" class="draft-badge">{{ t('printHr.acr.draft_badge') }}</div>
       </div>
 
       <table class="meta">
         <tbody>
           <tr>
-            <td><div class="small">Employee</div><b>{{ emp.emp_no }} — {{ emp.full_name }}</b></td>
-            <td><div class="small">Designation</div><b>{{ emp.designation || '—' }}</b></td>
-            <td><div class="small">Department</div><b>{{ emp.department || '—' }}</b></td>
+            <td><div class="small">{{ t('printHr.acr.employee') }}</div><b>{{ emp.emp_no }} — {{ emp.full_name }}</b></td>
+            <td><div class="small">{{ t('printHr.acr.designation') }}</div><b>{{ emp.designation || '—' }}</b></td>
+            <td><div class="small">{{ t('printHr.acr.department') }}</div><b>{{ emp.department || '—' }}</b></td>
           </tr>
           <tr>
-            <td colspan="2"><div class="small">Reviewing officer</div><b>{{ acr.reviewing_officer || '—' }}</b></td>
-            <td><div class="small">Review year</div><b class="mono">{{ acr.review_year }}</b></td>
+            <td colspan="2"><div class="small">{{ t('printHr.acr.reviewing_officer') }}</div><b>{{ acr.reviewing_officer || '—' }}</b></td>
+            <td><div class="small">{{ t('printHr.acr.review_year') }}</div><b class="mono">{{ acr.review_year }}</b></td>
           </tr>
         </tbody>
       </table>
 
       <table class="lines">
-        <thead><tr><th>Assessment area</th><th class="num">Rating (1-5)</th></tr></thead>
+        <thead><tr><th>{{ t('printHr.acr.assessment_area') }}</th><th class="num">{{ t('printHr.acr.rating_header') }}</th></tr></thead>
         <tbody>
           <tr v-for="r in ratings" :key="r.label"><td>{{ r.label }}</td><td class="num">{{ r.value ?? '—' }}</td></tr>
         </tbody>
       </table>
 
-      <p class="section-label">Overall grade</p>
+      <p class="section-label">{{ t('printHr.acr.overall_grade') }}</p>
       <p class="grade">{{ gradeLabel[acr.overall_grade] }}</p>
 
-      <p class="section-label">Strengths</p>
+      <p class="section-label">{{ t('printHr.acr.strengths') }}</p>
       <p class="body-text">{{ acr.strengths || '—' }}</p>
 
-      <p class="section-label">Areas of improvement</p>
+      <p class="section-label">{{ t('printHr.acr.areas_of_improvement') }}</p>
       <p class="body-text">{{ acr.areas_of_improvement || '—' }}</p>
 
-      <p class="section-label">Reporting officer's remarks</p>
+      <p class="section-label">{{ t('printHr.acr.reporting_officer_remarks') }}</p>
       <p class="body-text">{{ acr.reporting_officer_remarks || '—' }}</p>
 
-      <p class="section-label">Employee's remarks (right of reply)</p>
+      <p class="section-label">{{ t('printHr.acr.employee_remarks') }}</p>
       <p class="body-text">{{ acr.employee_remarks || '—' }}</p>
 
       <div class="sig-cols">
         <div class="sig-block">
           <div class="sig-line" />
-          <p class="small">Employee acknowledgment</p>
+          <p class="small">{{ t('printHr.acr.employee_acknowledgment') }}</p>
         </div>
         <div class="sig-block">
           <div class="sig-line" />
-          <p class="small">Reporting officer — {{ acr.reviewing_officer || '' }}</p>
+          <p class="small">{{ t('printHr.acr.reporting_officer_sig', { officer: acr.reviewing_officer || '' }) }}</p>
         </div>
       </div>
     </div>
@@ -113,6 +119,7 @@ const ratings = computed(() => acr.value ? [
 }
 .toolbar .back { color: #fbbf24; text-decoration: none; }
 .print-btn { background: #f59e0b; color: #000; border: 0; border-radius: 4px; padding: 6px 16px; font-weight: 600; cursor: pointer; }
+.lang-btn { background: transparent; color: #e4e4e7; border: 1px solid #52525b; border-radius: 4px; padding: 5px 14px; font-weight: 500; cursor: pointer; }
 .sheet {
   width: 210mm; min-height: 280mm; margin: 0 auto 20px; background: #fff; color: #111;
   padding: 20mm 18mm; box-shadow: 0 2px 12px rgba(0,0,0,.4); font-size: 13px; line-height: 1.6;

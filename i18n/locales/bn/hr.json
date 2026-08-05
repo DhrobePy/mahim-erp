@@ -1,0 +1,356 @@
+{
+  "hr": {
+    "kicker": "এইচআর",
+    "employees": {
+      "title": "কর্মচারী",
+      "subtitle": "ওটি হার = (মূল বেতন / ২০৮) × ২, বিএলএ ২০০৬ অনুযায়ী; ঋণ সর্বোচ্চ মূল বেতনের ৬ গুণ পর্যন্ত",
+      "disburse_loan": "ঋণ বিতরণ",
+      "new_employee": "নতুন কর্মচারী",
+      "columns": {
+        "id": "আইডি",
+        "name": "নাম",
+        "designation": "পদবি",
+        "joined": "যোগদান",
+        "basic": "মূল বেতন (৳)",
+        "gross": "মোট বেতন (৳)",
+        "ot_rate": "ওটি হার/ঘণ্টা"
+      },
+      "no_employees": "এখনো কোনো কর্মচারী নেই।",
+      "loans_header": "কর্মচারী ঋণ — বেতনের মাধ্যমে কিস্তিতে সমন্বয়",
+      "loans_columns": {
+        "loan": "ঋণ",
+        "employee": "কর্মচারী",
+        "principal": "মূল অর্থ (৳)",
+        "installment": "কিস্তি",
+        "balance": "অবশিষ্ট",
+        "status": "অবস্থা"
+      },
+      "no_loans": "কোনো ঋণ নেই।",
+      "edit_title": "কর্মচারী সম্পাদনা",
+      "new_title": "নতুন কর্মচারী",
+      "form": {
+        "full_name": "পূর্ণ নাম",
+        "designation": "পদবি",
+        "department": "বিভাগ",
+        "joining_date": "যোগদানের তারিখ",
+        "biometric_id": "বায়োমেট্রিক আইডি",
+        "basic_salary": "মূল বেতন (৳)",
+        "gross_salary": "মোট বেতন (৳)",
+        "attendance_allowance": "হাজিরা ভাতা (৳/মাস)",
+        "phone": "ফোন",
+        "nid_no": "এনআইডি নম্বর",
+        "personal_info": "ব্যক্তিগত তথ্য",
+        "father_name": "পিতার নাম",
+        "date_of_birth": "জন্ম তারিখ",
+        "blood_group": "রক্তের গ্রুপ",
+        "blood_group_placeholder": "যেমন B+",
+        "marital_status": "বৈবাহিক অবস্থা",
+        "marital_status_placeholder": "অবিবাহিত / বিবাহিত",
+        "present_address": "বর্তমান ঠিকানা",
+        "permanent_address": "স্থায়ী ঠিকানা",
+        "emergency_contact_name": "জরুরি যোগাযোগের নাম",
+        "emergency_contact_phone": "জরুরি যোগাযোগের ফোন"
+      },
+      "loan_form": {
+        "title": "কর্মচারী ঋণ বিতরণ",
+        "employee": "কর্মচারী",
+        "principal": "মূল অর্থ (৳)",
+        "principal_hint": "সর্বোচ্চ মূল বেতনের ৬ গুণ",
+        "installment": "মাসিক কিস্তি (৳)",
+        "paid_from_account": "যে হিসাব থেকে পরিশোধ",
+        "default_account_placeholder": "— ডিফল্ট ব্যাংক হিসাব —",
+        "note": "নোট",
+        "disburse_button": "বিতরণ করুন (ডেবিট ১২৪০ / ক্রেডিট ১১০০)"
+      },
+      "toast": {
+        "employee_updated": "কর্মচারীর তথ্য আপডেট হয়েছে",
+        "employee_added": "কর্মচারী যুক্ত হয়েছে",
+        "save_failed": "সংরক্ষণ ব্যর্থ হয়েছে",
+        "loan_failed": "ঋণ প্রক্রিয়া ব্যর্থ হয়েছে",
+        "loan_disbursed": "ঋণ বিতরণ ও পোস্ট করা হয়েছে"
+      },
+      "status": {
+        "active": "সক্রিয়",
+        "inactive": "নিষ্ক্রিয়"
+      }
+    },
+    "detail": {
+      "active": "সক্রিয়",
+      "inactive": "নিষ্ক্রিয়",
+      "joined_label": "যোগদান",
+      "salary_certificate": "বেতন সনদ",
+      "not_found": "কর্মচারী খুঁজে পাওয়া যায়নি।",
+      "stats": {
+        "basic": "মূল বেতন",
+        "gross": "মোট বেতন",
+        "ot_rate": "ওটি হার/ঘণ্টা (বিএলএ)",
+        "this_month": "এই মাস",
+        "ot_this_month": "এই মাসের ওটি"
+      },
+      "personal_info": {
+        "title": "ব্যক্তিগত তথ্য",
+        "father_name": "পিতার নাম",
+        "date_of_birth": "জন্ম তারিখ",
+        "blood_group": "রক্তের গ্রুপ",
+        "marital_status": "বৈবাহিক অবস্থা",
+        "nid_no": "এনআইডি নম্বর",
+        "phone": "ফোন",
+        "present_address": "বর্তমান ঠিকানা",
+        "permanent_address": "স্থায়ী ঠিকানা",
+        "emergency_contact": "জরুরি যোগাযোগ"
+      },
+      "payslip_history": {
+        "title": "বেতন স্লিপের ইতিহাস",
+        "no_runs": "এখনো কোনো বেতন রান নেই।",
+        "bonus_badge": "বোনাস",
+        "print_aria": "বেতন স্লিপ প্রিন্ট করুন"
+      },
+      "loans": {
+        "title": "ঋণ",
+        "balance_label": "অবশিষ্ট",
+        "print_aria": "ঋণ চুক্তিপত্র প্রিন্ট করুন"
+      },
+      "stationery_usage": {
+        "title": "স্টেশনারি / ইনভেন্টরি ব্যবহার",
+        "no_usage": "এখনো কোনো স্টেশনারি ইস্যু হয়নি।",
+        "total": "মোট"
+      },
+      "attendance": {
+        "title": "এই মাসের হাজিরা",
+        "no_records": "এই মাসে কোনো রেকর্ড নেই।",
+        "late": "বিলম্ব",
+        "ot_suffix": "ওটি"
+      },
+      "acr": {
+        "title": "বার্ষিক গোপনীয় প্রতিবেদন (এসিআর)",
+        "new": "নতুন এসিআর",
+        "no_records": "এখনো কোনো এসিআর নেই।",
+        "draft_badge": "খসড়া",
+        "print_aria": "এসিআর প্রিন্ট করুন",
+        "new_title": "নতুন বার্ষিক গোপনীয় প্রতিবেদন",
+        "review_year": "পর্যালোচনার বছর",
+        "reviewing_officer": "পর্যালোচনাকারী কর্মকর্তা",
+        "job_knowledge": "কাজের জ্ঞান (১-৫)",
+        "quality_of_work": "কাজের মান (১-৫)",
+        "integrity": "সততা (১-৫)",
+        "punctuality": "সময়ানুবর্তিতা (১-৫)",
+        "initiative": "উদ্যোগ (১-৫)",
+        "overall_grade": "সামগ্রিক গ্রেড",
+        "strengths": "শক্তিমত্তা",
+        "areas_of_improvement": "উন্নতির ক্ষেত্র",
+        "officer_remarks": "প্রতিবেদনকারী কর্মকর্তার মন্তব্য",
+        "employee_remarks": "কর্মচারীর মন্তব্য",
+        "employee_remarks_hint": "কর্মচারীর প্রতিউত্তরের অধিকার",
+        "status": "অবস্থা",
+        "grades": {
+          "outstanding": "অসাধারণ",
+          "very_good": "খুব ভালো",
+          "good": "ভালো",
+          "satisfactory": "সন্তোষজনক",
+          "poor": "দুর্বল"
+        },
+        "status_options": {
+          "draft": "খসড়া",
+          "finalized": "চূড়ান্ত"
+        },
+        "toast": {
+          "save_failed": "সংরক্ষণ ব্যর্থ হয়েছে",
+          "saved": "এসিআর সংরক্ষিত হয়েছে"
+        }
+      },
+      "assistance": {
+        "title": "কল্যাণ ও চিকিৎসা সহায়তা",
+        "new": "নতুন আবেদন",
+        "no_requests": "কোনো আবেদন নেই।",
+        "approve": "অনুমোদন",
+        "reject": "প্রত্যাখ্যান",
+        "pay": "পরিশোধ",
+        "new_title": "নতুন কল্যাণ / চিকিৎসা সহায়তার আবেদন",
+        "type": "ধরন",
+        "types": {
+          "welfare": "কল্যাণ",
+          "medical": "চিকিৎসা"
+        },
+        "date": "তারিখ",
+        "amount": "পরিমাণ (৳)",
+        "reason": "কারণ",
+        "submit": "জমা দিন",
+        "pay_title": "পরিশোধ করুন {request_no}",
+        "pay_from_account": "যে হিসাব থেকে পরিশোধ",
+        "default_account_placeholder": "— ডিফল্ট ব্যাংক হিসাব —",
+        "status": {
+          "requested": "আবেদনকৃত",
+          "approved": "অনুমোদিত",
+          "paid": "পরিশোধিত",
+          "rejected": "প্রত্যাখ্যাত"
+        },
+        "toast": {
+          "amount_required": "পরিমাণ আবশ্যক",
+          "save_failed": "সংরক্ষণ ব্যর্থ হয়েছে",
+          "created": "সহায়তা আবেদন তৈরি হয়েছে",
+          "failed": "ব্যর্থ হয়েছে",
+          "approved": "অনুমোদিত হয়েছে",
+          "rejected": "প্রত্যাখ্যাত হয়েছে",
+          "payment_failed": "পরিশোধ ব্যর্থ হয়েছে",
+          "paid": "পরিশোধিত — জিএল-এ পোস্ট হয়েছে"
+        }
+      }
+    },
+    "attendance": {
+      "title": "হাজিরা",
+      "subtitle": "দৈনিক রেজিস্টার — ওটি দৈনিক সর্বোচ্চ ৪ ঘণ্টা (সেডেক্স/বিএসসিআই নিয়ম, ডাটাবেজ দ্বারা প্রয়োগকৃত)",
+      "save_day": "দিন সংরক্ষণ করুন",
+      "columns": {
+        "id": "আইডি",
+        "employee": "কর্মচারী",
+        "status": "অবস্থা",
+        "ot_hours": "ওটি ঘণ্টা",
+        "late": "বিলম্ব"
+      },
+      "status_options": {
+        "present": "উপস্থিত",
+        "absent": "অনুপস্থিত",
+        "leave": "ছুটি",
+        "holiday": "ছুটির দিন",
+        "weekend": "সাপ্তাহিক ছুটি"
+      },
+      "empty": "কোনো সক্রিয় কর্মচারী নেই — এইচআর → কর্মচারী থেকে যুক্ত করুন।",
+      "toast": {
+        "saved": "{date} তারিখের হাজিরা সংরক্ষিত হয়েছে",
+        "save_failed": "সংরক্ষণ ব্যর্থ হয়েছে"
+      }
+    },
+    "payroll": {
+      "title": "বেতন",
+      "subtitle": "তৈরি করুন → জিএল-এ পোস্ট করুন → পরিশোধ করুন। বোনাস রান চাকরির মেয়াদ অনুযায়ী অনুপাতিক।",
+      "monthly": {
+        "title": "মাসিক বেতন",
+        "year": "বছর",
+        "month": "মাস",
+        "generate": "তৈরি করুন"
+      },
+      "bonus": {
+        "title": "উৎসব বোনাস",
+        "year": "বছর",
+        "month": "মাস",
+        "label": "লেবেল",
+        "label_placeholder": "ঈদুল ফিতর ২০২৬",
+        "generate": "তৈরি করুন"
+      },
+      "bonus_badge": "বোনাস",
+      "net_prefix": "নিট",
+      "post_to_gl": "জিএল-এ পোস্ট করুন",
+      "pay": "পরিশোধ",
+      "no_runs": "এখনো কোনো বেতন রান নেই।",
+      "status": {
+        "draft": "খসড়া",
+        "posted": "পোস্ট হয়েছে",
+        "paid": "পরিশোধিত"
+      },
+      "table": {
+        "employee": "কর্মচারী",
+        "present": "উপস্থিত",
+        "absent": "অনুপস্থিত",
+        "ot_hours": "ওটি ঘ.",
+        "ot_amount": "ওটি ৳",
+        "allowance": "ভাতা",
+        "absence_deduction": "অনুপস্থিতি কর্তন",
+        "loan": "ঋণ",
+        "net": "নিট ৳"
+      },
+      "pay_slideover": {
+        "pay_from_account": "যে হিসাব থেকে পরিশোধ",
+        "default_account_placeholder": "— ডিফল্ট ব্যাংক হিসাব —"
+      },
+      "toast": {
+        "generation_failed": "তৈরি ব্যর্থ হয়েছে",
+        "generated": "বেতন তৈরি হয়েছে (খসড়া)",
+        "bonus_label_required": "বোনাসের জন্য একটি লেবেল দিন (যেমন ঈদুল ফিতর ২০২৬)",
+        "bonus_failed": "বোনাস ব্যর্থ হয়েছে",
+        "bonus_generated": "উৎসব বোনাস তৈরি হয়েছে (চাকরির মেয়াদ অনুযায়ী অনুপাতিক)",
+        "posting_failed": "পোস্ট করা ব্যর্থ হয়েছে",
+        "posted": "{run} জিএল-এ পোস্ট হয়েছে — ঋণ কিস্তিতে সমন্বিত",
+        "payment_failed": "পরিশোধ ব্যর্থ হয়েছে",
+        "paid": "{run} পরিশোধিত হয়েছে (ডেবিট ২২০০ / ক্রেডিট ব্যাংক)"
+      }
+    },
+    "stationery": {
+      "title": "অফিস স্টেশনারি",
+      "subtitle": "অফিস সরবরাহের স্টক, খরচ এবং ডেস্ক পর্যায়ের ব্যবহার — ইস্যু করার সাথে সাথেই খরচ হিসেবে ধরা হয় (৫৮০০)",
+      "manage_items": "পণ্য পরিচালনা করুন",
+      "receive_stock": "স্টক গ্রহণ",
+      "issue_to_employee": "কর্মচারীকে ইস্যু করুন",
+      "stats": {
+        "items": "স্টেশনারি পণ্য",
+        "stock_value": "স্টক মূল্য",
+        "below_reorder": "রি-অর্ডার লেভেলের নিচে"
+      },
+      "current_stock": {
+        "title": "বর্তমান স্টক",
+        "columns": {
+          "sku": "এসকেইউ",
+          "item": "পণ্য",
+          "on_hand": "মজুদ",
+          "reorder_at": "রি-অর্ডার লেভেল",
+          "value": "মূল্য (৳)"
+        },
+        "empty_prefix": "এখনো কোনো স্টেশনারি পণ্য নেই —",
+        "empty_link": "একটি যুক্ত করুন",
+        "empty_suffix": "\"consumable\" ধরন দিয়ে।"
+      },
+      "recent_receipts": {
+        "title": "সাম্প্রতিক গ্রহণ",
+        "none": "এখনো কিছু নেই।"
+      },
+      "recent_issues": {
+        "title": "সাম্প্রতিক ইস্যু",
+        "none": "এখনো কিছু নেই।"
+      },
+      "usage_by_person": {
+        "title": "ব্যক্তি অনুযায়ী ব্যবহার",
+        "columns": {
+          "id": "আইডি",
+          "employee": "কর্মচারী",
+          "issues": "ইস্যু",
+          "total_qty": "মোট পরিমাণ",
+          "total_cost": "মোট খরচ (৳)"
+        },
+        "empty": "এখনো কোনো ইস্যু রেকর্ড নেই।"
+      },
+      "receive_form": {
+        "title": "স্টেশনারি স্টক গ্রহণ",
+        "date": "তারিখ",
+        "item": "পণ্য",
+        "qty": "পরিমাণ",
+        "unit_cost": "একক মূল্য (৳)",
+        "supplier": "সরবরাহকারী",
+        "supplier_hint": "ঐচ্ছিক",
+        "paid_from_account": "যে হিসাব থেকে পরিশোধ",
+        "paid_from_account_hint": "বাকিতে কেনা হলে খালি রাখুন (প্রদেয় হিসাবে পোস্ট হবে)",
+        "on_credit_placeholder": "— বাকিতে —",
+        "reference_no": "রেফারেন্স নম্বর",
+        "reference_no_hint": "ঐচ্ছিক — ইনভয়েস/রিসিট নম্বর",
+        "note": "নোট",
+        "receive_button": "গ্রহণ করুন"
+      },
+      "issue_form": {
+        "title": "কর্মচারীর ডেস্কে ইস্যু করুন",
+        "date": "তারিখ",
+        "item": "পণ্য",
+        "employee": "কর্মচারী",
+        "qty": "পরিমাণ",
+        "note": "নোট",
+        "note_placeholder": "যেমন নতুন ডেস্ক সেটআপ, মাসিক পুনঃসরবরাহ",
+        "issue_button": "ইস্যু করুন"
+      },
+      "toast": {
+        "pick_item_qty": "একটি পণ্য ও পরিমাণ নির্বাচন করুন",
+        "receipt_failed": "রিসিট ব্যর্থ হয়েছে",
+        "stock_received": "স্টক গৃহীত হয়েছে",
+        "pick_item_employee_qty": "একটি পণ্য, কর্মচারী ও পরিমাণ নির্বাচন করুন",
+        "issue_failed": "ইস্যু ব্যর্থ হয়েছে",
+        "issued": "কর্মচারীর ডেস্কে ইস্যু করা হয়েছে"
+      }
+    }
+  }
+}

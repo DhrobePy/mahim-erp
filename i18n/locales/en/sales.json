@@ -1,0 +1,90 @@
+{
+  "sales": {
+    "kicker": "Sales & Local LC",
+    "doc_types": {
+      "quotation": "Quotation",
+      "pi": "Proforma Invoice",
+      "contract": "Sales Contract"
+    },
+    "statuses": {
+      "open": "Open",
+      "partially_delivered": "Partially delivered",
+      "delivered": "Delivered",
+      "closed": "Closed",
+      "cancelled": "Cancelled"
+    },
+    "challan_statuses": {
+      "draft": "Draft",
+      "issued": "Issued",
+      "delivered_unbilled": "Delivered — unbilled",
+      "covered": "Covered",
+      "invoiced": "Invoiced"
+    },
+    "challan_kinds": {
+      "standard": "Standard",
+      "original": "Original",
+      "covering": "Covering"
+    },
+    "invoice_statuses": {
+      "open": "Open",
+      "billed": "Billed",
+      "settled": "Settled"
+    },
+    "index": {
+      "title": "Sales orders",
+      "subtitle": "Verbal orders welcome — the LC can attach later (flow B)",
+      "new_order": "New order",
+      "columns": {
+        "so": "SO",
+        "buyer": "Buyer",
+        "date": "Date",
+        "lc": "LC",
+        "lines": "Lines",
+        "status": "Status"
+      },
+      "pre_lc": "pre-LC",
+      "delete_aria": "Delete",
+      "empty": "No sales orders yet.",
+      "modal_title": "New sales order",
+      "buyer_label": "Buyer",
+      "buyer_placeholder": "—",
+      "lc_label": "LC (leave empty if verbal / pending)",
+      "lc_placeholder": "No LC yet",
+      "deemed_export_checkbox": "Deemed export (zero-rated, revenue account 4100)",
+      "item_label": "Item",
+      "item_placeholder": "—",
+      "qty_label": "Qty",
+      "unit_price_label": "Unit price (৳)",
+      "add_line": "Add line",
+      "create_order": "Create order",
+      "toast": {
+        "pick_buyer": "Pick a buyer",
+        "save_failed": "Save failed",
+        "created": "Sales order created"
+      }
+    },
+    "detail": {
+      "generate_pi": "Generate PI",
+      "buyer": "Buyer",
+      "order_value": "Order value",
+      "delivered": "Delivered",
+      "lc": "LC",
+      "pre_lc": "pre-LC",
+      "buyer_profile": "→ buyer profile",
+      "lc_lifecycle": "→ LC lifecycle",
+      "lines_fulfilment": "Lines & fulfilment",
+      "challans": "Challans",
+      "invoices": "Invoices",
+      "linked_docs": "Quotations / PI / contracts",
+      "none_yet": "None yet.",
+      "deemed_export": "deemed export",
+      "domestic": "domestic",
+      "covers": "covers {no}",
+      "not_found": "Sales order not found.",
+      "toast": {
+        "pi_failed": "PI generation failed",
+        "pi_generated": "Proforma Invoice generated"
+      }
+    }
+  }
+}

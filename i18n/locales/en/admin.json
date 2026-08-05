@@ -1,0 +1,446 @@
+{
+  "admin": {
+    "bank_requests": {
+      "kicker": "Admin",
+      "title": "Bank service requests",
+      "subtitle": "Approach a branch for LC issue, collection, discrepancy, statements, LBPD, FDR, DPS or any other service",
+      "new_branch_btn": "New branch",
+      "new_request_btn": "New request",
+      "branches": {
+        "card_title": "Bank branches",
+        "empty": "No branches registered yet."
+      },
+      "requests": {
+        "card_title": "Requests",
+        "columns": {
+          "no": "No.",
+          "service": "Service",
+          "branch": "Branch",
+          "subject": "Subject",
+          "amount_period": "Amount / Period",
+          "status": "Status"
+        },
+        "empty": "No bank service requests yet.",
+        "print_aria": "Print",
+        "mark_submitted": "Submitted",
+        "mark_acknowledged": "Acknowledged",
+        "mark_completed": "Completed"
+      },
+      "status": {
+        "draft": "draft",
+        "submitted": "submitted",
+        "acknowledged": "acknowledged",
+        "completed": "completed"
+      },
+      "new_branch": {
+        "title": "New bank branch",
+        "bank": "Bank",
+        "branch_name": "Branch name",
+        "branch_name_placeholder": "e.g. Narayanganj Branch",
+        "address": "Address",
+        "routing_no": "Routing no.",
+        "contact_person": "Contact person",
+        "phone": "Phone",
+        "add_branch": "Add branch"
+      },
+      "new_request": {
+        "title": "New bank service request",
+        "branch": "Branch",
+        "service": "Service",
+        "date": "Date",
+        "reference_no": "Reference no.",
+        "reference_no_hint": "LC/bill/facility/account no. being referenced",
+        "statement_from": "Statement period — from",
+        "statement_to": "Statement period — to",
+        "amount": "Amount (৳)",
+        "tenor_period": "Tenor / period",
+        "tenor_period_placeholder": "e.g. 12 months",
+        "subject": "Subject",
+        "body": "Body",
+        "board_resolution": "Authorizing board resolution",
+        "board_resolution_hint": "optional",
+        "create": "Create"
+      },
+      "select_placeholder": "—",
+      "validation": {
+        "branch_name_required": "Bank and branch name are required",
+        "pick_branch": "Pick a branch",
+        "subject_required": "Subject is required",
+        "statement_period_required": "Statement period (from and to) is required"
+      },
+      "toasts": {
+        "failed": "Failed",
+        "branch_added": "Branch added",
+        "request_created": "Bank service request created",
+        "update_failed": "Update failed"
+      }
+    },
+    "company": {
+      "kicker": "Admin",
+      "title": "Company & structure",
+      "subtitle": "Profile, branding and the group hierarchy",
+      "profile": {
+        "card_title": "Profile",
+        "upload_logo": "Upload logo",
+        "uploading": "Uploading…",
+        "trading_name": "Trading name",
+        "legal_name": "Legal name",
+        "address": "Address",
+        "bin": "BIN (VAT reg.)",
+        "tin": "TIN",
+        "phone": "Phone",
+        "email": "Email",
+        "website": "Website",
+        "save": "Save profile"
+      },
+      "structure": {
+        "card_title": "Group structure",
+        "new_subsidiary_btn": "New subsidiary",
+        "mother_badge": "mother",
+        "active_badge": "active",
+        "switch_to": "Switch to",
+        "no_subsidiaries": "No subsidiaries yet.",
+        "switch_to_mother": "Switch to mother company"
+      },
+      "costing": {
+        "card_title": "Costing defaults",
+        "card_subtitle": "Feeds the suggested overhead % and margin % on every carton recipe's cost breakdown",
+        "ref_material_cost": "Reference material cost",
+        "ref_material_cost_hint": "a period's actual total, e.g. last full year",
+        "ref_factory_cost": "Reference factory cost",
+        "ref_factory_cost_hint": "same period's factory/overhead total",
+        "implied_overhead_pct": "Implied overhead %",
+        "default_margin_pct": "Default margin %",
+        "default_margin_pct_hint": "used unless a recipe overrides it",
+        "save": "Save costing defaults"
+      },
+      "new_subsidiary": {
+        "title": "New subsidiary under {name}",
+        "trading_name": "Trading name",
+        "code": "Code",
+        "code_hint": "short, unique e.g. MAHIM-TRD",
+        "legal_name": "Legal name",
+        "legal_name_placeholder": "defaults to trading name",
+        "note": "A full chart of accounts is seeded automatically, and you become admin of the new company.",
+        "create": "Create subsidiary"
+      },
+      "toasts": {
+        "profile_updated": "Company profile updated",
+        "costing_updated": "Costing defaults updated",
+        "logo_updated": "Logo updated",
+        "upload_failed": "Upload failed",
+        "name_code_required": "Name and code are required",
+        "created": "{name} created",
+        "failed": "Failed",
+        "switched": "Switched active company"
+      }
+    },
+    "directors": {
+      "kicker": "Admin",
+      "title": "Directors & partners",
+      "subtitle": "Governance register — feeds RJSC Form XII and Schedule X",
+      "form12_btn": "Form XII",
+      "schedulex_btn": "Schedule X",
+      "new_director_btn": "New director",
+      "columns": {
+        "name": "Name",
+        "designation": "Designation",
+        "nid": "NID",
+        "shares": "Shares",
+        "appointed": "Appointed"
+      },
+      "designations": {
+        "chairman": "Chairman",
+        "managing_director": "Managing Director",
+        "director": "Director",
+        "partner": "Partner",
+        "company_secretary": "Company Secretary"
+      },
+      "status": {
+        "active": "active",
+        "resigned": "resigned"
+      },
+      "empty": "No directors or partners recorded yet.",
+      "form": {
+        "edit_title": "Edit director / partner",
+        "new_title": "New director / partner",
+        "full_name": "Full name",
+        "designation": "Designation",
+        "nationality": "Nationality",
+        "father_or_spouse_name": "Father's / spouse's name",
+        "nid_no": "NID no.",
+        "tin": "TIN",
+        "address": "Address",
+        "phone": "Phone",
+        "email": "Email",
+        "shares_held": "Shares held",
+        "face_value": "Face value / share (৳)",
+        "appointment_date": "Appointment date",
+        "resignation_date": "Resignation date",
+        "currently_active": "Currently active",
+        "save": "Save"
+      },
+      "validation": {
+        "name_required": "Name is required"
+      },
+      "toasts": {
+        "updated": "Updated",
+        "director_added": "Director added"
+      }
+    },
+    "documents": {
+      "kicker": "Admin",
+      "title": "Company documents",
+      "subtitle": "Trade license, incorporation papers, certificates — with expiry tracking and legal review",
+      "upload_btn": "Upload document",
+      "doc_types": {
+        "trade_license": "Trade License",
+        "incorporation_certificate": "Incorporation Certificate",
+        "moa_aoa": "Memorandum & Articles of Association",
+        "tin_certificate": "TIN Certificate",
+        "vat_bin_certificate": "VAT / BIN Certificate",
+        "fire_license": "Fire License",
+        "environment_clearance": "Environment Clearance",
+        "factory_license": "Factory License (DIFE)",
+        "boiler_certificate": "Boiler Certificate",
+        "bsci_sedex_audit": "BSCI / Sedex Audit Certificate",
+        "fsc_coc_certificate": "FSC Chain of Custody Certificate",
+        "import_registration_certificate": "Import Registration Certificate (IRC)",
+        "export_registration_certificate": "Export Registration Certificate (ERC)",
+        "effluent_treatment_certificate": "Effluent Treatment (ETP) Certificate",
+        "electrical_installation_license": "Electrical Installation License",
+        "bsti_certification": "BSTI Certification",
+        "trademark_design_registration": "Trademark / Design Registration",
+        "labour_welfare_registration": "Labour Welfare Fund Registration",
+        "group_insurance_certificate": "Group Insurance Certificate",
+        "bank_charge_document": "Bank Charge / Mortgage Document",
+        "noc_certificate": "No Objection Certificate (NOC)",
+        "bank_account_doc": "Bank Account Document",
+        "membership_certificate": "Membership Certificate",
+        "other": "Other"
+      },
+      "expiry": {
+        "expired": "expired",
+        "expiring_soon": "expiring soon",
+        "valid": "valid"
+      },
+      "doc_no_label": "Doc no:",
+      "issued_label": "Issued:",
+      "empty": "No documents uploaded yet.",
+      "form": {
+        "title": "Upload company document",
+        "type": "Type",
+        "doc_title": "Title",
+        "doc_title_placeholder": "e.g. Trade License 2026-27",
+        "doc_no": "Document no.",
+        "issue_date": "Issue date",
+        "expiry_date": "Expiry date",
+        "notes": "Notes",
+        "file": "File",
+        "save": "Save"
+      },
+      "validation": {
+        "title_required": "Title is required"
+      },
+      "toasts": {
+        "document_saved": "Document saved"
+      }
+    },
+    "forwarding": {
+      "kicker": "Admin",
+      "title": "Forwarding pad",
+      "subtitle": "Correspondence covering letters — documents submitted to banks, buyers & offices",
+      "new_letter_btn": "New letter",
+      "columns": {
+        "no": "No.",
+        "date": "Date",
+        "to": "To",
+        "subject": "Subject"
+      },
+      "print_aria": "Print",
+      "empty": "No forwarding letters yet.",
+      "form": {
+        "title": "New forwarding letter",
+        "topic": "Topic",
+        "date": "Date",
+        "to": "To",
+        "to_placeholder": "e.g. Islami Bank Bangladesh, Narayanganj Branch",
+        "address": "Address",
+        "subject": "Subject",
+        "body": "Body",
+        "body_placeholder": "Please find enclosed the following documents for your kind perusal and necessary action.",
+        "enclosures": "Enclosures",
+        "enclosures_placeholder": "Commercial Invoice, Packing List, Bill of Exchange…",
+        "cc": "CC",
+        "create": "Create"
+      },
+      "validation": {
+        "addressee_subject_required": "Addressee and subject are required"
+      },
+      "toasts": {
+        "letter_created": "Forwarding letter created"
+      }
+    },
+    "resolutions": {
+      "kicker": "Admin",
+      "title": "Board resolutions",
+      "subtitle": "Minutes with choosable or manual agenda items — doubles as the bank's mandate paper trail",
+      "new_resolution_btn": "New resolution",
+      "columns": {
+        "no": "No.",
+        "meeting": "Meeting",
+        "date": "Date",
+        "agendas": "Agendas",
+        "status": "Status"
+      },
+      "meeting_types": {
+        "board_meeting": "Board Meeting",
+        "agm": "Annual General Meeting (AGM)",
+        "egm": "Extraordinary General Meeting (EGM)",
+        "circular_resolution": "Circular Resolution"
+      },
+      "status": {
+        "draft": "draft",
+        "passed": "passed",
+        "circulated": "circulated"
+      },
+      "print_aria": "Print",
+      "mark_passed_btn": "Mark passed",
+      "empty": "No board resolutions yet.",
+      "form": {
+        "title": "New board resolution",
+        "meeting_type": "Meeting type",
+        "meeting_no": "Meeting no.",
+        "meeting_no_hint": "e.g. 18th Board Meeting",
+        "date": "Date",
+        "chairperson": "Chairperson",
+        "venue": "Venue",
+        "attendees": "Attendees",
+        "agenda_items": "Agenda items",
+        "add_agenda": "Add agenda",
+        "template_placeholder": "Pick a standard template… (optional)",
+        "agenda_title_placeholder": "Agenda title",
+        "resolution_text_placeholder": "RESOLVED THAT…",
+        "create": "Create"
+      },
+      "validation": {
+        "agenda_required": "Add at least one agenda item"
+      },
+      "toasts": {
+        "resolution_created": "Board resolution created",
+        "update_failed": "Update failed"
+      }
+    },
+    "tax_index": {
+      "kicker": "Admin",
+      "title": "Tax — IT-10B",
+      "subtitle": "Wealth statement draft builder, per director/partner and assessment year",
+      "new_statement_btn": "New statement",
+      "disclaimer": "Draft preparation aid only — verify figures and the current NBR form version with a registered tax practitioner before filing.",
+      "columns": {
+        "individual": "Individual",
+        "assessment_year": "Assessment year",
+        "date": "Date",
+        "net_wealth": "Net wealth (৳)"
+      },
+      "print_aria": "Print",
+      "empty": "No IT-10B statements yet.",
+      "form": {
+        "title": "New IT-10B statement",
+        "director": "Director / partner",
+        "director_placeholder": "— or enter name below —",
+        "individual_name": "Individual name (if not listed)",
+        "tin": "TIN",
+        "assessment_year": "Assessment year",
+        "assessment_year_placeholder": "2025-2026",
+        "statement_date": "Statement date",
+        "opening_net_wealth": "Opening net wealth (৳)",
+        "total_income": "Total income this year (৳)",
+        "total_expenditure": "Total expenditure this year (৳)",
+        "assets_liabilities": "Assets & liabilities",
+        "add_line": "Add line",
+        "description_placeholder": "Description",
+        "amount_placeholder": "Amount ৳",
+        "liability_note": "Liability categories (mortgage / bank loan / other) are netted off automatically in the total.",
+        "save": "Save"
+      },
+      "categories": {
+        "business_capital": "Business capital",
+        "non_agri_property": "Non-agricultural property",
+        "agri_property": "Agricultural property",
+        "investments": "Investments (shares, FDR, savings certificates)",
+        "motor_vehicles": "Motor vehicles",
+        "ornaments": "Ornaments / jewellery",
+        "furniture_electronics": "Furniture & electronics",
+        "cash_bank": "Cash in hand / at bank",
+        "other_assets": "Other assets",
+        "mortgage_liability": "Mortgage liability",
+        "bank_loan_liability": "Bank loan liability",
+        "other_liability": "Other liability"
+      },
+      "validation": {
+        "director_or_name_required": "Pick a director or enter an individual name",
+        "assessment_year_required": "Assessment year is required"
+      },
+      "toasts": {
+        "statement_created": "IT-10B statement created"
+      }
+    },
+    "tax_corporate": {
+      "kicker": "Admin",
+      "title": "Corporate tax computation",
+      "subtitle": "Net profit per accounts → addbacks / deductions → taxable income → tax → less advance tax / TDS → payable. Draft working paper — review with a registered tax practitioner before filing.",
+      "new_computation_btn": "New computation",
+      "labels": {
+        "taxable": "taxable",
+        "tax": "tax",
+        "net_payable": "net payable"
+      },
+      "print_aria": "Print",
+      "table": {
+        "net_profit": "Net profit per accounts",
+        "taxable_income": "Taxable income",
+        "tax_at": "Tax rate {pct}%",
+        "less_advance_tax": "Less: advance tax paid",
+        "less_tds": "Less: TDS credit",
+        "net_tax_payable": "Net tax payable / (refundable)"
+      },
+      "adj_type": {
+        "addback": "Addback",
+        "deduction": "Deduction"
+      },
+      "line_form": {
+        "type": "Type",
+        "description": "Description",
+        "description_placeholder": "e.g. Depreciation per accounts vs. tax depreciation",
+        "amount": "Amount (৳)",
+        "add": "Add"
+      },
+      "empty": "No tax computations yet.",
+      "form": {
+        "title": "New tax computation",
+        "assessment_year": "Assessment year",
+        "assessment_year_hint": "e.g. 2025-2026",
+        "net_profit": "Net profit per accounts (৳)",
+        "pull_pnl": "Pull from P&L",
+        "tax_rate": "Tax rate % (annual)",
+        "advance_tax": "Advance tax (AIT) paid (৳)",
+        "pull_ait": "Pull from AIT summary",
+        "tds_credit": "TDS credit (৳)",
+        "notes": "Notes",
+        "create": "Create"
+      },
+      "validation": {
+        "assessment_year_required": "Assessment year is required (e.g. 2025-2026)",
+        "description_amount_required": "Description and amount are required"
+      },
+      "toasts": {
+        "pnl_pulled": "Pulled cumulative net profit from posted GL entries",
+        "ait_pulled": "Pulled advance tax paid from AIT summary",
+        "computation_created": "Tax computation created",
+        "adjustment_added": "Adjustment added",
+        "failed": "Failed"
+      }
+    }
+  }
+}

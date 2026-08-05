@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
@@ -44,6 +45,16 @@ const rows = computed(() => items.value.map((it) => ({ ...it, ...stockFor(it.id)
 const totalValue = computed(() => rows.value.reduce((s, r) => s + r.value, 0))
 const lowStockCount = computed(() => rows.value.filter((r) => r.qty <= r.reorder_level).length)
 
+const columns = computed(() => [
+  { key: 'sku', label: t('hr.stationery.current_stock.columns.sku') }, { key: 'name', label: t('hr.stationery.current_stock.columns.item') },
+  { key: 'qty', label: t('hr.stationery.current_stock.columns.on_hand') }, { key: 'reorder_level', label: t('hr.stationery.current_stock.columns.reorder_at') },
+  { key: 'value', label: t('hr.stationery.current_stock.columns.value') }
+])
+const usageColumns = computed(() => [
+  { key: 'emp_no', label: t('hr.stationery.usage_by_person.columns.id') }, { key: 'full_name', label: t('hr.stationery.usage_by_person.columns.employee') },
+  { key: 'issue_count', label: t('hr.stationery.usage_by_person.columns.issues') }, { key: 'total_qty', label: t('hr.stationery.usage_by_person.columns.total_qty') }, { key: 'total_cost', label: t('hr.stationery.usage_by_person.columns.total_cost') }
+])
+
 // --- Receive stock ---
 const receiveOpen = ref(false)
 const savingReceive = ref(false)
@@ -59,12 +70,12 @@ const openReceive = () => {
   receiveOpen.value = true
 }
 const saveReceive = async () => {
-  if (!receiveForm.item_id || !receiveForm.qty) { toast.add({ title: 'Pick an item and quantity', color: 'red' }); return }
+  if (!receiveForm.item_id || !receiveForm.qty) { toast.add({ title: t('hr.stationery.toast.pick_item_qty'), color: 'red' }); return }
   savingReceive.value = true
   const payload: any = { ...receiveForm, reference_no: receiveForm.reference_no || null }
   const { error } = await client.from('stationery_receipts').insert(payload)
-  if (error) toast.add({ title: 'Receipt failed', description: error.message, color: 'red' })
-  else { toast.add({ title: 'Stock received' }); receiveOpen.value = false; await load() }
+  if (error) toast.add({ title: t('hr.stationery.toast.receipt_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('hr.stationery.toast.stock_received') }); receiveOpen.value = false; await load() }
   savingReceive.value = false
 }
 
@@ -77,11 +88,11 @@ const openIssue = () => {
   issueOpen.value = true
 }
 const saveIssue = async () => {
-  if (!issueForm.item_id || !issueForm.employee_id || !issueForm.qty) { toast.add({ title: 'Pick an item, employee and quantity', color: 'red' }); return }
+  if (!issueForm.item_id || !issueForm.employee_id || !issueForm.qty) { toast.add({ title: t('hr.stationery.toast.pick_item_employee_qty'), color: 'red' }); return }
   savingIssue.value = true
   const { error } = await client.from('stationery_issues').insert({ ...issueForm })
-  if (error) toast.add({ title: 'Issue failed', description: error.message, color: 'red' })
-  else { toast.add({ title: 'Issued to employee desk' }); issueOpen.value = false; await load() }
+  if (error) toast.add({ title: t('hr.stationery.toast.issue_failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('hr.stationery.toast.issued') }); issueOpen.value = false; await load() }
   savingIssue.value = false
 }
 
@@ -95,42 +106,38 @@ const removeIssue = async (row: any) => {
 
 <template>
   <div>
-    <PageHeader kicker="HR" title="Office stationery" subtitle="Stock, cost and desk-level usage of office supplies — issuing expenses the cost immediately (5800)">
-      <UButton variant="soft" icon="i-heroicons-cube" to="/items">Manage items</UButton>
-      <UButton v-if="canWrite" variant="soft" icon="i-heroicons-arrow-down-tray" @click="openReceive">Receive stock</UButton>
-      <UButton v-if="canWrite" icon="i-heroicons-arrow-up-tray" @click="openIssue">Issue to employee</UButton>
+    <PageHeader :kicker="t('hr.kicker')" :title="t('hr.stationery.title')" :subtitle="t('hr.stationery.subtitle')">
+      <UButton variant="soft" icon="i-heroicons-cube" to="/items">{{ t('hr.stationery.manage_items') }}</UButton>
+      <UButton v-if="canWrite" variant="soft" icon="i-heroicons-arrow-down-tray" @click="openReceive">{{ t('hr.stationery.receive_stock') }}</UButton>
+      <UButton v-if="canWrite" icon="i-heroicons-arrow-up-tray" @click="openIssue">{{ t('hr.stationery.issue_to_employee') }}</UButton>
     </PageHeader>
 
     <div class="grid grid-cols-3 gap-4 mb-6">
-      <StatCard label="Stationery items" :value="String(rows.length)" />
-      <StatCard label="Stock value" :value="money(totalValue)" />
-      <StatCard label="Below reorder level" :value="String(lowStockCount)" :tone="lowStockCount > 0 ? 'red' : 'default'" />
+      <StatCard :label="t('hr.stationery.stats.items')" :value="String(rows.length)" />
+      <StatCard :label="t('hr.stationery.stats.stock_value')" :value="money(totalValue)" />
+      <StatCard :label="t('hr.stationery.stats.below_reorder')" :value="String(lowStockCount)" :tone="lowStockCount > 0 ? 'red' : 'default'" />
     </div>
 
     <UCard class="mb-6" :loading="loading">
-      <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Current stock</p></template>
+      <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('hr.stationery.current_stock.title') }}</p></template>
       <UTable
         :rows="rows"
-        :columns="[
-          { key: 'sku', label: 'SKU' }, { key: 'name', label: 'Item' },
-          { key: 'qty', label: 'On hand' }, { key: 'reorder_level', label: 'Reorder at' },
-          { key: 'value', label: 'Value (৳)' }
-        ]"
+        :columns="columns"
       >
         <template #qty-data="{ row }">
           <span class="num font-medium" :class="row.qty <= row.reorder_level ? 'text-red-600 dark:text-red-400' : ''">{{ row.qty }}</span>
         </template>
         <template #value-data="{ row }"><span class="num">{{ money(row.value) }}</span></template>
         <template #empty-state>
-          <div class="text-center py-6 text-sm text-gray-400">No stationery items yet — <NuxtLink to="/items" class="text-amber-500 hover:underline">add one</NuxtLink> with type "consumable".</div>
+          <div class="text-center py-6 text-sm text-gray-400">{{ t('hr.stationery.current_stock.empty_prefix') }} <NuxtLink to="/items" class="text-amber-500 hover:underline">{{ t('hr.stationery.current_stock.empty_link') }}</NuxtLink> {{ t('hr.stationery.current_stock.empty_suffix') }}</div>
         </template>
       </UTable>
     </UCard>
 
     <div class="grid grid-cols-2 gap-4 mb-6">
       <UCard :loading="loading">
-        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Recent receipts</p></template>
-        <div v-if="!receipts.length" class="text-sm text-gray-400 py-3 text-center">None yet.</div>
+        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('hr.stationery.recent_receipts.title') }}</p></template>
+        <div v-if="!receipts.length" class="text-sm text-gray-400 py-3 text-center">{{ t('hr.stationery.recent_receipts.none') }}</div>
         <div v-for="r in receipts" :key="r.id" class="flex justify-between items-center py-1.5 text-[13px] border-b border-gray-100 dark:border-zinc-800/60 last:border-0">
           <span><span class="num text-xs text-gray-400 mr-2">{{ r.receipt_date }}</span>{{ r.items?.sku }} — <span class="num">{{ r.qty }}</span> @ ৳{{ r.unit_cost }}</span>
           <span class="flex items-center gap-1">
@@ -140,8 +147,8 @@ const removeIssue = async (row: any) => {
         </div>
       </UCard>
       <UCard :loading="loading">
-        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Recent issues</p></template>
-        <div v-if="!issues.length" class="text-sm text-gray-400 py-3 text-center">None yet.</div>
+        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('hr.stationery.recent_issues.title') }}</p></template>
+        <div v-if="!issues.length" class="text-sm text-gray-400 py-3 text-center">{{ t('hr.stationery.recent_issues.none') }}</div>
         <div v-for="r in issues" :key="r.id" class="flex justify-between items-center py-1.5 text-[13px] border-b border-gray-100 dark:border-zinc-800/60 last:border-0">
           <span><span class="num text-xs text-gray-400 mr-2">{{ r.issue_date }}</span>{{ r.items?.sku }} — <span class="num">{{ r.qty }}</span> → {{ r.employees?.full_name }}</span>
           <span class="flex items-center gap-1">
@@ -153,47 +160,44 @@ const removeIssue = async (row: any) => {
     </div>
 
     <UCard :loading="loading">
-      <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Usage by person</p></template>
+      <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('hr.stationery.usage_by_person.title') }}</p></template>
       <UTable
         :rows="usage"
-        :columns="[
-          { key: 'emp_no', label: 'ID' }, { key: 'full_name', label: 'Employee' },
-          { key: 'issue_count', label: 'Issues' }, { key: 'total_qty', label: 'Total qty' }, { key: 'total_cost', label: 'Total cost (৳)' }
-        ]"
+        :columns="usageColumns"
       >
         <template #full_name-data="{ row }">
           <NuxtLink :to="`/hr/${row.employee_id}`" class="hover:underline text-amber-600 dark:text-amber-400">{{ row.full_name }}</NuxtLink>
         </template>
         <template #total_cost-data="{ row }"><span class="num font-medium">{{ money(row.total_cost) }}</span></template>
-        <template #empty-state><div class="text-center py-6 text-sm text-gray-400">No issues recorded yet.</div></template>
+        <template #empty-state><div class="text-center py-6 text-sm text-gray-400">{{ t('hr.stationery.usage_by_person.empty') }}</div></template>
       </UTable>
     </UCard>
 
     <USlideover v-model="receiveOpen">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">Receive stationery stock</p></template>
+        <template #header><p class="font-medium">{{ t('hr.stationery.receive_form.title') }}</p></template>
         <div class="space-y-3">
-          <UFormGroup label="Date"><UInput v-model="receiveForm.receipt_date" type="date" /></UFormGroup>
-          <UFormGroup label="Item" required>
+          <UFormGroup :label="t('hr.stationery.receive_form.date')"><UInput v-model="receiveForm.receipt_date" type="date" /></UFormGroup>
+          <UFormGroup :label="t('hr.stationery.receive_form.item')" required>
             <USelect v-model="receiveForm.item_id" :options="items" option-attribute="name" value-attribute="id" placeholder="—" />
           </UFormGroup>
           <div class="grid grid-cols-2 gap-3">
-            <UFormGroup label="Qty"><UInput v-model.number="receiveForm.qty" type="number" /></UFormGroup>
-            <UFormGroup label="Unit cost (৳)"><UInput v-model.number="receiveForm.unit_cost" type="number" /></UFormGroup>
+            <UFormGroup :label="t('hr.stationery.receive_form.qty')"><UInput v-model.number="receiveForm.qty" type="number" /></UFormGroup>
+            <UFormGroup :label="t('hr.stationery.receive_form.unit_cost')"><UInput v-model.number="receiveForm.unit_cost" type="number" /></UFormGroup>
           </div>
-          <UFormGroup label="Supplier" hint="optional">
+          <UFormGroup :label="t('hr.stationery.receive_form.supplier')" :hint="t('hr.stationery.receive_form.supplier_hint')">
             <USelect v-model="receiveForm.party_id" :options="parties" option-attribute="name" value-attribute="id" placeholder="—" />
           </UFormGroup>
-          <UFormGroup label="Paid from account" hint="leave blank if purchased on credit (posts to Accounts Payable)">
-            <USelect v-model="receiveForm.cash_bank_account_id" :options="cashBankAccounts" option-attribute="name" value-attribute="id" placeholder="— on credit —" />
+          <UFormGroup :label="t('hr.stationery.receive_form.paid_from_account')" :hint="t('hr.stationery.receive_form.paid_from_account_hint')">
+            <USelect v-model="receiveForm.cash_bank_account_id" :options="cashBankAccounts" option-attribute="name" value-attribute="id" :placeholder="t('hr.stationery.receive_form.on_credit_placeholder')" />
           </UFormGroup>
-          <UFormGroup label="Reference no." hint="optional — invoice/receipt no."><UInput v-model="receiveForm.reference_no" /></UFormGroup>
-          <UFormGroup label="Note"><UInput v-model="receiveForm.note" /></UFormGroup>
+          <UFormGroup :label="t('hr.stationery.receive_form.reference_no')" :hint="t('hr.stationery.receive_form.reference_no_hint')"><UInput v-model="receiveForm.reference_no" /></UFormGroup>
+          <UFormGroup :label="t('hr.stationery.receive_form.note')"><UInput v-model="receiveForm.note" /></UFormGroup>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="receiveOpen = false">Cancel</UButton>
-            <UButton :loading="savingReceive" @click="saveReceive">Receive</UButton>
+            <UButton color="gray" variant="ghost" @click="receiveOpen = false">{{ t('common.cancel') }}</UButton>
+            <UButton :loading="savingReceive" @click="saveReceive">{{ t('hr.stationery.receive_form.receive_button') }}</UButton>
           </div>
         </template>
       </UCard>
@@ -201,22 +205,22 @@ const removeIssue = async (row: any) => {
 
     <USlideover v-model="issueOpen">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">Issue to employee desk</p></template>
+        <template #header><p class="font-medium">{{ t('hr.stationery.issue_form.title') }}</p></template>
         <div class="space-y-3">
-          <UFormGroup label="Date"><UInput v-model="issueForm.issue_date" type="date" /></UFormGroup>
-          <UFormGroup label="Item" required>
+          <UFormGroup :label="t('hr.stationery.issue_form.date')"><UInput v-model="issueForm.issue_date" type="date" /></UFormGroup>
+          <UFormGroup :label="t('hr.stationery.issue_form.item')" required>
             <USelect v-model="issueForm.item_id" :options="items" option-attribute="name" value-attribute="id" placeholder="—" />
           </UFormGroup>
-          <UFormGroup label="Employee" required>
+          <UFormGroup :label="t('hr.stationery.issue_form.employee')" required>
             <USelect v-model="issueForm.employee_id" :options="employees" option-attribute="full_name" value-attribute="id" placeholder="—" />
           </UFormGroup>
-          <UFormGroup label="Qty"><UInput v-model.number="issueForm.qty" type="number" /></UFormGroup>
-          <UFormGroup label="Note"><UInput v-model="issueForm.note" placeholder="e.g. new desk setup, monthly replenishment" /></UFormGroup>
+          <UFormGroup :label="t('hr.stationery.issue_form.qty')"><UInput v-model.number="issueForm.qty" type="number" /></UFormGroup>
+          <UFormGroup :label="t('hr.stationery.issue_form.note')"><UInput v-model="issueForm.note" :placeholder="t('hr.stationery.issue_form.note_placeholder')" /></UFormGroup>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="issueOpen = false">Cancel</UButton>
-            <UButton :loading="savingIssue" @click="saveIssue">Issue</UButton>
+            <UButton color="gray" variant="ghost" @click="issueOpen = false">{{ t('common.cancel') }}</UButton>
+            <UButton :loading="savingIssue" @click="saveIssue">{{ t('hr.stationery.issue_form.issue_button') }}</UButton>
           </div>
         </template>
       </UCard>

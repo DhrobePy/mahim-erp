@@ -6,6 +6,7 @@ const client = useSupabaseClient()
 const { money } = useFmt()
 const { takaWords } = useTakaWords()
 const { logoUrl } = useCompanyLogo()
+const { locale: printLocale, t, toggle: toggleLang } = usePrintLocale()
 
 const id = route.params.id as string
 const loan = ref<any>(null)
@@ -30,62 +31,68 @@ const fmtDate = (d?: string) => d
   : '—'
 const tenureMonths = computed(() => loan.value && Number(loan.value.monthly_installment) > 0
   ? Math.ceil(Number(loan.value.principal) / Number(loan.value.monthly_installment)) : 0)
+
+const introText = computed(() => loan.value && company.value ? t('printHr.loanagreement.intro', {
+  company: company.value.legal_name || company.value.name,
+  name: loan.value.employees?.full_name,
+  empNo: loan.value.employees?.emp_no,
+  designation: loan.value.employees?.designation || '—'
+}) : '')
+const term1Text = computed(() => loan.value ? t('printHr.loanagreement.term1', { principal: money(loan.value.principal) }) : '')
+const term2Text = computed(() => loan.value ? t('printHr.loanagreement.term2', { installment: money(loan.value.monthly_installment) }) : '')
 </script>
 
 <template>
   <div class="print-root">
     <div class="no-print toolbar">
-      <NuxtLink :to="`/hr/${loan?.employee_id}`" class="back">← back</NuxtLink>
-      <button class="print-btn" @click="() => window.print()">🖨 Print</button>
+      <NuxtLink :to="`/hr/${loan?.employee_id}`" class="back">{{ t('printHr.loanagreement.back') }}</NuxtLink>
+      <button class="lang-btn" @click="toggleLang">{{ t('print.toolbar.lang_toggle') }}</button>
+      <button class="print-btn" @click="() => window.print()">{{ t('print.toolbar.print_btn') }}</button>
     </div>
 
-    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">Loading…</div>
+    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">{{ t('print.toolbar.loading') }}</div>
 
-    <div v-else-if="loan && company" class="sheet">
+    <div v-else-if="loan && company" class="sheet" :lang="printLocale">
       <div class="letterhead">
         <img v-if="logoUrl(company)" :src="logoUrl(company)" class="co-logo" alt="Company logo">
         <div class="co-name">{{ company.legal_name || company.name }}</div>
-        <div class="title">STAFF LOAN AGREEMENT</div>
+        <div class="title">{{ t('printHr.loanagreement.title') }}</div>
       </div>
 
       <div class="row spread ref-row">
-        <div>Loan Ref: <b class="mono">{{ loan.loan_no }}</b></div>
-        <div>Date: <b>{{ fmtDate(loan.disbursed_at) }}</b></div>
+        <div>{{ t('printHr.loanagreement.loan_ref_label') }} <b class="mono">{{ loan.loan_no }}</b></div>
+        <div>{{ t('printHr.loanagreement.date_label') }} <b>{{ fmtDate(loan.disbursed_at) }}</b></div>
       </div>
 
-      <p class="body-text">
-        This agreement is made between <b>{{ company.legal_name || company.name }}</b> ("the Company") and
-        <b>{{ loan.employees?.full_name }}</b>, Employee ID <b class="mono">{{ loan.employees?.emp_no }}</b>,
-        holding the position of {{ loan.employees?.designation || '—' }} ("the Employee"), for a staff loan on the following terms:
-      </p>
+      <p class="body-text">{{ introText }}</p>
 
       <table class="meta">
         <tbody>
           <tr>
-            <td><div class="small">Principal amount</div><b class="mono">{{ money(loan.principal) }}</b></td>
-            <td><div class="small">Monthly installment</div><b class="mono">{{ money(loan.monthly_installment) }}</b></td>
-            <td><div class="small">Repayment tenure</div><b>{{ tenureMonths }} month(s)</b></td>
+            <td><div class="small">{{ t('printHr.loanagreement.principal_amount_label') }}</div><b class="mono">{{ money(loan.principal) }}</b></td>
+            <td><div class="small">{{ t('printHr.loanagreement.monthly_installment_label') }}</div><b class="mono">{{ money(loan.monthly_installment) }}</b></td>
+            <td><div class="small">{{ t('printHr.loanagreement.repayment_tenure_label') }}</div><b>{{ tenureMonths }} {{ t('printHr.loanagreement.months_suffix') }}</b></td>
           </tr>
         </tbody>
       </table>
-      <p class="small words">Principal in words: {{ takaWords(loan.principal) }}</p>
+      <p class="small words">{{ t('printHr.loanagreement.principal_in_words', { words: takaWords(loan.principal) }) }}</p>
 
       <ol class="terms">
-        <li>The Company shall disburse <b>{{ money(loan.principal) }}</b> to the Employee as an interest-free staff loan.</li>
-        <li>The Employee agrees to repay the loan through monthly deductions of <b>{{ money(loan.monthly_installment) }}</b> from salary, commencing the payroll cycle immediately following disbursement, until the full principal is recovered.</li>
-        <li>Should the Employee's service with the Company terminate for any reason before the loan is fully repaid, the outstanding balance shall become immediately due and shall be recovered from any final settlement (salary, gratuity, or other dues) payable to the Employee.</li>
-        <li>This loan is granted at the sole discretion of the Company as a staff welfare measure and does not constitute a precedent or entitlement for future loans.</li>
-        <li>Both parties acknowledge and agree to the terms set out above by their signatures below.</li>
+        <li>{{ term1Text }}</li>
+        <li>{{ term2Text }}</li>
+        <li>{{ t('printHr.loanagreement.term3') }}</li>
+        <li>{{ t('printHr.loanagreement.term4') }}</li>
+        <li>{{ t('printHr.loanagreement.term5') }}</li>
       </ol>
 
       <div class="sig-cols">
         <div class="sig-block">
           <div class="sig-line" />
-          <p class="small">Employee — {{ loan.employees?.full_name }}</p>
+          <p class="small">{{ t('printHr.loanagreement.employee_sig_label', { name: loan.employees?.full_name }) }}</p>
         </div>
         <div class="sig-block">
           <div class="sig-line" />
-          <p class="small">For {{ company.legal_name || company.name }} — Authorised Signature</p>
+          <p class="small">{{ t('printHr.loanagreement.for_company_sig_label', { company: company.legal_name || company.name }) }}</p>
         </div>
       </div>
     </div>
@@ -100,6 +107,7 @@ const tenureMonths = computed(() => loan.value && Number(loan.value.monthly_inst
 }
 .toolbar .back { color: #fbbf24; text-decoration: none; }
 .print-btn { background: #f59e0b; color: #000; border: 0; border-radius: 4px; padding: 6px 16px; font-weight: 600; cursor: pointer; }
+.lang-btn { background: transparent; color: #e4e4e7; border: 1px solid #52525b; border-radius: 4px; padding: 5px 14px; font-weight: 500; cursor: pointer; }
 .sheet {
   width: 210mm; min-height: 280mm; margin: 0 auto 20px; background: #fff; color: #111;
   padding: 20mm 18mm; box-shadow: 0 2px 12px rgba(0,0,0,.4); font-size: 13px; line-height: 1.7;

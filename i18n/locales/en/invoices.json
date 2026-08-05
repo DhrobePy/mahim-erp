@@ -1,0 +1,58 @@
+{
+  "invoices": {
+    "list": {
+      "kicker": "Sales & Local LC",
+      "title": "Invoices",
+      "subtitle": "Created from issued challans; submit bills against LC invoices for LBPD",
+      "columns": {
+        "invoice": "Invoice",
+        "buyer": "Buyer",
+        "challan": "Challan",
+        "lc": "LC",
+        "total": "Total (৳)"
+      },
+      "covering": "covering",
+      "print_aria": "Print bank document set",
+      "submit_bill": "Submit bill",
+      "bill_submitted": "Bill submitted for {invoice} — see Banking",
+      "bill_failed": "Bill failed",
+      "return": "Return",
+      "empty": "No invoices — issue and invoice a challan first.",
+      "return_dialog": {
+        "title": "Sales return against {invoice}",
+        "item": "Item",
+        "returned_qty": "Returned qty",
+        "scrap_unit_value": "Scrap unit value (৳)",
+        "scrap_unit_value_hint": "branded stock downgrades to scrap at this value",
+        "reason": "Reason",
+        "issue_credit_note": "Issue credit note",
+        "return_failed": "Return failed",
+        "credit_note_issued": "Credit note issued — stock downgraded to scrap"
+      }
+    },
+    "detail": {
+      "kicker": "Sales & Local LC",
+      "domestic": "domestic",
+      "deemed_export": "deemed export (0% VAT, Mushak 6.3)",
+      "print_bank_set": "Print bank set",
+      "stat_cogs": "COGS",
+      "stat_margin": "Margin",
+      "stat_buyer": "Buyer",
+      "link_buyer": "→ buyer",
+      "link_order": "→ order {no}",
+      "link_lc": "→ LC {no}",
+      "link_bill": "→ bill {no} ({status})",
+      "lines_header": "Lines — challan {no}",
+      "covering_set": "(covering set)",
+      "document_date_note": "Document date {doc} · actual delivery {actual}",
+      "bill_financing": "Bill & financing",
+      "bill": "Bill",
+      "maturity": "Maturity",
+      "lbpd_line": "LBPD {pct}% ({status})",
+      "returns_credit_notes": "Returns / credit notes",
+      "postings": "Postings",
+      "no_journals": "No journals reference this invoice.",
+      "not_found": "Invoice not found."
+    }
+  }
+}

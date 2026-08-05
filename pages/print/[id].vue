@@ -9,6 +9,7 @@ const route = useRoute()
 const client = useSupabaseClient()
 const { num, money } = useFmt()
 const { takaWords } = useTakaWords()
+const { locale: printLocale, t, toggle: toggleLang } = usePrintLocale()
 
 const id = route.params.id as string
 const inv = ref<any>(null)
@@ -82,68 +83,76 @@ const packTotals = computed(() => ({
 const fmtDate = (d?: string) => d
   ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
   : '—'
+
+const tenorText = computed(() => {
+  if (inv.value?.lcs?.lc_type === 'usance') {
+    const days = inv.value?.lcs?.usance_days ?? 0
+    const words = takaWords(days).replace('Taka ', '').replace(' Only', '')
+    return t('printTrade.boe.bill.tenor_usance', { days, words })
+  }
+  return t('printTrade.boe.bill.tenor_sight')
+})
+const copyLabel = (copy: string) => copy === 'FIRST' ? t('printTrade.boe.bill.copy_first') : t('printTrade.boe.bill.copy_second')
+const otherCopyLabel = (copy: string) => copy === 'FIRST' ? t('printTrade.boe.bill.copy_second') : t('printTrade.boe.bill.copy_first')
+const body1 = (copy: string) => t('printTrade.boe.bill.body1', {
+  tenor: tenorText.value, copy: copyLabel(copy), otherCopy: otherCopyLabel(copy), sum: takaWords(total.value)
+})
+const body2 = computed(() => t('printTrade.boe.bill.body2', {
+  invoiceNo: inv.value?.invoice_no, invoiceDate: fmtDate(inv.value?.invoice_date),
+  lcNo: inv.value?.lcs?.lc_no ?? '—', lcDate: fmtDate(inv.value?.lcs?.opened_at),
+  bank: inv.value?.lcs?.bank?.name ?? '—'
+}))
 </script>
 
 <template>
   <div class="print-root">
     <!-- toolbar (screen only) -->
     <div class="no-print toolbar">
-      <NuxtLink :to="`/invoices/${id}`" class="back">← back to invoice</NuxtLink>
-      <label><input v-model="docs.boe" type="checkbox"> Bill of Exchange</label>
-      <label><input v-model="docs.ci" type="checkbox"> Commercial Invoice</label>
-      <label><input v-model="docs.pl" type="checkbox"> Packing List</label>
-      <label><input v-model="docs.dc" type="checkbox"> Delivery Challan</label>
+      <NuxtLink :to="`/invoices/${id}`" class="back">{{ t('printTrade.boe.back') }}</NuxtLink>
+      <label><input v-model="docs.boe" type="checkbox"> {{ t('printTrade.boe.toggle_boe') }}</label>
+      <label><input v-model="docs.ci" type="checkbox"> {{ t('printTrade.boe.toggle_ci') }}</label>
+      <label><input v-model="docs.pl" type="checkbox"> {{ t('printTrade.boe.toggle_pl') }}</label>
+      <label><input v-model="docs.dc" type="checkbox"> {{ t('printTrade.boe.toggle_dc') }}</label>
       <PrintClausePicker v-model="clauses" :docs="activeDocs" />
-      <button class="print-btn" @click="() => window.print()">🖨 Print</button>
+      <button class="lang-btn" @click="toggleLang">{{ t('print.toolbar.lang_toggle') }}</button>
+      <button class="print-btn" @click="() => window.print()">{{ t('print.toolbar.print_btn') }}</button>
     </div>
 
-    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">Loading…</div>
+    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">{{ t('print.toolbar.loading') }}</div>
 
     <template v-else-if="inv && company">
       <!-- ============ BILL OF EXCHANGE (first + second) ============ -->
       <template v-if="docs.boe">
-        <div v-for="copy in ['FIRST', 'SECOND']" :key="copy" class="sheet">
-          <div class="doc-title">BILL OF EXCHANGE</div>
+        <div v-for="copy in ['FIRST', 'SECOND']" :key="copy" class="sheet" :lang="printLocale">
+          <div class="doc-title">{{ t('printTrade.boe.bill.title') }}</div>
           <div class="row spread">
             <div>
-              <div>No. <b class="mono">{{ bill?.bill_no ?? inv.invoice_no }}</b></div>
-              <div>For <b class="mono">৳ {{ num(total) }}</b></div>
+              <div>{{ t('printTrade.boe.bill.no_label') }} <b class="mono">{{ bill?.bill_no ?? inv.invoice_no }}</b></div>
+              <div>{{ t('printTrade.boe.bill.for_label') }} <b class="mono">৳ {{ num(total) }}</b></div>
             </div>
             <div class="right">
-              <div>{{ company.address || 'Dhaka, Bangladesh' }}</div>
-              <div>Date: <b>{{ fmtDate(inv.invoice_date) }}</b></div>
+              <div>{{ company.address || t('printTrade.boe.bill.address_fallback') }}</div>
+              <div>{{ t('printTrade.boe.bill.date_label') }} <b>{{ fmtDate(inv.invoice_date) }}</b></div>
             </div>
           </div>
 
-          <p class="boe-body">
-            At <b>{{ inv.lcs?.lc_type === 'usance' ? `${inv.lcs?.usance_days} (${takaWords(inv.lcs?.usance_days ?? 0).replace('Taka ', '').replace(' Only', '')}) days sight` : 'sight' }}</b>
-            of this <b>{{ copy }}</b> Bill of Exchange
-            ({{ copy === 'FIRST' ? 'Second' : 'First' }} of the same tenor and date being unpaid),
-            pay to the order of <b>ourselves</b> the sum of
-            <b>{{ takaWords(total) }}</b>.
-          </p>
+          <p class="boe-body">{{ body1(copy) }}</p>
 
-          <p class="boe-body">
-            Value received against our Commercial Invoice No. <b class="mono">{{ inv.invoice_no }}</b>
-            dated {{ fmtDate(inv.invoice_date) }}, drawn under Irrevocable Letter of Credit
-            No. <b class="mono">{{ inv.lcs?.lc_no ?? '—' }}</b>
-            dated {{ fmtDate(inv.lcs?.opened_at) }}
-            issued by <b>{{ inv.lcs?.bank?.name ?? '—' }}</b>.
-          </p>
+          <p class="boe-body">{{ body2 }}</p>
 
           <PrintClauseBlock :selected-keys="clauses" doc="boe" />
 
           <div class="row spread boe-foot">
             <div>
-              <div class="small">To:</div>
+              <div class="small">{{ t('printTrade.boe.bill.to_label') }}</div>
               <div><b>{{ inv.lcs?.bank?.name ?? '—' }}</b></div>
               <div class="small">{{ inv.lcs?.bank?.address || '' }}</div>
-              <div class="small">A/C: {{ inv.parties?.name }}</div>
+              <div class="small">{{ t('printTrade.boe.bill.account_label', { name: inv.parties?.name }) }}</div>
             </div>
             <div class="sig">
               <div class="sig-line" />
-              <div>For <b>{{ company.legal_name || company.name }}</b></div>
-              <div class="small">Authorised Signature</div>
+              <div>{{ t('printTrade.boe.common.for_company', { company: company.legal_name || company.name }) }}</div>
+              <div class="small">{{ t('printTrade.boe.common.authorised_signature') }}</div>
             </div>
           </div>
         </div>

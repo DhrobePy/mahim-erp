@@ -2,6 +2,7 @@
 const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite, activeCompanyId } = useProfile()
+const { t } = useI18n()
 
 const tb = ref<any[]>([])
 const journals = ref<any[]>([])
@@ -60,11 +61,11 @@ const save = async () => {
       p_lines: payload
     } as any)
     if (error) throw error
-    toast.add({ title: 'Journal posted' })
+    toast.add({ title: t('accounting.home.journal_dialog.posted') })
     open.value = false
     await load()
   } catch (e: any) {
-    toast.add({ title: 'Posting failed', description: e.message, color: 'red' })
+    toast.add({ title: t('accounting.home.journal_dialog.posting_failed'), description: e.message, color: 'red' })
   } finally {
     saving.value = false
   }
@@ -75,25 +76,25 @@ const expanded = ref<string | null>(null)
 
 <template>
   <div>
-    <PageHeader kicker="Finance" title="Accounting" subtitle="Trial balance and journal register — every entry via the posting engine">
-      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">Manual journal</UButton>
+    <PageHeader :kicker="t('accounting.kicker')" :title="t('accounting.home.title')" :subtitle="t('accounting.home.subtitle')">
+      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">{{ t('accounting.home.manual_journal') }}</UButton>
     </PageHeader>
 
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
       <UCard>
         <template #header>
           <div class="flex items-center justify-between">
-            <p class="microlabel text-gray-400 dark:text-zinc-500">Trial balance</p>
+            <p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('accounting.home.trial_balance.header') }}</p>
             <UBadge size="xs" :color="Math.abs(totals.debit - totals.credit) < 0.01 ? 'green' : 'red'" variant="subtle" class="num">
-              Dr {{ totals.debit.toLocaleString('en-IN') }} / Cr {{ totals.credit.toLocaleString('en-IN') }}
+              {{ t('accounting.home.trial_balance.balance_badge', { debit: totals.debit.toLocaleString('en-IN'), credit: totals.credit.toLocaleString('en-IN') }) }}
             </UBadge>
           </div>
         </template>
         <UTable
           :rows="nonZero" :loading="loading"
           :columns="[
-            { key: 'code', label: 'Code' }, { key: 'name', label: 'Account' },
-            { key: 'debit_balance', label: 'Debit (৳)' }, { key: 'credit_balance', label: 'Credit (৳)' }
+            { key: 'code', label: t('common.code') }, { key: 'name', label: t('accounting.home.trial_balance.columns.account') },
+            { key: 'debit_balance', label: t('accounting.home.trial_balance.columns.debit') }, { key: 'credit_balance', label: t('accounting.home.trial_balance.columns.credit') }
           ]"
         >
           <template #code-data="{ row }"><span class="num text-gray-400 dark:text-zinc-500">{{ row.code }}</span></template>
@@ -103,12 +104,12 @@ const expanded = ref<string | null>(null)
           <template #credit_balance-data="{ row }">
             <span class="num font-medium dark:text-zinc-100">{{ Number(row.credit_balance) ? Number(row.credit_balance).toLocaleString('en-IN') : '' }}</span>
           </template>
-          <template #empty-state><div class="text-center py-4 text-sm text-gray-400">Nothing posted yet.</div></template>
+          <template #empty-state><div class="text-center py-4 text-sm text-gray-400">{{ t('accounting.home.trial_balance.empty') }}</div></template>
         </UTable>
       </UCard>
 
       <UCard>
-        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">Journal register (latest 50)</p></template>
+        <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('accounting.home.journal_register.header') }}</p></template>
         <div class="divide-y divide-gray-100 dark:divide-zinc-800/60">
           <div v-for="j in journals" :key="j.id" class="py-2">
             <button class="w-full flex items-center justify-between text-left cursor-pointer" @click="expanded = expanded === j.id ? null : j.id">
@@ -128,36 +129,36 @@ const expanded = ref<string | null>(null)
               </div>
             </div>
           </div>
-          <div v-if="!journals.length" class="text-center py-4 text-sm text-gray-400">No journals yet.</div>
+          <div v-if="!journals.length" class="text-center py-4 text-sm text-gray-400">{{ t('accounting.home.journal_register.empty') }}</div>
         </div>
       </UCard>
     </div>
 
     <USlideover v-model="open" :ui="{ width: 'w-screen max-w-2xl' }">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">Manual journal voucher</p></template>
+        <template #header><p class="font-medium">{{ t('accounting.home.journal_dialog.title') }}</p></template>
         <div class="grid grid-cols-2 gap-4 mb-4">
-          <UFormGroup label="Date"><UInput v-model="jdate" type="date" /></UFormGroup>
-          <UFormGroup label="Memo"><UInput v-model="memo" placeholder="e.g. Director loan injection" /></UFormGroup>
+          <UFormGroup :label="t('common.date')"><UInput v-model="jdate" type="date" /></UFormGroup>
+          <UFormGroup :label="t('accounting.home.journal_dialog.memo')"><UInput v-model="memo" :placeholder="t('accounting.home.journal_dialog.memo_placeholder')" /></UFormGroup>
         </div>
         <div class="space-y-2">
           <div v-for="(l, idx) in lines" :key="idx" class="grid grid-cols-7 gap-2 items-center">
-            <USelect v-model="l.account" :options="accounts" option-attribute="label" value-attribute="code" placeholder="Account" class="col-span-3" />
-            <UInput v-model.number="l.debit" type="number" placeholder="Debit" />
-            <UInput v-model.number="l.credit" type="number" placeholder="Credit" />
-            <UInput v-model="l.note" placeholder="Note" class="col-span-2" />
+            <USelect v-model="l.account" :options="accounts" option-attribute="label" value-attribute="code" :placeholder="t('accounting.home.journal_dialog.account_placeholder')" class="col-span-3" />
+            <UInput v-model.number="l.debit" type="number" :placeholder="t('accounting.home.journal_dialog.debit_placeholder')" />
+            <UInput v-model.number="l.credit" type="number" :placeholder="t('accounting.home.journal_dialog.credit_placeholder')" />
+            <UInput v-model="l.note" :placeholder="t('accounting.home.journal_dialog.note_placeholder')" class="col-span-2" />
           </div>
           <div class="flex items-center justify-between">
-            <UButton size="xs" variant="soft" icon="i-heroicons-plus" @click="lines.push(blankLine())">Add line</UButton>
+            <UButton size="xs" variant="soft" icon="i-heroicons-plus" @click="lines.push(blankLine())">{{ t('accounting.home.journal_dialog.add_line') }}</UButton>
             <p class="num text-xs font-medium" :class="Math.abs(sums.d - sums.c) < 0.01 && sums.d > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'">
-              Dr {{ sums.d.toLocaleString('en-IN') }} / Cr {{ sums.c.toLocaleString('en-IN') }}
+              {{ t('accounting.home.journal_dialog.balance_line', { debit: sums.d.toLocaleString('en-IN'), credit: sums.c.toLocaleString('en-IN') }) }}
             </p>
           </div>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="open = false">Cancel</UButton>
-            <UButton :loading="saving" :disabled="Math.abs(sums.d - sums.c) > 0.005 || !sums.d" @click="save">Post</UButton>
+            <UButton color="gray" variant="ghost" @click="open = false">{{ t('common.cancel') }}</UButton>
+            <UButton :loading="saving" :disabled="Math.abs(sums.d - sums.c) > 0.005 || !sums.d" @click="save">{{ t('accounting.home.journal_dialog.post') }}</UButton>
           </div>
         </template>
       </UCard>

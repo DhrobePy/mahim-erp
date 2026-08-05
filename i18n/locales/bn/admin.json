@@ -1,0 +1,446 @@
+{
+  "admin": {
+    "bank_requests": {
+      "kicker": "প্রশাসন",
+      "title": "ব্যাংক সেবা অনুরোধ",
+      "subtitle": "LC ইস্যু, কালেকশন, ডিসক্রেপেন্সি, স্টেটমেন্ট, LBPD, FDR, DPS বা অন্য যেকোনো সেবার জন্য শাখায় অনুরোধ পাঠান",
+      "new_branch_btn": "নতুন শাখা",
+      "new_request_btn": "নতুন অনুরোধ",
+      "branches": {
+        "card_title": "ব্যাংক শাখা",
+        "empty": "এখনো কোনো শাখা নিবন্ধিত হয়নি।"
+      },
+      "requests": {
+        "card_title": "অনুরোধসমূহ",
+        "columns": {
+          "no": "নং",
+          "service": "সেবা",
+          "branch": "শাখা",
+          "subject": "বিষয়",
+          "amount_period": "পরিমাণ / মেয়াদ",
+          "status": "অবস্থা"
+        },
+        "empty": "এখনো কোনো ব্যাংক সেবা অনুরোধ নেই।",
+        "print_aria": "প্রিন্ট",
+        "mark_submitted": "জমা দেওয়া হয়েছে",
+        "mark_acknowledged": "গৃহীত হয়েছে",
+        "mark_completed": "সম্পন্ন হয়েছে"
+      },
+      "status": {
+        "draft": "খসড়া",
+        "submitted": "জমা দেওয়া হয়েছে",
+        "acknowledged": "গৃহীত হয়েছে",
+        "completed": "সম্পন্ন হয়েছে"
+      },
+      "new_branch": {
+        "title": "নতুন ব্যাংক শাখা",
+        "bank": "ব্যাংক",
+        "branch_name": "শাখার নাম",
+        "branch_name_placeholder": "যেমন নারায়ণগঞ্জ শাখা",
+        "address": "ঠিকানা",
+        "routing_no": "রাউটিং নং",
+        "contact_person": "যোগাযোগকারী ব্যক্তি",
+        "phone": "ফোন",
+        "add_branch": "শাখা যোগ করুন"
+      },
+      "new_request": {
+        "title": "নতুন ব্যাংক সেবা অনুরোধ",
+        "branch": "শাখা",
+        "service": "সেবা",
+        "date": "তারিখ",
+        "reference_no": "রেফারেন্স নং",
+        "reference_no_hint": "উল্লেখিত LC/বিল/ফ্যাসিলিটি/হিসাব নং",
+        "statement_from": "স্টেটমেন্ট মেয়াদ — শুরু",
+        "statement_to": "স্টেটমেন্ট মেয়াদ — শেষ",
+        "amount": "পরিমাণ (৳)",
+        "tenor_period": "মেয়াদ / সময়কাল",
+        "tenor_period_placeholder": "যেমন ১২ মাস",
+        "subject": "বিষয়",
+        "body": "বিবরণ",
+        "board_resolution": "অনুমোদনকারী বোর্ড রেজোলিউশন",
+        "board_resolution_hint": "ঐচ্ছিক",
+        "create": "তৈরি করুন"
+      },
+      "select_placeholder": "—",
+      "validation": {
+        "branch_name_required": "ব্যাংক ও শাখার নাম আবশ্যক",
+        "pick_branch": "একটি শাখা নির্বাচন করুন",
+        "subject_required": "বিষয় আবশ্যক",
+        "statement_period_required": "স্টেটমেন্ট মেয়াদ (শুরু ও শেষ) আবশ্যক"
+      },
+      "toasts": {
+        "failed": "ব্যর্থ হয়েছে",
+        "branch_added": "শাখা যোগ হয়েছে",
+        "request_created": "ব্যাংক সেবা অনুরোধ তৈরি হয়েছে",
+        "update_failed": "আপডেট ব্যর্থ হয়েছে"
+      }
+    },
+    "company": {
+      "kicker": "প্রশাসন",
+      "title": "কোম্পানি ও কাঠামো",
+      "subtitle": "প্রোফাইল, ব্র্যান্ডিং এবং গ্রুপের কাঠামো",
+      "profile": {
+        "card_title": "প্রোফাইল",
+        "upload_logo": "লোগো আপলোড",
+        "uploading": "আপলোড হচ্ছে…",
+        "trading_name": "ট্রেডিং নাম",
+        "legal_name": "আইনি নাম",
+        "address": "ঠিকানা",
+        "bin": "BIN (ভ্যাট নিবন্ধন)",
+        "tin": "TIN",
+        "phone": "ফোন",
+        "email": "ইমেইল",
+        "website": "ওয়েবসাইট",
+        "save": "প্রোফাইল সংরক্ষণ করুন"
+      },
+      "structure": {
+        "card_title": "গ্রুপ কাঠামো",
+        "new_subsidiary_btn": "নতুন সাবসিডিয়ারি",
+        "mother_badge": "মূল প্রতিষ্ঠান",
+        "active_badge": "সক্রিয়",
+        "switch_to": "পরিবর্তন করুন",
+        "no_subsidiaries": "এখনো কোনো সাবসিডিয়ারি নেই।",
+        "switch_to_mother": "মূল প্রতিষ্ঠানে ফিরে যান"
+      },
+      "costing": {
+        "card_title": "খরচের ডিফল্ট মান",
+        "card_subtitle": "প্রতিটি কার্টন রেসিপির খরচ হিসাবে প্রস্তাবিত ওভারহেড % ও মার্জিন % সরবরাহ করে",
+        "ref_material_cost": "রেফারেন্স কাঁচামাল খরচ",
+        "ref_material_cost_hint": "একটি সময়কালের প্রকৃত মোট, যেমন গত পূর্ণ বছর",
+        "ref_factory_cost": "রেফারেন্স ফ্যাক্টরি খরচ",
+        "ref_factory_cost_hint": "একই সময়কালের ফ্যাক্টরি/ওভারহেড মোট",
+        "implied_overhead_pct": "প্রযোজ্য ওভারহেড %",
+        "default_margin_pct": "ডিফল্ট মার্জিন %",
+        "default_margin_pct_hint": "কোনো রেসিপি ওভাররাইড না করলে এটি ব্যবহৃত হয়",
+        "save": "খরচের ডিফল্ট মান সংরক্ষণ করুন"
+      },
+      "new_subsidiary": {
+        "title": "{name}-এর অধীনে নতুন সাবসিডিয়ারি",
+        "trading_name": "ট্রেডিং নাম",
+        "code": "কোড",
+        "code_hint": "সংক্ষিপ্ত, অনন্য — যেমন MAHIM-TRD",
+        "legal_name": "আইনি নাম",
+        "legal_name_placeholder": "খালি থাকলে ট্রেডিং নাম ব্যবহৃত হবে",
+        "note": "সম্পূর্ণ চার্ট অফ অ্যাকাউন্টস স্বয়ংক্রিয়ভাবে তৈরি হয়, এবং আপনি নতুন কোম্পানির অ্যাডমিন হয়ে যাবেন।",
+        "create": "সাবসিডিয়ারি তৈরি করুন"
+      },
+      "toasts": {
+        "profile_updated": "কোম্পানি প্রোফাইল আপডেট হয়েছে",
+        "costing_updated": "খরচের ডিফল্ট মান আপডেট হয়েছে",
+        "logo_updated": "লোগো আপডেট হয়েছে",
+        "upload_failed": "আপলোড ব্যর্থ হয়েছে",
+        "name_code_required": "নাম ও কোড আবশ্যক",
+        "created": "{name} তৈরি হয়েছে",
+        "failed": "ব্যর্থ হয়েছে",
+        "switched": "সক্রিয় কোম্পানি পরিবর্তন হয়েছে"
+      }
+    },
+    "directors": {
+      "kicker": "প্রশাসন",
+      "title": "পরিচালক ও অংশীদার",
+      "subtitle": "গভর্নেন্স রেজিস্টার — RJSC ফর্ম XII ও শিডিউল X-এ ব্যবহৃত হয়",
+      "form12_btn": "ফর্ম XII",
+      "schedulex_btn": "শিডিউল X",
+      "new_director_btn": "নতুন পরিচালক",
+      "columns": {
+        "name": "নাম",
+        "designation": "পদবি",
+        "nid": "NID",
+        "shares": "শেয়ার",
+        "appointed": "নিয়োগের তারিখ"
+      },
+      "designations": {
+        "chairman": "চেয়ারম্যান",
+        "managing_director": "ব্যবস্থাপনা পরিচালক",
+        "director": "পরিচালক",
+        "partner": "অংশীদার",
+        "company_secretary": "কোম্পানি সেক্রেটারি"
+      },
+      "status": {
+        "active": "সক্রিয়",
+        "resigned": "পদত্যাগকৃত"
+      },
+      "empty": "এখনো কোনো পরিচালক বা অংশীদার নথিভুক্ত হয়নি।",
+      "form": {
+        "edit_title": "পরিচালক / অংশীদার সম্পাদনা",
+        "new_title": "নতুন পরিচালক / অংশীদার",
+        "full_name": "পূর্ণ নাম",
+        "designation": "পদবি",
+        "nationality": "জাতীয়তা",
+        "father_or_spouse_name": "পিতা / স্বামীর নাম",
+        "nid_no": "NID নং",
+        "tin": "TIN",
+        "address": "ঠিকানা",
+        "phone": "ফোন",
+        "email": "ইমেইল",
+        "shares_held": "মালিকানাধীন শেয়ার",
+        "face_value": "প্রতি শেয়ারের অভিহিত মূল্য (৳)",
+        "appointment_date": "নিয়োগের তারিখ",
+        "resignation_date": "পদত্যাগের তারিখ",
+        "currently_active": "বর্তমানে সক্রিয়",
+        "save": "সংরক্ষণ করুন"
+      },
+      "validation": {
+        "name_required": "নাম আবশ্যক"
+      },
+      "toasts": {
+        "updated": "আপডেট হয়েছে",
+        "director_added": "পরিচালক যোগ হয়েছে"
+      }
+    },
+    "documents": {
+      "kicker": "প্রশাসন",
+      "title": "কোম্পানির ডকুমেন্ট",
+      "subtitle": "ট্রেড লাইসেন্স, ইনকরপোরেশন কাগজপত্র, সার্টিফিকেট — মেয়াদ ট্র্যাকিং ও আইনি পর্যালোচনাসহ",
+      "upload_btn": "ডকুমেন্ট আপলোড",
+      "doc_types": {
+        "trade_license": "ট্রেড লাইসেন্স",
+        "incorporation_certificate": "ইনকরপোরেশন সার্টিফিকেট",
+        "moa_aoa": "মেমোরান্ডাম ও আর্টিকেলস অফ অ্যাসোসিয়েশন",
+        "tin_certificate": "TIN সার্টিফিকেট",
+        "vat_bin_certificate": "VAT / BIN সার্টিফিকেট",
+        "fire_license": "ফায়ার লাইসেন্স",
+        "environment_clearance": "পরিবেশ ছাড়পত্র",
+        "factory_license": "ফ্যাক্টরি লাইসেন্স (DIFE)",
+        "boiler_certificate": "বয়লার সার্টিফিকেট",
+        "bsci_sedex_audit": "BSCI / Sedex অডিট সার্টিফিকেট",
+        "fsc_coc_certificate": "FSC চেইন অফ কাস্টডি সার্টিফিকেট",
+        "import_registration_certificate": "আমদানি নিবন্ধন সার্টিফিকেট (IRC)",
+        "export_registration_certificate": "রপ্তানি নিবন্ধন সার্টিফিকেট (ERC)",
+        "effluent_treatment_certificate": "এফ্লুয়েন্ট ট্রিটমেন্ট (ETP) সার্টিফিকেট",
+        "electrical_installation_license": "বৈদ্যুতিক ইনস্টলেশন লাইসেন্স",
+        "bsti_certification": "BSTI সার্টিফিকেশন",
+        "trademark_design_registration": "ট্রেডমার্ক / ডিজাইন নিবন্ধন",
+        "labour_welfare_registration": "শ্রমিক কল্যাণ তহবিল নিবন্ধন",
+        "group_insurance_certificate": "গ্রুপ ইনস্যুরেন্স সার্টিফিকেট",
+        "bank_charge_document": "ব্যাংক চার্জ / বন্ধকী দলিল",
+        "noc_certificate": "অনাপত্তি সনদ (NOC)",
+        "bank_account_doc": "ব্যাংক অ্যাকাউন্ট সংক্রান্ত ডকুমেন্ট",
+        "membership_certificate": "সদস্যপদ সার্টিফিকেট",
+        "other": "অন্যান্য"
+      },
+      "expiry": {
+        "expired": "মেয়াদোত্তীর্ণ",
+        "expiring_soon": "শীঘ্রই মেয়াদোত্তীর্ণ",
+        "valid": "বৈধ"
+      },
+      "doc_no_label": "ডকুমেন্ট নং:",
+      "issued_label": "ইস্যু তারিখ:",
+      "empty": "এখনো কোনো ডকুমেন্ট আপলোড হয়নি।",
+      "form": {
+        "title": "কোম্পানির ডকুমেন্ট আপলোড",
+        "type": "ধরন",
+        "doc_title": "শিরোনাম",
+        "doc_title_placeholder": "যেমন ট্রেড লাইসেন্স ২০২৬-২৭",
+        "doc_no": "ডকুমেন্ট নং",
+        "issue_date": "ইস্যুর তারিখ",
+        "expiry_date": "মেয়াদ শেষের তারিখ",
+        "notes": "নোট",
+        "file": "ফাইল",
+        "save": "সংরক্ষণ করুন"
+      },
+      "validation": {
+        "title_required": "শিরোনাম আবশ্যক"
+      },
+      "toasts": {
+        "document_saved": "ডকুমেন্ট সংরক্ষিত হয়েছে"
+      }
+    },
+    "forwarding": {
+      "kicker": "প্রশাসন",
+      "title": "ফরওয়ার্ডিং প্যাড",
+      "subtitle": "প্রেরণপত্র — ব্যাংক, ক্রেতা ও অফিসে জমাকৃত ডকুমেন্টের কভারিং লেটার",
+      "new_letter_btn": "নতুন পত্র",
+      "columns": {
+        "no": "নং",
+        "date": "তারিখ",
+        "to": "প্রাপক",
+        "subject": "বিষয়"
+      },
+      "print_aria": "প্রিন্ট",
+      "empty": "এখনো কোনো ফরওয়ার্ডিং পত্র নেই।",
+      "form": {
+        "title": "নতুন ফরওয়ার্ডিং পত্র",
+        "topic": "বিষয়শ্রেণি",
+        "date": "তারিখ",
+        "to": "প্রাপক",
+        "to_placeholder": "যেমন ইসলামী ব্যাংক বাংলাদেশ, নারায়ণগঞ্জ শাখা",
+        "address": "ঠিকানা",
+        "subject": "বিষয়",
+        "body": "বিবরণ",
+        "body_placeholder": "অনুগ্রহপূর্বক সংযুক্ত নিম্নলিখিত ডকুমেন্টগুলো আপনার সদয় বিবেচনা ও প্রয়োজনীয় ব্যবস্থার জন্য পাঠানো হলো।",
+        "enclosures": "সংযুক্তি",
+        "enclosures_placeholder": "কমার্শিয়াল ইনভয়েস, প্যাকিং লিস্ট, বিল অফ এক্সচেঞ্জ…",
+        "cc": "সিসি",
+        "create": "তৈরি করুন"
+      },
+      "validation": {
+        "addressee_subject_required": "প্রাপক ও বিষয় আবশ্যক"
+      },
+      "toasts": {
+        "letter_created": "ফরওয়ার্ডিং পত্র তৈরি হয়েছে"
+      }
+    },
+    "resolutions": {
+      "kicker": "প্রশাসন",
+      "title": "বোর্ড রেজোলিউশন",
+      "subtitle": "নির্বাচিত বা নিজে লেখা এজেন্ডাসহ মিনিটস — ব্যাংকের ম্যান্ডেট কাগজপত্র হিসেবেও ব্যবহৃত হয়",
+      "new_resolution_btn": "নতুন রেজোলিউশন",
+      "columns": {
+        "no": "নং",
+        "meeting": "সভা",
+        "date": "তারিখ",
+        "agendas": "এজেন্ডা",
+        "status": "অবস্থা"
+      },
+      "meeting_types": {
+        "board_meeting": "বোর্ড মিটিং",
+        "agm": "বার্ষিক সাধারণ সভা (AGM)",
+        "egm": "অসাধারণ সাধারণ সভা (EGM)",
+        "circular_resolution": "সার্কুলার রেজোলিউশন"
+      },
+      "status": {
+        "draft": "খসড়া",
+        "passed": "পাস হয়েছে",
+        "circulated": "সার্কুলেটেড"
+      },
+      "print_aria": "প্রিন্ট",
+      "mark_passed_btn": "পাস হিসেবে চিহ্নিত করুন",
+      "empty": "এখনো কোনো বোর্ড রেজোলিউশন নেই।",
+      "form": {
+        "title": "নতুন বোর্ড রেজোলিউশন",
+        "meeting_type": "সভার ধরন",
+        "meeting_no": "সভা নং",
+        "meeting_no_hint": "যেমন ১৮তম বোর্ড মিটিং",
+        "date": "তারিখ",
+        "chairperson": "সভাপতি",
+        "venue": "স্থান",
+        "attendees": "উপস্থিতগণ",
+        "agenda_items": "এজেন্ডা আইটেম",
+        "add_agenda": "এজেন্ডা যোগ করুন",
+        "template_placeholder": "একটি স্ট্যান্ডার্ড টেমপ্লেট বেছে নিন… (ঐচ্ছিক)",
+        "agenda_title_placeholder": "এজেন্ডার শিরোনাম",
+        "resolution_text_placeholder": "RESOLVED THAT…",
+        "create": "তৈরি করুন"
+      },
+      "validation": {
+        "agenda_required": "অন্তত একটি এজেন্ডা আইটেম যোগ করুন"
+      },
+      "toasts": {
+        "resolution_created": "বোর্ড রেজোলিউশন তৈরি হয়েছে",
+        "update_failed": "আপডেট ব্যর্থ হয়েছে"
+      }
+    },
+    "tax_index": {
+      "kicker": "প্রশাসন",
+      "title": "কর — IT-10B",
+      "subtitle": "পরিচালক/অংশীদার ও কর নির্ধারণী বর্ষ অনুযায়ী সম্পদ বিবরণী খসড়া প্রস্তুতকারক",
+      "new_statement_btn": "নতুন বিবরণী",
+      "disclaimer": "কেবল খসড়া প্রস্তুতির সহায়ক — দাখিলের আগে একজন নিবন্ধিত কর পরামর্শকের সাথে হিসাব ও বর্তমান NBR ফর্ম যাচাই করে নিন।",
+      "columns": {
+        "individual": "ব্যক্তি",
+        "assessment_year": "কর নির্ধারণী বর্ষ",
+        "date": "তারিখ",
+        "net_wealth": "নিট সম্পদ (৳)"
+      },
+      "print_aria": "প্রিন্ট",
+      "empty": "এখনো কোনো IT-10B বিবরণী নেই।",
+      "form": {
+        "title": "নতুন IT-10B বিবরণী",
+        "director": "পরিচালক / অংশীদার",
+        "director_placeholder": "— অথবা নিচে নাম লিখুন —",
+        "individual_name": "ব্যক্তির নাম (তালিকায় না থাকলে)",
+        "tin": "TIN",
+        "assessment_year": "কর নির্ধারণী বর্ষ",
+        "assessment_year_placeholder": "২০২৫-২০২৬",
+        "statement_date": "বিবরণীর তারিখ",
+        "opening_net_wealth": "শুরুর নিট সম্পদ (৳)",
+        "total_income": "এই বছরের মোট আয় (৳)",
+        "total_expenditure": "এই বছরের মোট ব্যয় (৳)",
+        "assets_liabilities": "সম্পদ ও দায়",
+        "add_line": "লাইন যোগ করুন",
+        "description_placeholder": "বিবরণ",
+        "amount_placeholder": "পরিমাণ ৳",
+        "liability_note": "দায়ের শ্রেণিগুলো (বন্ধকী / ব্যাংক ঋণ / অন্যান্য) মোট হিসাবে স্বয়ংক্রিয়ভাবে বিয়োগ করা হয়।",
+        "save": "সংরক্ষণ করুন"
+      },
+      "categories": {
+        "business_capital": "ব্যবসায়িক পুঁজি",
+        "non_agri_property": "অকৃষি সম্পত্তি",
+        "agri_property": "কৃষি সম্পত্তি",
+        "investments": "বিনিয়োগ (শেয়ার, FDR, সঞ্চয়পত্র)",
+        "motor_vehicles": "মোটরযান",
+        "ornaments": "অলংকার / গহনা",
+        "furniture_electronics": "আসবাবপত্র ও ইলেকট্রনিক্স",
+        "cash_bank": "হাতে নগদ / ব্যাংকে জমা",
+        "other_assets": "অন্যান্য সম্পদ",
+        "mortgage_liability": "বন্ধকী দায়",
+        "bank_loan_liability": "ব্যাংক ঋণ দায়",
+        "other_liability": "অন্যান্য দায়"
+      },
+      "validation": {
+        "director_or_name_required": "একজন পরিচালক নির্বাচন করুন অথবা ব্যক্তির নাম লিখুন",
+        "assessment_year_required": "কর নির্ধারণী বর্ষ আবশ্যক"
+      },
+      "toasts": {
+        "statement_created": "IT-10B বিবরণী তৈরি হয়েছে"
+      }
+    },
+    "tax_corporate": {
+      "kicker": "প্রশাসন",
+      "title": "কর্পোরেট কর গণনা",
+      "subtitle": "হিসাব অনুযায়ী নিট মুনাফা → সংযোজন / বিয়োজন → করযোগ্য আয় → কর → অগ্রিম কর / TDS বাদে → প্রদেয়। খসড়া ওয়ার্কিং পেপার — দাখিলের আগে একজন নিবন্ধিত কর পরামর্শকের সাথে পর্যালোচনা করুন।",
+      "new_computation_btn": "নতুন গণনা",
+      "labels": {
+        "taxable": "করযোগ্য",
+        "tax": "কর",
+        "net_payable": "নিট প্রদেয়"
+      },
+      "print_aria": "প্রিন্ট",
+      "table": {
+        "net_profit": "হিসাব অনুযায়ী নিট মুনাফা",
+        "taxable_income": "করযোগ্য আয়",
+        "tax_at": "কর হার {pct}%",
+        "less_advance_tax": "বাদ: প্রদত্ত অগ্রিম কর",
+        "less_tds": "বাদ: TDS ক্রেডিট",
+        "net_tax_payable": "নিট প্রদেয় কর / (ফেরতযোগ্য)"
+      },
+      "adj_type": {
+        "addback": "সংযোজন",
+        "deduction": "বিয়োজন"
+      },
+      "line_form": {
+        "type": "ধরন",
+        "description": "বিবরণ",
+        "description_placeholder": "যেমন হিসাব অনুযায়ী অবচয় বনাম কর অবচয়",
+        "amount": "পরিমাণ (৳)",
+        "add": "যোগ করুন"
+      },
+      "empty": "এখনো কোনো কর গণনা নেই।",
+      "form": {
+        "title": "নতুন কর গণনা",
+        "assessment_year": "কর নির্ধারণী বর্ষ",
+        "assessment_year_hint": "যেমন ২০২৫-২০২৬",
+        "net_profit": "হিসাব অনুযায়ী নিট মুনাফা (৳)",
+        "pull_pnl": "P&L থেকে আনুন",
+        "tax_rate": "কর হার % (বার্ষিক)",
+        "advance_tax": "প্রদত্ত অগ্রিম কর (AIT) (৳)",
+        "pull_ait": "AIT সারসংক্ষেপ থেকে আনুন",
+        "tds_credit": "TDS ক্রেডিট (৳)",
+        "notes": "নোট",
+        "create": "তৈরি করুন"
+      },
+      "validation": {
+        "assessment_year_required": "কর নির্ধারণী বর্ষ আবশ্যক (যেমন ২০২৫-২০২৬)",
+        "description_amount_required": "বিবরণ ও পরিমাণ আবশ্যক"
+      },
+      "toasts": {
+        "pnl_pulled": "পোস্টকৃত GL এন্ট্রি থেকে সমষ্টিগত নিট মুনাফা আনা হয়েছে",
+        "ait_pulled": "AIT সারসংক্ষেপ থেকে প্রদত্ত অগ্রিম কর আনা হয়েছে",
+        "computation_created": "কর গণনা তৈরি হয়েছে",
+        "adjustment_added": "সংযোজন/বিয়োজন যোগ হয়েছে",
+        "failed": "ব্যর্থ হয়েছে"
+      }
+    }
+  }
+}

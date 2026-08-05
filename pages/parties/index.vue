@@ -3,17 +3,18 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { deleteRecord } = useRecycleBin()
+const { t } = useI18n()
 
 const rows = ref<any[]>([])
 const loading = ref(true)
 const search = ref('')
 
 const columns = [
-  { key: 'code', label: 'Code' },
-  { key: 'name', label: 'Name' },
-  { key: 'roles', label: 'Roles' },
-  { key: 'phone', label: 'Phone' },
-  { key: 'bin_no', label: 'BIN' },
+  { key: 'code', label: t('parties.columns.code') },
+  { key: 'name', label: t('parties.columns.name') },
+  { key: 'roles', label: t('parties.columns.roles') },
+  { key: 'phone', label: t('parties.columns.phone') },
+  { key: 'bin_no', label: t('parties.columns.bin') },
   { key: 'actions', label: '' }
 ]
 
@@ -35,11 +36,11 @@ const filtered = computed(() => {
 
 const roleBadges = (p: any) => {
   const r: string[] = []
-  if (p.is_customer) r.push('customer')
-  if (p.is_supplier) r.push('supplier')
-  if (p.is_transporter) r.push('transporter')
-  if (p.is_bank) r.push('bank')
-  if (p.is_foreign) r.push(p.country ? `foreign · ${p.country}` : 'foreign')
+  if (p.is_customer) r.push(t('parties.roles.customer'))
+  if (p.is_supplier) r.push(t('parties.roles.supplier'))
+  if (p.is_transporter) r.push(t('parties.roles.transporter'))
+  if (p.is_bank) r.push(t('parties.roles.bank'))
+  if (p.is_foreign) r.push(p.country ? `${t('parties.roles.foreign')} · ${p.country}` : t('parties.roles.foreign'))
   return r
 }
 
@@ -74,11 +75,11 @@ const save = async () => {
       ? await client.from('parties').update(payload).eq('id', form.id)
       : await client.from('parties').insert(payload)
     if (res.error) throw res.error
-    toast.add({ title: form.id ? 'Party updated' : 'Party created' })
+    toast.add({ title: form.id ? t('parties.party_updated') : t('parties.party_created') })
     open.value = false
     await load()
   } catch (e: any) {
-    toast.add({ title: 'Save failed', description: e.message, color: 'red' })
+    toast.add({ title: t('common.save_failed'), description: e.message, color: 'red' })
   } finally {
     saving.value = false
   }
@@ -87,13 +88,13 @@ const save = async () => {
 
 <template>
   <div>
-    <PageHeader kicker="Procurement" title="Parties" subtitle="Customers, suppliers, transporters &amp; banks">
-      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">New party</UButton>
+    <PageHeader :kicker="t('parties.kicker')" :title="t('parties.title')" :subtitle="t('parties.subtitle')">
+      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">{{ t('parties.new_party') }}</UButton>
     </PageHeader>
 
     <UCard>
       <template #header>
-        <UInput v-model="search" icon="i-heroicons-magnifying-glass" placeholder="Search code or name…" />
+        <UInput v-model="search" icon="i-heroicons-magnifying-glass" :placeholder="t('parties.search_placeholder')" />
       </template>
       <UTable :rows="filtered" :columns="columns" :loading="loading">
         <template #code-data="{ row }">
@@ -114,35 +115,35 @@ const save = async () => {
           <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="removeParty(row)" />
         </template>
         <template #empty-state>
-          <div class="text-center py-6 text-sm text-gray-400">No parties yet.</div>
+          <div class="text-center py-6 text-sm text-gray-400">{{ t('parties.empty') }}</div>
         </template>
       </UTable>
     </UCard>
 
     <USlideover v-model="open">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">{{ form.id ? 'Edit party' : 'New party' }}</p></template>
+        <template #header><p class="font-medium">{{ form.id ? t('parties.edit_party') : t('parties.new_party_title') }}</p></template>
         <div class="grid grid-cols-2 gap-4">
-          <UFormGroup label="Code" required><UInput v-model="form.code" /></UFormGroup>
-          <UFormGroup label="Name" required><UInput v-model="form.name" /></UFormGroup>
+          <UFormGroup :label="t('parties.fields.code')" required><UInput v-model="form.code" /></UFormGroup>
+          <UFormGroup :label="t('parties.fields.name')" required><UInput v-model="form.name" /></UFormGroup>
           <div class="col-span-2 flex flex-wrap gap-4">
-            <UCheckbox v-model="form.is_customer" label="Customer" />
-            <UCheckbox v-model="form.is_supplier" label="Supplier" />
-            <UCheckbox v-model="form.is_transporter" label="Transporter" />
-            <UCheckbox v-model="form.is_bank" label="Bank" />
-            <UCheckbox v-model="form.is_foreign" label="Foreign (overseas)" />
+            <UCheckbox v-model="form.is_customer" :label="t('parties.checkboxes.customer')" />
+            <UCheckbox v-model="form.is_supplier" :label="t('parties.checkboxes.supplier')" />
+            <UCheckbox v-model="form.is_transporter" :label="t('parties.checkboxes.transporter')" />
+            <UCheckbox v-model="form.is_bank" :label="t('parties.checkboxes.bank')" />
+            <UCheckbox v-model="form.is_foreign" :label="t('parties.checkboxes.foreign')" />
           </div>
-          <UFormGroup label="Phone"><UInput v-model="form.phone" /></UFormGroup>
-          <UFormGroup label="Email"><UInput v-model="form.email" /></UFormGroup>
-          <UFormGroup label="BIN (VAT reg.)"><UInput v-model="form.bin_no" /></UFormGroup>
-          <UFormGroup label="TIN"><UInput v-model="form.tin_no" /></UFormGroup>
-          <UFormGroup label="Address" class="col-span-2"><UInput v-model="form.address" /></UFormGroup>
-          <UFormGroup v-if="form.is_foreign" label="Country"><UInput v-model="form.country" placeholder="e.g. China" /></UFormGroup>
+          <UFormGroup :label="t('parties.fields.phone')"><UInput v-model="form.phone" /></UFormGroup>
+          <UFormGroup :label="t('parties.fields.email')"><UInput v-model="form.email" /></UFormGroup>
+          <UFormGroup :label="t('parties.fields.bin')"><UInput v-model="form.bin_no" /></UFormGroup>
+          <UFormGroup :label="t('parties.fields.tin')"><UInput v-model="form.tin_no" /></UFormGroup>
+          <UFormGroup :label="t('parties.fields.address')" class="col-span-2"><UInput v-model="form.address" /></UFormGroup>
+          <UFormGroup v-if="form.is_foreign" :label="t('parties.fields.country')"><UInput v-model="form.country" :placeholder="t('parties.country_placeholder')" /></UFormGroup>
         </div>
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="open = false">Cancel</UButton>
-            <UButton :loading="saving" @click="save">Save</UButton>
+            <UButton color="gray" variant="ghost" @click="open = false">{{ t('common.cancel') }}</UButton>
+            <UButton :loading="saving" @click="save">{{ t('common.save') }}</UButton>
           </div>
         </template>
       </UCard>

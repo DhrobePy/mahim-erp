@@ -1,0 +1,90 @@
+{
+  "sales": {
+    "kicker": "বিক্রয় ও লোকাল এলসি",
+    "doc_types": {
+      "quotation": "কোটেশন",
+      "pi": "প্রোফর্মা ইনভয়েস",
+      "contract": "বিক্রয় চুক্তি"
+    },
+    "statuses": {
+      "open": "চলমান",
+      "partially_delivered": "আংশিক ডেলিভারি",
+      "delivered": "ডেলিভারি সম্পন্ন",
+      "closed": "সম্পন্ন",
+      "cancelled": "বাতিল"
+    },
+    "challan_statuses": {
+      "draft": "খসড়া",
+      "issued": "ইস্যুকৃত",
+      "delivered_unbilled": "ডেলিভারি — অইনভয়েসকৃত",
+      "covered": "কভারকৃত",
+      "invoiced": "ইনভয়েসকৃত"
+    },
+    "challan_kinds": {
+      "standard": "স্ট্যান্ডার্ড",
+      "original": "অরিজিনাল",
+      "covering": "কভারিং"
+    },
+    "invoice_statuses": {
+      "open": "চলমান",
+      "billed": "বিলকৃত",
+      "settled": "নিষ্পন্ন"
+    },
+    "index": {
+      "title": "বিক্রয় আদেশ",
+      "subtitle": "মৌখিক অর্ডার গ্রহণযোগ্য — এলসি পরে যুক্ত করা যাবে (ফ্লো বি)",
+      "new_order": "নতুন অর্ডার",
+      "columns": {
+        "so": "এসও",
+        "buyer": "ক্রেতা",
+        "date": "তারিখ",
+        "lc": "এলসি",
+        "lines": "লাইন",
+        "status": "অবস্থা"
+      },
+      "pre_lc": "প্রি-এলসি",
+      "delete_aria": "মুছুন",
+      "empty": "এখনো কোনো বিক্রয় আদেশ নেই।",
+      "modal_title": "নতুন বিক্রয় আদেশ",
+      "buyer_label": "ক্রেতা",
+      "buyer_placeholder": "—",
+      "lc_label": "এলসি (মৌখিক/অপেক্ষমাণ হলে খালি রাখুন)",
+      "lc_placeholder": "এখনো এলসি নেই",
+      "deemed_export_checkbox": "ডিমড এক্সপোর্ট (শূন্য-হার, রাজস্ব হিসাব ৪১০০)",
+      "item_label": "পণ্য",
+      "item_placeholder": "—",
+      "qty_label": "পরিমাণ",
+      "unit_price_label": "একক মূল্য (৳)",
+      "add_line": "লাইন যোগ করুন",
+      "create_order": "অর্ডার তৈরি করুন",
+      "toast": {
+        "pick_buyer": "একজন ক্রেতা নির্বাচন করুন",
+        "save_failed": "সংরক্ষণ ব্যর্থ হয়েছে",
+        "created": "বিক্রয় আদেশ তৈরি হয়েছে"
+      }
+    },
+    "detail": {
+      "generate_pi": "পিআই তৈরি করুন",
+      "buyer": "ক্রেতা",
+      "order_value": "অর্ডার মূল্য",
+      "delivered": "ডেলিভারি সম্পন্ন",
+      "lc": "এলসি",
+      "pre_lc": "প্রি-এলসি",
+      "buyer_profile": "→ ক্রেতার প্রোফাইল",
+      "lc_lifecycle": "→ এলসি লাইফসাইকেল",
+      "lines_fulfilment": "লাইন ও সরবরাহ",
+      "challans": "চালান",
+      "invoices": "ইনভয়েস",
+      "linked_docs": "কোটেশন / পিআই / চুক্তি",
+      "none_yet": "এখনো কিছু নেই।",
+      "deemed_export": "ডিমড এক্সপোর্ট",
+      "domestic": "লোকাল",
+      "covers": "{no} কভার করে",
+      "not_found": "বিক্রয় আদেশ পাওয়া যায়নি।",
+      "toast": {
+        "pi_failed": "পিআই তৈরি ব্যর্থ হয়েছে",
+        "pi_generated": "প্রোফর্মা ইনভয়েস তৈরি হয়েছে"
+      }
+    }
+  }
+}

@@ -6,6 +6,7 @@ const route = useRoute()
 const client = useSupabaseClient()
 const { num } = useFmt()
 const { takaWords } = useTakaWords()
+const { locale: printLocale, t, toggle: toggleLang } = usePrintLocale()
 
 const id = route.params.id as string
 const doc = ref<any>(null)
@@ -23,8 +24,12 @@ watch(clauses, (v) => {
   }, 600)
 }, { deep: true })
 
-const titleFor: Record<string, string> = { quotation: 'QUOTATION', pi: 'PROFORMA INVOICE', contract: 'SALES CONTRACT' }
 const clauseDocFor: Record<string, 'quotation' | 'pi' | 'contract'> = { quotation: 'quotation', pi: 'pi', contract: 'contract' }
+const titleFor = computed<Record<string, string>>(() => ({
+  quotation: t('printTrade.quote.title_quotation'),
+  pi: t('printTrade.quote.title_pi'),
+  contract: t('printTrade.quote.title_contract')
+}))
 
 const load = async () => {
   loading.value = true
@@ -53,19 +58,20 @@ const fmtDate = (d?: string) => d
 <template>
   <div class="print-root">
     <div class="no-print toolbar">
-      <NuxtLink :to="`/quotations/${id}`" class="back">← back</NuxtLink>
+      <NuxtLink :to="`/quotations/${id}`" class="back">{{ t('printTrade.quote.back') }}</NuxtLink>
       <PrintClausePicker v-if="doc" v-model="clauses" :docs="[clauseDocFor[doc.doc_type]]" />
-      <button class="print-btn" @click="() => window.print()">🖨 Print</button>
+      <button class="lang-btn" @click="toggleLang">{{ t('print.toolbar.lang_toggle') }}</button>
+      <button class="print-btn" @click="() => window.print()">{{ t('print.toolbar.print_btn') }}</button>
     </div>
 
-    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">Loading…</div>
+    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">{{ t('print.toolbar.loading') }}</div>
 
-    <div v-else-if="doc && company" class="sheet">
+    <div v-else-if="doc && company" class="sheet" :lang="printLocale">
       <div class="letterhead">
         <img v-if="logoUrl(company)" :src="logoUrl(company)" class="co-logo" alt="Company logo">
         <div class="co-name">{{ company.legal_name || company.name }}</div>
         <div class="small">{{ company.address || '' }}</div>
-        <div class="small">BIN: {{ company.bin_no || '—' }} · TIN: {{ company.tin_no || '—' }}</div>
+        <div class="small">{{ t('printTrade.quote.bin_tin', { bin: company.bin_no || '—', tin: company.tin_no || '—' }) }}</div>
       </div>
       <div class="doc-title">{{ titleFor[doc.doc_type] }}</div>
 
@@ -73,20 +79,20 @@ const fmtDate = (d?: string) => d
         <tbody>
           <tr>
             <td>
-              <div class="small">Buyer</div>
+              <div class="small">{{ t('printTrade.quote.buyer') }}</div>
               <b>{{ doc.parties?.name }}</b>
               <div class="small">{{ doc.parties?.address || '' }}</div>
-              <div class="small">BIN: {{ doc.parties?.bin_no || '—' }}</div>
+              <div class="small">{{ t('printTrade.quote.bin_label', { bin: doc.parties?.bin_no || '—' }) }}</div>
             </td>
             <td>
-              <div>No: <b class="mono">{{ doc.doc_no }}</b></div>
-              <div>Date: <b>{{ fmtDate(doc.doc_date) }}</b></div>
-              <div>Valid until: <b>{{ fmtDate(doc.valid_until) }}</b></div>
+              <div>{{ t('printTrade.quote.no_label') }} <b class="mono">{{ doc.doc_no }}</b></div>
+              <div>{{ t('printTrade.quote.date_label') }} <b>{{ fmtDate(doc.doc_date) }}</b></div>
+              <div>{{ t('printTrade.quote.valid_until') }} <b>{{ fmtDate(doc.valid_until) }}</b></div>
             </td>
             <td>
-              <div class="small">Payment terms</div>
+              <div class="small">{{ t('printTrade.quote.payment_terms') }}</div>
               <div>{{ doc.payment_terms || '—' }}</div>
-              <div class="small mt">Delivery terms</div>
+              <div class="small mt">{{ t('printTrade.quote.delivery_terms') }}</div>
               <div>{{ doc.delivery_terms || '—' }}</div>
             </td>
           </tr>
@@ -96,9 +102,9 @@ const fmtDate = (d?: string) => d
       <table class="lines">
         <thead>
           <tr>
-            <th style="width: 30px;">SL</th><th>Description of Goods</th>
-            <th>Size / Spec</th><th class="right">Quantity (Pcs)</th>
-            <th class="right">Unit Price (৳)</th><th class="right">Amount (৳)</th>
+            <th style="width: 30px;">{{ t('printTrade.quote.col_sl') }}</th><th>{{ t('printTrade.quote.col_description') }}</th>
+            <th>{{ t('printTrade.quote.col_size_spec') }}</th><th class="right">{{ t('printTrade.quote.col_qty') }}</th>
+            <th class="right">{{ t('printTrade.quote.col_unit_price') }}</th><th class="right">{{ t('printTrade.quote.col_amount') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -111,31 +117,31 @@ const fmtDate = (d?: string) => d
             <td class="right mono">{{ num(l.qty * l.unit_price) }}</td>
           </tr>
           <tr class="total-row">
-            <td colspan="5"><b>TOTAL</b></td>
+            <td colspan="5"><b>{{ t('printTrade.quote.total') }}</b></td>
             <td class="right mono"><b>{{ num(total) }}</b></td>
           </tr>
         </tbody>
       </table>
 
-      <p><b>Amount in words:</b> {{ takaWords(total) }}</p>
+      <p><b>{{ t('printTrade.quote.amount_in_words') }}</b> {{ takaWords(total) }}</p>
       <p v-if="doc.doc_type === 'pi'" class="small">
-        This Proforma Invoice is issued for the purpose of opening a Local Letter of Credit in favour of the Beneficiary named above.
+        {{ t('printTrade.quote.pi_note') }}
       </p>
       <p v-if="doc.notes" class="small">{{ doc.notes }}</p>
 
       <PrintClauseBlock :selected-keys="clauses" :doc="clauseDocFor[doc.doc_type]" />
 
       <div class="row spread sig-block">
-        <div class="sig"><div class="sig-line" /><div class="small">Accepted by Buyer</div></div>
+        <div class="sig"><div class="sig-line" /><div class="small">{{ t('printTrade.quote.accepted_by_buyer') }}</div></div>
         <div class="sig">
           <div class="sig-line" />
-          <div>For <b>{{ company.legal_name || company.name }}</b></div>
-          <div class="small">Authorised Signature</div>
+          <div>{{ t('printTrade.quote.for_company', { company: company.legal_name || company.name }) }}</div>
+          <div class="small">{{ t('printTrade.quote.authorised_signature') }}</div>
         </div>
       </div>
     </div>
 
-    <div v-else-if="!loading" class="no-print" style="padding: 40px; text-align: center;">Document not found.</div>
+    <div v-else-if="!loading" class="no-print" style="padding: 40px; text-align: center;">{{ t('printTrade.quote.not_found') }}</div>
   </div>
 </template>
 
@@ -148,6 +154,7 @@ const fmtDate = (d?: string) => d
 }
 .toolbar .back { color: #fbbf24; text-decoration: none; }
 .print-btn { background: #f59e0b; color: #000; border: 0; border-radius: 4px; padding: 6px 16px; font-weight: 600; cursor: pointer; }
+.lang-btn { background: transparent; color: #e4e4e7; border: 1px solid #52525b; border-radius: 4px; padding: 5px 14px; font-weight: 500; cursor: pointer; }
 
 .sheet {
   width: 210mm; min-height: 280mm; margin: 0 auto 20px; background: #fff; color: #111;

@@ -1,0 +1,34 @@
+{
+  "items": {
+    "kicker": "কার্যক্রম",
+    "title": "পণ্য",
+    "subtitle": "কাঁচামাল, সমাপ্ত পণ্য ও ভোগ্যপণ্য",
+    "new_item": "নতুন পণ্য",
+    "edit_item": "পণ্য সম্পাদনা",
+    "search_placeholder": "SKU বা নাম দিয়ে খুঁজুন…",
+    "columns": {
+      "sku": "SKU",
+      "category": "ক্যাটাগরি",
+      "uom": "একক (UOM)",
+      "reorder": "রিঅর্ডার"
+    },
+    "no_items": "কোনো পণ্য পাওয়া যায়নি।",
+    "fields": {
+      "sku": "SKU",
+      "uom": "পরিমাপের একক",
+      "gsm": "GSM",
+      "size_spec": "আকার / স্পেক",
+      "reorder_level": "রিঅর্ডার লেভেল",
+      "standard_cost": "স্ট্যান্ডার্ড খরচ (৳)"
+    },
+    "types": {
+      "raw_material": "কাঁচামাল",
+      "wip": "WIP",
+      "finished_good": "সমাপ্ত পণ্য",
+      "consumable": "ভোগ্যপণ্য",
+      "packaging": "প্যাকেজিং"
+    },
+    "item_updated": "পণ্য আপডেট হয়েছে",
+    "item_created": "পণ্য তৈরি হয়েছে"
+  }
+}

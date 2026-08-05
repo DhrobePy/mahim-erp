@@ -5,6 +5,7 @@ const route = useRoute()
 const client = useSupabaseClient()
 const { money } = useFmt()
 const { logoUrl } = useCompanyLogo()
+const { locale: printLocale, t, toggle: toggleLang } = usePrintLocale()
 
 const company = ref<any>(null)
 const summary = ref<any>(null)
@@ -40,30 +41,31 @@ const fmtDate = (d?: string) => d
 <template>
   <div class="print-root">
     <div class="no-print toolbar">
-      <NuxtLink to="/accounting/ait-summary" class="back">← back</NuxtLink>
-      <button class="print-btn" @click="() => window.print()">🖨 Print</button>
+      <NuxtLink to="/accounting/ait-summary" class="back">{{ t('printGov.aitSummary.back') }}</NuxtLink>
+      <button class="lang-btn" @click="toggleLang">{{ t('print.toolbar.lang_toggle') }}</button>
+      <button class="print-btn" @click="() => window.print()">{{ t('print.toolbar.print_btn') }}</button>
     </div>
 
-    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">Loading…</div>
+    <div v-if="loading" class="no-print" style="padding: 40px; text-align: center;">{{ t('print.toolbar.loading') }}</div>
 
-    <div v-else class="sheet">
+    <div v-else class="sheet" :lang="printLocale">
       <div class="letterhead">
         <img v-if="company && logoUrl(company)" :src="logoUrl(company)" class="co-logo" alt="Company logo">
         <div class="co-name">{{ company?.legal_name || company?.name }}</div>
-        <div class="title">ADVANCE INCOME TAX (AIT) SUMMARY</div>
+        <div class="title">{{ t('printGov.aitSummary.title') }}</div>
       </div>
 
       <table class="meta">
         <tbody>
           <tr>
-            <td><div class="small">Advance income tax paid</div><b>{{ money(summary?.advance_tax_paid ?? 0) }}</b></td>
-            <td><div class="small">TDS withheld payable</div><b>{{ money(summary?.tds_withheld_payable ?? 0) }}</b></td>
+            <td><div class="small">{{ t('printGov.aitSummary.advance_tax_paid') }}</div><b>{{ money(summary?.advance_tax_paid ?? 0) }}</b></td>
+            <td><div class="small">{{ t('printGov.aitSummary.tds_withheld_payable') }}</div><b>{{ money(summary?.tds_withheld_payable ?? 0) }}</b></td>
           </tr>
         </tbody>
       </table>
 
       <table class="lines">
-        <thead><tr><th>Date</th><th>Voucher</th><th>Account</th><th>Description</th><th>Reference</th><th class="num">Amount (৳)</th></tr></thead>
+        <thead><tr><th>{{ t('printGov.aitSummary.col_date') }}</th><th>{{ t('printGov.aitSummary.col_voucher') }}</th><th>{{ t('printGov.aitSummary.col_account') }}</th><th>{{ t('printGov.aitSummary.col_description') }}</th><th>{{ t('printGov.aitSummary.col_reference') }}</th><th class="num">{{ t('printGov.aitSummary.col_amount') }}</th></tr></thead>
         <tbody>
           <tr v-for="r in entries" :key="r.id">
             <td>{{ fmtDate(r.entry_date) }}</td><td>{{ r.entry_no }}</td><td>{{ r.cash_bank_accounts?.name }}</td>
@@ -72,7 +74,7 @@ const fmtDate = (d?: string) => d
         </tbody>
       </table>
 
-      <p class="small disclaimer">Working paper only — cross-check against original AIT/TDS certificates before tax return filing.</p>
+      <p class="small disclaimer">{{ t('printGov.aitSummary.disclaimer') }}</p>
     </div>
   </div>
 </template>
@@ -85,6 +87,7 @@ const fmtDate = (d?: string) => d
 }
 .toolbar .back { color: #fbbf24; text-decoration: none; }
 .print-btn { background: #f59e0b; color: #000; border: 0; border-radius: 4px; padding: 6px 16px; font-weight: 600; cursor: pointer; }
+.lang-btn { background: transparent; color: #e4e4e7; border: 1px solid #52525b; border-radius: 4px; padding: 5px 14px; font-weight: 500; cursor: pointer; }
 .sheet {
   width: 210mm; min-height: 200mm; margin: 0 auto 20px; background: #fff; color: #111;
   padding: 20mm 18mm; box-shadow: 0 2px 12px rgba(0,0,0,.4); font-size: 12px; line-height: 1.6;
