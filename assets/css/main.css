@@ -45,6 +45,24 @@ html {
   animation: fade-in-up 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* Ambient background glow behind the dashboard's glass cards — a few large,
+   heavily blurred color blobs pinned behind the content, never interactive. */
+.dashboard-glow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.glow-blob {
+  position: absolute;
+  width: 380px;
+  height: 380px;
+  border-radius: 9999px;
+  filter: blur(110px);
+  opacity: 0.16;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

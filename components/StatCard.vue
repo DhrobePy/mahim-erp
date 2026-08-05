@@ -18,26 +18,29 @@ const toneClass = computed(() => ({
   red: 'text-red-600 dark:text-red-400'
 })[props.tone ?? 'default'])
 
-// Flagged (amber/red) cards carry a matching ring so the one number that
-// needs attention doesn't sit at the same visual weight as the other seven.
-const ringClass = computed(() => ({
-  default: 'ring-gray-200 dark:ring-zinc-800',
-  amber: 'ring-amber-300/70 dark:ring-amber-700/50',
-  green: 'ring-gray-200 dark:ring-zinc-800',
-  red: 'ring-red-300/70 dark:ring-red-800/60'
+// Flagged (amber/red) cards carry a matching edge so the one number that
+// needs attention doesn't sit at the same visual weight as the other seven;
+// unflagged cards get a plain glass edge and lean on their own accent glow
+// instead (see .stat-card box-shadow below).
+const edgeColor = computed(() => ({
+  default: null,
+  amber: '#f59e0b',
+  green: null,
+  red: '#ef4444'
 })[props.tone ?? 'default'])
 
-const cardClass = 'stat-card animate-fade-in-up block rounded-md border-t-2 ring-1 bg-white dark:bg-zinc-900/60 px-4 py-3 transition-[color,background-color,border-color,box-shadow,transform] duration-200 ease-out will-change-transform'
+const cardClass = 'stat-card animate-fade-in-up block rounded-xl border-t-2 bg-white/80 dark:bg-zinc-900/40 backdrop-blur-xl px-4 py-3 transition-[color,background-color,box-shadow,transform] duration-300 ease-out will-change-transform'
 const cardStyle = computed(() => ({
   animationDelay: `${props.delay ?? 0}ms`,
   borderTopColor: props.accent,
-  '--accent': props.accent
+  '--accent': props.accent,
+  '--edge': edgeColor.value ?? 'rgba(255,255,255,0.1)'
 }))
-const chipStyle = computed(() => ({ backgroundColor: `${props.accent}1a`, color: props.accent }))
+const chipStyle = computed(() => ({ backgroundColor: `${props.accent}1a`, color: props.accent, boxShadow: `0 0 12px -2px ${props.accent}80` }))
 </script>
 
 <template>
-  <component :is="to ? 'NuxtLink' : 'div'" :to="to" :style="cardStyle" :class="[cardClass, ringClass, to && 'hover:-translate-y-0.5 hover:shadow-md dark:hover:shadow-black/30 cursor-pointer']">
+  <component :is="to ? 'NuxtLink' : 'div'" :to="to" :style="cardStyle" :class="[cardClass, to && 'hover:-translate-y-1 cursor-pointer']">
     <dl>
       <div class="mb-1.5 flex items-center gap-1.5">
         <span v-if="icon" class="flex h-5 w-5 shrink-0 items-center justify-center rounded" :style="chipStyle">
@@ -55,7 +58,14 @@ const chipStyle = computed(() => ({ backgroundColor: `${props.accent}1a`, color:
 </template>
 
 <style scoped>
+.stat-card {
+  box-shadow:
+    inset 0 0 0 1px var(--edge),
+    0 12px 28px -18px color-mix(in srgb, var(--accent) 55%, transparent);
+}
 .stat-card:hover {
-  box-shadow: 0 0 0 1px var(--accent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 65%, var(--edge)),
+    0 18px 44px -14px color-mix(in srgb, var(--accent) 70%, transparent);
 }
 </style>

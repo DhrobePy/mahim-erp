@@ -158,13 +158,25 @@ onMounted(() => {
 })
 onUnmounted(() => { if (timer) clearInterval(timer) })
 
+// Local override for just these two panels — the app-wide UCard look
+// (app.config.ts) stays flat/opaque everywhere else on purpose.
+const glassPanelUi = {
+  background: 'bg-white/80 dark:bg-zinc-900/40 backdrop-blur-xl',
+  ring: 'ring-1 ring-black/5 dark:ring-white/10'
+}
+
 const updatedLabel = computed(() => lastUpdated.value
   ? t('dashboard.updated_at', { time: lastUpdated.value.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) })
   : '')
 </script>
 
 <template>
-  <div>
+  <div class="relative">
+    <div class="dashboard-glow" aria-hidden="true">
+      <div class="glow-blob" style="left: -6%; top: -8%; background: #f59e0b;" />
+      <div class="glow-blob" style="right: -8%; top: 4%; background: #9085e9;" />
+      <div class="glow-blob" style="left: 22%; top: 34%; background: #199e70;" />
+    </div>
     <PageHeader :kicker="t('dashboard.kicker')" :title="t('dashboard.title')" :subtitle="t('dashboard.subtitle')">
       <div class="flex items-center gap-3">
         <span v-if="updatedLabel" class="num text-[11px] text-gray-400 dark:text-zinc-500">{{ updatedLabel }}</span>
@@ -192,8 +204,8 @@ const updatedLabel = computed(() => lastUpdated.value
       <StatCard :label="t('dashboard.stats.unbilled')" :value="num(animUnbilled, 0)" :tone="stats.unbilled ? 'amber' : 'default'" to="/challans" :delay="280" :accent="CARD.unbilled.accent" :icon="CARD.unbilled.icon" :points="sparklines.unbilled" />
     </div>
 
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-3">
-      <UCard class="xl:col-span-2 animate-fade-in-up" style="animation-delay: 320ms">
+    <div class="relative grid grid-cols-1 xl:grid-cols-3 gap-3">
+      <UCard class="xl:col-span-2 animate-fade-in-up" style="animation-delay: 320ms" :ui="glassPanelUi">
         <template #header>
           <h2 class="microlabel flex items-center gap-1.5 text-gray-400 dark:text-zinc-500">
             <UIcon name="i-heroicons-archive-box" class="text-[13px]" />
@@ -223,7 +235,7 @@ const updatedLabel = computed(() => lastUpdated.value
         </ul>
       </UCard>
 
-      <UCard class="animate-fade-in-up" style="animation-delay: 360ms">
+      <UCard class="animate-fade-in-up" style="animation-delay: 360ms" :ui="glassPanelUi">
         <template #header>
           <h2 class="microlabel flex items-center gap-1.5 text-gray-400 dark:text-zinc-500">
             <UIcon name="i-heroicons-calculator" class="text-[13px]" />
