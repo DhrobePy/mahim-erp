@@ -4,6 +4,7 @@ const props = defineProps<{
   value: string | number
   sub?: string
   tone?: 'default' | 'amber' | 'green' | 'red'
+  to?: string
 }>()
 
 const toneClass = computed(() => ({
@@ -12,12 +13,30 @@ const toneClass = computed(() => ({
   green: 'text-emerald-600 dark:text-emerald-400',
   red: 'text-red-600 dark:text-red-400'
 })[props.tone ?? 'default'])
+
+// Flagged (amber/red) cards carry a matching ring so the one number that
+// needs attention doesn't sit at the same visual weight as the other seven.
+const ringClass = computed(() => ({
+  default: 'ring-gray-200 dark:ring-zinc-800',
+  amber: 'ring-amber-300/70 dark:ring-amber-700/50',
+  green: 'ring-gray-200 dark:ring-zinc-800',
+  red: 'ring-red-300/70 dark:ring-red-800/60'
+})[props.tone ?? 'default'])
+
+const cardClass = 'block rounded-md ring-1 bg-white dark:bg-zinc-900/60 px-4 py-3 transition-colors'
 </script>
 
 <template>
-  <div class="rounded-md ring-1 ring-gray-200 dark:ring-zinc-800 bg-white dark:bg-zinc-900/60 px-4 py-3">
-    <p class="microlabel text-gray-400 dark:text-zinc-500">{{ label }}</p>
-    <p class="num text-[22px] leading-8 font-semibold" :class="toneClass">{{ value }}</p>
-    <p v-if="sub" class="text-[11px] text-gray-400 dark:text-zinc-500">{{ sub }}</p>
-  </div>
+  <NuxtLink v-if="to" :to="to" :class="[cardClass, ringClass, 'hover:ring-amber-400/70 dark:hover:ring-amber-500/50 cursor-pointer']">
+    <dl>
+      <dt class="microlabel text-gray-400 dark:text-zinc-500">{{ label }}</dt>
+      <dd class="num text-[22px] leading-8 font-semibold" :class="toneClass">{{ value }}</dd>
+      <dd v-if="sub" class="text-[11px] text-gray-400 dark:text-zinc-500">{{ sub }}</dd>
+    </dl>
+  </NuxtLink>
+  <dl v-else :class="[cardClass, ringClass]">
+    <dt class="microlabel text-gray-400 dark:text-zinc-500">{{ label }}</dt>
+    <dd class="num text-[22px] leading-8 font-semibold" :class="toneClass">{{ value }}</dd>
+    <dd v-if="sub" class="text-[11px] text-gray-400 dark:text-zinc-500">{{ sub }}</dd>
+  </dl>
 </template>

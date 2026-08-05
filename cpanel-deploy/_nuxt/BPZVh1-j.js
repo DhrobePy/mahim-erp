@@ -1,0 +1,1 @@
+import{f as u,s as r}from"./Dh6Quudx.js";const f=()=>{const a=r("en"),{t:l,locale:n,setLocale:s}=u(),t=new Set([n.value]),c=async e=>{if(t.has(e))return;const o=n.value;await s(e),await s(o),t.add(e)};return{locale:a,t:(e,o)=>l(e,o??{},{locale:a.value}),toggle:async()=>{const e=a.value==="en"?"bn":"en";await c(e),a.value=e}}};export{f as u};

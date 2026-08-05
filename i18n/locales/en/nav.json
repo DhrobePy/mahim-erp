@@ -49,6 +49,15 @@
       "tax_corporate": "Corporate tax computation",
       "access": "Access & roles"
     },
+    "roles": {
+      "admin": "Admin",
+      "manager": "Manager",
+      "store": "Store",
+      "production": "Production",
+      "sales": "Sales",
+      "accounts": "Accounts",
+      "viewer": "Viewer"
+    },
     "company_label": "Company",
     "collapse": "Collapse sidebar",
     "expand": "Expand sidebar",

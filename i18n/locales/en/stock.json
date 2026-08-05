@@ -27,7 +27,12 @@
     "adj_types": {
       "opening": "Opening balance",
       "adjustment": "Adjustment",
-      "grn_in": "Goods receipt (in)"
+      "grn_in": "Goods receipt (in)",
+      "production_in": "Production (in)",
+      "production_out": "Production (out)",
+      "sales_out": "Sales (out)",
+      "transfer_in": "Transfer (in)",
+      "transfer_out": "Transfer (out)"
     },
     "post": "Post"
   }

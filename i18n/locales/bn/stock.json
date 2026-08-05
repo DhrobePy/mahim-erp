@@ -27,7 +27,12 @@
     "adj_types": {
       "opening": "শুরুর জের",
       "adjustment": "সমন্বয়",
-      "grn_in": "পণ্য গ্রহণ (ইন)"
+      "grn_in": "পণ্য গ্রহণ (ইন)",
+      "production_in": "উৎপাদন (ইন)",
+      "production_out": "উৎপাদন (আউট)",
+      "sales_out": "বিক্রয় (আউট)",
+      "transfer_in": "স্থানান্তর (ইন)",
+      "transfer_out": "স্থানান্তর (আউট)"
     },
     "post": "পোস্ট করুন"
   }

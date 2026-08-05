@@ -151,6 +151,11 @@ const profileMenu = computed(() => [
 
 const otherLocale = computed(() => locales.value.find((l: any) => l.code !== locale.value))
 const toggleLocale = () => otherLocale.value && setLocale(otherLocale.value.code)
+
+const roleLabel = computed(() => {
+  const role = profile.value?.role
+  return role ? t(`nav.roles.${role}`) : t('nav.roles.viewer')
+})
 </script>
 
 <template>
@@ -174,7 +179,7 @@ const toggleLocale = () => otherLocale.value && setLocale(otherLocale.value.code
         class="h-12 flex items-center gap-2.5 border-b border-gray-200 dark:border-zinc-800/80 shrink-0"
         :class="sidebarCollapsed ? 'justify-center px-0' : 'px-4'"
       >
-        <div class="w-6 h-6 rounded-sm bg-amber-500 flex items-center justify-center shrink-0">
+        <div class="w-6 h-6 rounded-sm bg-amber-500 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.15)] flex items-center justify-center shrink-0">
           <UIcon name="i-heroicons-cube-transparent" class="text-black text-sm" />
         </div>
         <div v-if="!sidebarCollapsed" class="leading-none">
@@ -242,15 +247,16 @@ const toggleLocale = () => otherLocale.value && setLocale(otherLocale.value.code
         <div class="flex-1" />
         <div class="flex items-center gap-2.5">
           <button
-            class="microlabel px-2 py-1 rounded border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-zinc-400 hover:text-gray-800 dark:hover:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-700 cursor-pointer"
+            class="microlabel flex items-center gap-1 px-2 py-1 rounded border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-zinc-400 hover:text-gray-800 dark:hover:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-700 cursor-pointer transition-colors"
             :aria-label="t('nav.switch_language')" :title="t('nav.switch_language')"
             @click="toggleLocale"
           >
+            <UIcon name="i-heroicons-language" class="text-[13px]" />
             {{ otherLocale?.code === 'bn' ? 'বাংলা' : 'EN' }}
           </button>
           <NotificationBell />
           <span class="microlabel px-1.5 py-0.5 rounded border border-amber-500/40 text-amber-600 dark:text-amber-400">
-            {{ profile?.role || 'viewer' }}
+            {{ roleLabel }}
           </span>
           <UDropdown :items="profileMenu" :popper="{ placement: 'bottom-end' }">
             <button class="flex items-center gap-2 rounded-full cursor-pointer hover:opacity-80" :aria-label="t('nav.profile_menu')">

@@ -16,6 +16,10 @@
     "stock_movements": "Stock movements",
     "no_movements": "No movements yet.",
     "latest_journals": "Latest journals",
-    "nothing_posted": "Nothing posted yet."
+    "nothing_posted": "Nothing posted yet.",
+    "load_failed": "Some dashboard data failed to load.",
+    "retry": "Retry",
+    "updated_at": "Updated {time}",
+    "refresh": "Refresh"
   }
 }
