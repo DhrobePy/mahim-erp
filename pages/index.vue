@@ -9,6 +9,24 @@ const stats = reactive({
   items: 0, lowStock: 0, openOrders: 0, unbilled: 0
 })
 
+// One fixed identity color + icon per card, never reassigned by data —
+// lets a glance tell cards apart before reading a single number.
+const CARD = {
+  bank: { accent: '#3987e5', icon: 'i-heroicons-banknotes' },
+  receivables: { accent: '#9085e9', icon: 'i-heroicons-receipt-percent' },
+  lbpd: { accent: '#d95926', icon: 'i-heroicons-scale' },
+  stockValue: { accent: '#199e70', icon: 'i-heroicons-cube' },
+  items: { accent: '#22c55e', icon: 'i-heroicons-archive-box' },
+  lowStock: { accent: '#e66767', icon: 'i-heroicons-exclamation-triangle' },
+  openOrders: { accent: '#c98500', icon: 'i-heroicons-cog-6-tooth' },
+  unbilled: { accent: '#d55181', icon: 'i-heroicons-truck' }
+} as const
+
+const sparklines = reactive<Record<keyof typeof CARD, number[]>>({
+  bank: [], receivables: [], lbpd: [], stockValue: [],
+  items: [], lowStock: [], openOrders: [], unbilled: []
+})
+
 // Tween each figure from its previous value to the newly-loaded one on
 // every fetch (initial load and the 60s auto-refresh alike) instead of
 // snapping — the numbers are the whole point of this page, they should
@@ -47,15 +65,22 @@ const load = async () => {
       // cheap for a handful of id-only rows and doesn't have that failure mode.
       client.from('items').select('id', { count: 'exact' }).eq('is_active', true).is('deleted_at', null),
       client.from('current_stock').select('item_id, qty, stock_value'),
-      client.from('production_orders').select('id', { count: 'exact' })
+      client.from('production_orders').select('id, created_at', { count: 'exact' })
         .in('status', ['planned', 'released', 'in_progress']),
-      client.from('delivery_challans').select('id', { count: 'exact' })
+      client.from('delivery_challans').select('id, created_at', { count: 'exact' })
         .eq('status', 'delivered_unbilled'),
       client.from('stock_movements')
         .select('id, movement_type, quantity, moved_at, ref_no, items(name, reorder_level)')
         .order('moved_at', { ascending: false }).limit(9),
       client.from('journals').select('id, journal_no, journal_date, memo').order('created_at', { ascending: false }).limit(6),
-      client.from('items').select('id, reorder_level').is('deleted_at', null)
+      client.from('items').select('id, reorder_level').is('deleted_at', null),
+      // Sparkline feeds — kept separate from the display queries above so
+      // widening those payloads (more rows / limits) never risks the UI
+      // that actually depends on them staying small and fast.
+      client.from('stock_movements').select('quantity, moved_at').order('moved_at', { ascending: false }).limit(200),
+      client.from('journal_lines')
+        .select('debit, credit, accounts(code), journals!inner(journal_date)')
+        .order('journal_date', { foreignTable: 'journals', ascending: false }).limit(300)
     ])
 
     error.value = results.some((r) => r.status === 'rejected' || (r.status === 'fulfilled' && r.value?.error))
@@ -64,10 +89,14 @@ const load = async () => {
     const itemCount = pluck<number>(results[1], 'count')
     const stockRows = pluck<any[]>(results[2], 'data')
     const openCount = pluck<number>(results[3], 'count')
+    const prodRows = pluck<any[]>(results[3], 'data')
     const unbilledCount = pluck<number>(results[4], 'count')
+    const challanRows = pluck<any[]>(results[4], 'data')
     const movements = pluck<any[]>(results[5], 'data')
     const jvs = pluck<any[]>(results[6], 'data')
     const lowStockItems = pluck<any[]>(results[7], 'data')
+    const moveHistory = pluck<any[]>(results[8], 'data') ?? []
+    const jlRows = pluck<any[]>(results[9], 'data') ?? []
 
     const bal = (code: string) => Number((balances ?? []).find((b: any) => b.code === code)?.balance ?? 0)
     const balPrefix = (prefix: string) => (balances ?? [])
@@ -89,6 +118,31 @@ const load = async () => {
 
     recent.value = movements ?? []
     journals.value = jvs ?? []
+
+    // 14-day sparklines, derived from data actually posted — never fabricated.
+    // Money cards: cumulative net (debit − credit) for the relevant account
+    // prefixes, so the line shows real direction of movement, not the
+    // absolute balance (which needs all-time data this window doesn't fetch).
+    const netByAccount = (prefixes: string[]) => bucketDaily(
+      jlRows.filter((r: any) => prefixes.some((p) => r.accounts?.code === p || r.accounts?.code?.startsWith(p + '-'))),
+      (r: any) => r.journals?.journal_date,
+      (r: any) => Number(r.debit || 0) - Number(r.credit || 0),
+      14, true
+    )
+    sparklines.bank = netByAccount(['1100', '1150'])
+    sparklines.receivables = netByAccount(['1200', '1210', '1220'])
+    sparklines.lbpd = netByAccount(['2300', '2310']).map((v) => -v)
+
+    // Stock domain: cumulative net quantity movement as an activity proxy
+    // for stock value/items, raw daily transaction count for low stock.
+    sparklines.stockValue = bucketDaily(moveHistory, (r: any) => r.moved_at, (r: any) => Number(r.quantity) || 0, 14, true)
+    sparklines.items = sparklines.stockValue
+    sparklines.lowStock = bucketDaily(moveHistory, (r: any) => r.moved_at, () => 1, 14, false)
+
+    // Activity counters: raw daily count of new documents.
+    sparklines.openOrders = bucketDaily(prodRows ?? [], (r: any) => r.created_at, () => 1, 14, false)
+    sparklines.unbilled = bucketDaily(challanRows ?? [], (r: any) => r.created_at, () => 1, 14, false)
+
     lastUpdated.value = new Date()
   } catch {
     error.value = true
@@ -126,16 +180,16 @@ const updatedLabel = computed(() => lastUpdated.value
     </div>
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
-      <StatCard :label="t('dashboard.stats.bank')" :value="money(animBank)" :tone="stats.bank < 0 ? 'red' : 'default'" to="/banking" :delay="0" />
-      <StatCard :label="t('dashboard.stats.receivables')" :value="money(animReceivables)" to="/invoices" :delay="40" />
-      <StatCard :label="t('dashboard.stats.lbpd')" :value="money(animLbpd)" :tone="stats.lbpd > 0 ? 'amber' : 'default'" to="/banking" :delay="80" />
-      <StatCard :label="t('dashboard.stats.stock_value')" :value="money(animStockValue)" to="/stock" :delay="120" />
+      <StatCard :label="t('dashboard.stats.bank')" :value="money(animBank)" :tone="stats.bank < 0 ? 'red' : 'default'" to="/banking" :delay="0" :accent="CARD.bank.accent" :icon="CARD.bank.icon" :points="sparklines.bank" />
+      <StatCard :label="t('dashboard.stats.receivables')" :value="money(animReceivables)" to="/invoices" :delay="40" :accent="CARD.receivables.accent" :icon="CARD.receivables.icon" :points="sparklines.receivables" />
+      <StatCard :label="t('dashboard.stats.lbpd')" :value="money(animLbpd)" :tone="stats.lbpd > 0 ? 'amber' : 'default'" to="/banking" :delay="80" :accent="CARD.lbpd.accent" :icon="CARD.lbpd.icon" :points="sparklines.lbpd" />
+      <StatCard :label="t('dashboard.stats.stock_value')" :value="money(animStockValue)" to="/stock" :delay="120" :accent="CARD.stockValue.accent" :icon="CARD.stockValue.icon" :points="sparklines.stockValue" />
     </div>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-      <StatCard :label="t('dashboard.stats.active_items')" :value="num(animItems, 0)" to="/items" :delay="160" />
-      <StatCard :label="t('dashboard.stats.low_stock')" :value="num(animLowStock, 0)" :tone="stats.lowStock ? 'red' : 'green'" to="/stock" :delay="200" />
-      <StatCard :label="t('dashboard.stats.open_production')" :value="num(animOpenOrders, 0)" to="/production" :delay="240" />
-      <StatCard :label="t('dashboard.stats.unbilled')" :value="num(animUnbilled, 0)" :tone="stats.unbilled ? 'amber' : 'default'" to="/challans" :delay="280" />
+      <StatCard :label="t('dashboard.stats.active_items')" :value="num(animItems, 0)" to="/items" :delay="160" :accent="CARD.items.accent" :icon="CARD.items.icon" :points="sparklines.items" />
+      <StatCard :label="t('dashboard.stats.low_stock')" :value="num(animLowStock, 0)" :tone="stats.lowStock ? 'red' : 'green'" to="/stock" :delay="200" :accent="CARD.lowStock.accent" :icon="CARD.lowStock.icon" :points="sparklines.lowStock" />
+      <StatCard :label="t('dashboard.stats.open_production')" :value="num(animOpenOrders, 0)" to="/production" :delay="240" :accent="CARD.openOrders.accent" :icon="CARD.openOrders.icon" :points="sparklines.openOrders" />
+      <StatCard :label="t('dashboard.stats.unbilled')" :value="num(animUnbilled, 0)" :tone="stats.unbilled ? 'amber' : 'default'" to="/challans" :delay="280" :accent="CARD.unbilled.accent" :icon="CARD.unbilled.icon" :points="sparklines.unbilled" />
     </div>
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-3">

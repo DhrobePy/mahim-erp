@@ -1,12 +1,15 @@
 <script setup lang="ts">
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   label: string
   value: string | number
   sub?: string
   tone?: 'default' | 'amber' | 'green' | 'red'
   to?: string
   delay?: number
-}>()
+  accent?: string
+  icon?: string
+  points?: number[]
+}>(), { accent: '#71717a' })
 
 const toneClass = computed(() => ({
   default: 'text-gray-900 dark:text-zinc-100',
@@ -24,24 +27,35 @@ const ringClass = computed(() => ({
   red: 'ring-red-300/70 dark:ring-red-800/60'
 })[props.tone ?? 'default'])
 
-const cardClass = 'animate-fade-in-up block rounded-md ring-1 bg-white dark:bg-zinc-900/60 px-4 py-3 transition-[color,background-color,border-color,box-shadow,transform] duration-200 ease-out will-change-transform'
-const cardStyle = computed(() => ({ animationDelay: `${props.delay ?? 0}ms` }))
+const cardClass = 'stat-card animate-fade-in-up block rounded-md border-t-2 ring-1 bg-white dark:bg-zinc-900/60 px-4 py-3 transition-[color,background-color,border-color,box-shadow,transform] duration-200 ease-out will-change-transform'
+const cardStyle = computed(() => ({
+  animationDelay: `${props.delay ?? 0}ms`,
+  borderTopColor: props.accent,
+  '--accent': props.accent
+}))
+const chipStyle = computed(() => ({ backgroundColor: `${props.accent}1a`, color: props.accent }))
 </script>
 
 <template>
-  <NuxtLink
-    v-if="to" :to="to" :style="cardStyle"
-    :class="[cardClass, ringClass, 'hover:ring-amber-400/70 dark:hover:ring-amber-500/50 hover:-translate-y-0.5 hover:shadow-md dark:hover:shadow-black/30 cursor-pointer']"
-  >
+  <component :is="to ? 'NuxtLink' : 'div'" :to="to" :style="cardStyle" :class="[cardClass, ringClass, to && 'hover:-translate-y-0.5 hover:shadow-md dark:hover:shadow-black/30 cursor-pointer']">
     <dl>
-      <dt class="microlabel text-gray-400 dark:text-zinc-500">{{ label }}</dt>
+      <div class="mb-1.5 flex items-center gap-1.5">
+        <span v-if="icon" class="flex h-5 w-5 shrink-0 items-center justify-center rounded" :style="chipStyle">
+          <UIcon :name="icon" class="text-[12px]" />
+        </span>
+        <dt class="microlabel text-gray-400 dark:text-zinc-500">{{ label }}</dt>
+      </div>
       <dd class="num text-[22px] leading-8 font-semibold" :class="toneClass">{{ value }}</dd>
       <dd v-if="sub" class="text-[11px] text-gray-400 dark:text-zinc-500">{{ sub }}</dd>
+      <dd v-if="points && points.length > 1" class="mt-2">
+        <Sparkline :points="points" :color="accent" :height="26" />
+      </dd>
     </dl>
-  </NuxtLink>
-  <dl v-else :class="[cardClass, ringClass]" :style="cardStyle">
-    <dt class="microlabel text-gray-400 dark:text-zinc-500">{{ label }}</dt>
-    <dd class="num text-[22px] leading-8 font-semibold" :class="toneClass">{{ value }}</dd>
-    <dd v-if="sub" class="text-[11px] text-gray-400 dark:text-zinc-500">{{ sub }}</dd>
-  </dl>
+  </component>
 </template>
+
+<style scoped>
+.stat-card:hover {
+  box-shadow: 0 0 0 1px var(--accent);
+}
+</style>
