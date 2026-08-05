@@ -6,6 +6,32 @@ const client = useSupabaseClient()
 const { money, num } = useFmt()
 const { t } = useI18n()
 
+// Same fixed identity colors as the dashboard where the concept overlaps
+// (bank, receivables, stock, the pre-LC exposure family) so the same figure
+// reads as the same color everywhere in the app; new concepts on this page
+// get the theme's remaining hues, reused per row since the two rows are
+// never compared against each other as one combined legend.
+const CARD = {
+  bank: { accent: '#3987e5', icon: 'i-heroicons-banknotes' },
+  billsReceivableLc: { accent: '#9085e9', icon: 'i-heroicons-receipt-percent' },
+  gdni: { accent: '#d55181', icon: 'i-heroicons-truck' },
+  stock: { accent: '#199e70', icon: 'i-heroicons-cube' },
+  payable: { accent: '#d95926', icon: 'i-heroicons-credit-card' },
+  debt: { accent: '#e66767', icon: 'i-heroicons-scale' },
+  netPosition: { accent: '#22c55e', icon: 'i-heroicons-chart-bar' },
+  revenue: { accent: '#22c55e', icon: 'i-heroicons-arrow-trending-up' },
+  expenses: { accent: '#e66767', icon: 'i-heroicons-arrow-trending-down' },
+  netProfit: { accent: '#c98500', icon: 'i-heroicons-chart-pie' },
+  pipeline: { accent: '#9085e9', icon: 'i-heroicons-shopping-cart' },
+  awaitingLc: { accent: '#d55181', icon: 'i-heroicons-truck' },
+  billsMaturity: { accent: '#3987e5', icon: 'i-heroicons-clock' }
+} as const
+
+const sparklines = reactive<Record<string, number[]>>({
+  bank: [], billsReceivableLc: [], gdni: [], stock: [], payable: [], debt: [], netPosition: [],
+  revenue: [], expenses: [], netProfit: [], pipeline: [], awaitingLc: []
+})
+
 const loading = ref(true)
 const bal = ref<Map<string, number>>(new Map())
 const typeTotals = ref<Record<string, number>>({})
@@ -23,10 +49,10 @@ const disbs = ref<any[]>([])
 
 const load = async () => {
   loading.value = true
-  const [b, lp, so, ub, bl, al, inv, st, emp, pr, fac, dis] = await Promise.all([
+  const [b, lp, so, ub, bl, al, inv, st, emp, pr, fac, dis, jl, mv] = await Promise.all([
     client.from('account_balances').select('code, name, account_type, balance'),
     client.from('lc_profitability').select('*'),
-    client.from('sales_orders').select('id, so_no, status, parties(name), sales_order_lines(qty, unit_price, delivered_qty)').in('status', ['open', 'partially_delivered']),
+    client.from('sales_orders').select('id, so_no, status, created_at, parties(name), sales_order_lines(qty, unit_price, delivered_qty)').in('status', ['open', 'partially_delivered']),
     client.from('delivery_challans').select('id, challan_no, actual_delivery_date, customer_party_id, parties(name), delivery_challan_lines(qty, unit_price)').eq('status', 'delivered_unbilled'),
     client.from('bills').select('id, bill_no, amount, maturity_date, status, lc_id, lcs(lc_no)').in('status', ['accepted', 'discounted', 'overdue']),
     client.from('v_lc_alerts').select('*'),
@@ -35,7 +61,11 @@ const load = async () => {
     client.from('employees').select('id', { count: 'exact', head: true }).eq('is_active', true).is('deleted_at', null),
     client.from('payroll_runs').select('run_no, label, total_net, status').eq('run_type', 'monthly').order('created_at', { ascending: false }).limit(1),
     client.from('bank_facilities').select('id, name, limit_amount').is('deleted_at', null),
-    client.from('lbpd_disbursements').select('facility_id, principal, status')
+    client.from('lbpd_disbursements').select('facility_id, principal, status'),
+    // Sparkline feeds — same 14-day-activity approach as the dashboard.
+    client.from('journal_lines').select('debit, credit, accounts(code, account_type), journals!inner(journal_date)')
+      .order('journal_date', { foreignTable: 'journals', ascending: false }).limit(400),
+    client.from('stock_movements').select('quantity, moved_at').order('moved_at', { ascending: false }).limit(200)
   ])
 
   bal.value = new Map((b.data ?? []).map((r: any) => [r.code, Number(r.balance)]))
@@ -63,6 +93,49 @@ const load = async () => {
     byCust.set(i.customer_party_id, cur)
   }
   topCustomers.value = [...byCust.values()].sort((a, b) => b.total - a.total).slice(0, 5)
+
+  // 14-day sparklines, derived from what was actually posted/created —
+  // cumulative net (debit − credit) per account prefix for balance-sheet
+  // figures, raw daily counts for pipeline/activity figures.
+  const jlRows = jl.data ?? []
+  const moveHistory = mv.data ?? []
+  const netByAccount = (prefixes: string[]) => bucketDaily(
+    jlRows.filter((r: any) => prefixes.some((p) => r.accounts?.code === p || r.accounts?.code?.startsWith(p + '-'))),
+    (r: any) => r.journals?.journal_date,
+    (r: any) => Number(r.debit || 0) - Number(r.credit || 0),
+    14, true
+  )
+  const netByType = (type: string) => bucketDaily(
+    jlRows.filter((r: any) => r.accounts?.account_type === type),
+    (r: any) => r.journals?.journal_date,
+    (r: any) => Number(r.debit || 0) - Number(r.credit || 0),
+    14, true
+  )
+
+  const cashSpark = netByAccount(['1100', '1150'])
+  const billsReceivableLcSpark = netByAccount(['1210'])
+  const receivableOpenSpark = netByAccount(['1200'])
+  const gdniSpark = netByAccount(['1220'])
+  const stockSpark = bucketDaily(moveHistory, (r: any) => r.moved_at, (r: any) => Number(r.quantity) || 0, 14, true)
+  const payableRaw = netByAccount(['2100', '2110', '2200'])
+  const debtRaw = netByAccount(['2300', '2310', '2320', '2330', '2400'])
+  const incomeSpark = netByType('income').map((v) => -v)
+  const expenseSpark = netByType('expense')
+
+  sparklines.bank = cashSpark
+  sparklines.billsReceivableLc = billsReceivableLcSpark
+  sparklines.gdni = gdniSpark
+  sparklines.stock = stockSpark
+  sparklines.payable = payableRaw.map((v) => -v)
+  sparklines.debt = debtRaw.map((v) => -v)
+  sparklines.netPosition = cashSpark.map((v, i) =>
+    v + billsReceivableLcSpark[i] + receivableOpenSpark[i] + gdniSpark[i] + stockSpark[i] + payableRaw[i] + debtRaw[i])
+  sparklines.revenue = incomeSpark
+  sparklines.expenses = expenseSpark
+  sparklines.netProfit = incomeSpark.map((v, i) => v - expenseSpark[i])
+  sparklines.pipeline = bucketDaily(so.data ?? [], (r: any) => r.created_at, () => 1, 14, false)
+  sparklines.awaitingLc = bucketDaily(ub.data ?? [], (r: any) => r.actual_delivery_date, () => 1, 14, false)
+
   loading.value = false
 }
 onMounted(load)
@@ -117,24 +190,24 @@ const exposure = (f: any) =>
     <!-- Financial position -->
     <p class="microlabel text-gray-400 dark:text-zinc-500 mb-2">{{ t('ceo.sections.money') }}</p>
     <div class="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 mb-5">
-      <NuxtLink to="/accounting"><StatCard :label="t('ceo.stats.bank')" :value="money(cash)" :tone="cash < 0 ? 'red' : 'default'" /></NuxtLink>
-      <NuxtLink to="/banking"><StatCard :label="t('ceo.stats.bills_receivable_lc')" :value="money(receivableLc)" /></NuxtLink>
-      <NuxtLink to="/challans"><StatCard :label="t('ceo.stats.delivered_not_invoiced')" :value="money(gdni)" :tone="gdni > 0 ? 'amber' : 'default'" :sub="t('ceo.stats.pre_lc_risk')" /></NuxtLink>
-      <NuxtLink to="/stock"><StatCard :label="t('ceo.stats.stock')" :value="money(stockValue)" /></NuxtLink>
-      <NuxtLink to="/procurement"><StatCard :label="t('ceo.stats.payable')" :value="money(payable)" :tone="payable > 0 ? 'red' : 'default'" /></NuxtLink>
-      <NuxtLink to="/banking"><StatCard :label="t('ceo.stats.bank_debt')" :value="money(debt)" :tone="debt > 0 ? 'red' : 'default'" /></NuxtLink>
-      <NuxtLink to="/accounting"><StatCard :label="t('ceo.stats.net_position')" :value="money(netPosition)" :tone="netPosition >= 0 ? 'green' : 'red'" /></NuxtLink>
+      <StatCard :label="t('ceo.stats.bank')" :value="money(cash)" :tone="cash < 0 ? 'red' : 'default'" to="/accounting" :accent="CARD.bank.accent" :icon="CARD.bank.icon" :points="sparklines.bank" />
+      <StatCard :label="t('ceo.stats.bills_receivable_lc')" :value="money(receivableLc)" to="/banking" :accent="CARD.billsReceivableLc.accent" :icon="CARD.billsReceivableLc.icon" :points="sparklines.billsReceivableLc" />
+      <StatCard :label="t('ceo.stats.delivered_not_invoiced')" :value="money(gdni)" :tone="gdni > 0 ? 'amber' : 'default'" :sub="t('ceo.stats.pre_lc_risk')" to="/challans" :accent="CARD.gdni.accent" :icon="CARD.gdni.icon" :points="sparklines.gdni" />
+      <StatCard :label="t('ceo.stats.stock')" :value="money(stockValue)" to="/stock" :accent="CARD.stock.accent" :icon="CARD.stock.icon" :points="sparklines.stock" />
+      <StatCard :label="t('ceo.stats.payable')" :value="money(payable)" :tone="payable > 0 ? 'red' : 'default'" to="/procurement" :accent="CARD.payable.accent" :icon="CARD.payable.icon" :points="sparklines.payable" />
+      <StatCard :label="t('ceo.stats.bank_debt')" :value="money(debt)" :tone="debt > 0 ? 'red' : 'default'" to="/banking" :accent="CARD.debt.accent" :icon="CARD.debt.icon" :points="sparklines.debt" />
+      <StatCard :label="t('ceo.stats.net_position')" :value="money(netPosition)" :tone="netPosition >= 0 ? 'green' : 'red'" to="/accounting" :accent="CARD.netPosition.accent" :icon="CARD.netPosition.icon" :points="sparklines.netPosition" />
     </div>
 
     <!-- P&L + pipeline -->
     <p class="microlabel text-gray-400 dark:text-zinc-500 mb-2">{{ t('ceo.sections.earning_pipeline') }}</p>
     <div class="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3 mb-5">
-      <NuxtLink to="/invoices"><StatCard :label="t('ceo.stats.revenue')" :value="money(typeTotals.income)" /></NuxtLink>
-      <NuxtLink to="/accounting"><StatCard :label="t('ceo.stats.expenses')" :value="money(typeTotals.expense)" /></NuxtLink>
-      <NuxtLink to="/accounting"><StatCard :label="t('ceo.stats.net_profit')" :value="money(netProfit)" :tone="netProfit >= 0 ? 'green' : 'red'" /></NuxtLink>
-      <NuxtLink to="/sales"><StatCard :label="t('ceo.stats.undelivered_orders')" :value="money(pipelineValue)" :sub="openSos.length + ' ' + t('ceo.orders_suffix')" /></NuxtLink>
-      <NuxtLink to="/challans"><StatCard :label="t('ceo.stats.awaiting_lc_cover')" :value="money(totalUnbilled)" :sub="unbilled.length + ' ' + t('ceo.deliveries_suffix')" :tone="totalUnbilled > 0 ? 'amber' : 'default'" /></NuxtLink>
-      <NuxtLink to="/banking"><StatCard :label="t('ceo.stats.bills_awaiting_maturity')" :value="money(billsAwaiting)" :sub="bills.length + ' ' + t('ceo.bills_suffix')" /></NuxtLink>
+      <StatCard :label="t('ceo.stats.revenue')" :value="money(typeTotals.income)" to="/invoices" :accent="CARD.revenue.accent" :icon="CARD.revenue.icon" :points="sparklines.revenue" />
+      <StatCard :label="t('ceo.stats.expenses')" :value="money(typeTotals.expense)" to="/accounting" :accent="CARD.expenses.accent" :icon="CARD.expenses.icon" :points="sparklines.expenses" />
+      <StatCard :label="t('ceo.stats.net_profit')" :value="money(netProfit)" :tone="netProfit >= 0 ? 'green' : 'red'" to="/accounting" :accent="CARD.netProfit.accent" :icon="CARD.netProfit.icon" :points="sparklines.netProfit" />
+      <StatCard :label="t('ceo.stats.undelivered_orders')" :value="money(pipelineValue)" :sub="openSos.length + ' ' + t('ceo.orders_suffix')" to="/sales" :accent="CARD.pipeline.accent" :icon="CARD.pipeline.icon" :points="sparklines.pipeline" />
+      <StatCard :label="t('ceo.stats.awaiting_lc_cover')" :value="money(totalUnbilled)" :sub="unbilled.length + ' ' + t('ceo.deliveries_suffix')" :tone="totalUnbilled > 0 ? 'amber' : 'default'" to="/challans" :accent="CARD.awaitingLc.accent" :icon="CARD.awaitingLc.icon" :points="sparklines.awaitingLc" />
+      <StatCard :label="t('ceo.stats.bills_awaiting_maturity')" :value="money(billsAwaiting)" :sub="bills.length + ' ' + t('ceo.bills_suffix')" to="/banking" :accent="CARD.billsMaturity.accent" :icon="CARD.billsMaturity.icon" />
     </div>
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">

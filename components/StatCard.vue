@@ -9,7 +9,7 @@ const props = withDefaults(defineProps<{
   accent?: string
   icon?: string
   points?: number[]
-}>(), { accent: '#71717a' })
+}>(), { accent: '#f59e0b' })
 
 const toneClass = computed(() => ({
   default: 'text-gray-900 dark:text-zinc-100',

@@ -7,6 +7,23 @@ const { money } = useFmt()
 const { extractLc } = usePdfExtract()
 const { t } = useI18n()
 
+// Fixed identity color + icon per fact card. These describe one LC contract
+// (static terms/figures, not daily activity), so no sparkline here — a
+// trend line would have to be invented rather than derived honestly.
+const CARD = {
+  activeTerms: { accent: '#3987e5', icon: 'i-heroicons-document-check' },
+  revenue: { accent: '#22c55e', icon: 'i-heroicons-arrow-trending-up' },
+  returns: { accent: '#e66767', icon: 'i-heroicons-arrow-uturn-left' },
+  cogsNet: { accent: '#d95926', icon: 'i-heroicons-calculator' },
+  bankFeesInterest: { accent: '#9085e9', icon: 'i-heroicons-banknotes' },
+  contractProfit: { accent: '#c98500', icon: 'i-heroicons-chart-pie' },
+  incoterm: { accent: '#199e70', icon: 'i-heroicons-globe-alt' },
+  latestShipment: { accent: '#d55181', icon: 'i-heroicons-truck' },
+  presentationPeriod: { accent: '#9085e9', icon: 'i-heroicons-calendar-days' },
+  portLoading: { accent: '#d95926', icon: 'i-heroicons-arrow-up-circle' },
+  portDischarge: { accent: '#c98500', icon: 'i-heroicons-arrow-down-circle' }
+} as const
+
 const lcId = route.params.id as string
 const lc = ref<any>(null)
 const events = ref<any[]>([])
@@ -197,21 +214,21 @@ const pageSubtitle = computed(() => {
     </div>
 
     <div v-if="lc.lc_role === 'export_local'" class="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
-      <StatCard :label="t('lcs.detail.stat_cards.active_terms')" :value="active ? 'v' + active.version : '—'" :sub="active ? money(active.amount) + ' · ±' + active.tolerance_pct + '%' : ''" />
-      <StatCard :label="t('lcs.detail.stat_cards.revenue')" :value="money(pnl?.revenue ?? 0)" />
-      <StatCard :label="t('lcs.detail.stat_cards.returns')" :value="money(pnl?.returns ?? 0)" :tone="Number(pnl?.returns) > 0 ? 'red' : 'default'" />
-      <StatCard :label="t('lcs.detail.stat_cards.cogs_net')" :value="money(pnl?.cogs_net ?? 0)" />
-      <StatCard :label="t('lcs.detail.stat_cards.bank_fees_interest')" :value="money(Number(pnl?.bank_fees ?? 0) + Number(pnl?.interest ?? 0))" />
-      <StatCard :label="t('lcs.detail.stat_cards.contract_profit')" :value="money(pnl?.contract_profit ?? 0)" :tone="Number(pnl?.contract_profit) >= 0 ? 'green' : 'red'" />
+      <StatCard :label="t('lcs.detail.stat_cards.active_terms')" :value="active ? 'v' + active.version : '—'" :sub="active ? money(active.amount) + ' · ±' + active.tolerance_pct + '%' : ''" :accent="CARD.activeTerms.accent" :icon="CARD.activeTerms.icon" />
+      <StatCard :label="t('lcs.detail.stat_cards.revenue')" :value="money(pnl?.revenue ?? 0)" :accent="CARD.revenue.accent" :icon="CARD.revenue.icon" />
+      <StatCard :label="t('lcs.detail.stat_cards.returns')" :value="money(pnl?.returns ?? 0)" :tone="Number(pnl?.returns) > 0 ? 'red' : 'default'" :accent="CARD.returns.accent" :icon="CARD.returns.icon" />
+      <StatCard :label="t('lcs.detail.stat_cards.cogs_net')" :value="money(pnl?.cogs_net ?? 0)" :accent="CARD.cogsNet.accent" :icon="CARD.cogsNet.icon" />
+      <StatCard :label="t('lcs.detail.stat_cards.bank_fees_interest')" :value="money(Number(pnl?.bank_fees ?? 0) + Number(pnl?.interest ?? 0))" :accent="CARD.bankFeesInterest.accent" :icon="CARD.bankFeesInterest.icon" />
+      <StatCard :label="t('lcs.detail.stat_cards.contract_profit')" :value="money(pnl?.contract_profit ?? 0)" :tone="Number(pnl?.contract_profit) >= 0 ? 'green' : 'red'" :accent="CARD.contractProfit.accent" :icon="CARD.contractProfit.icon" />
     </div>
 
     <div v-else class="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
-      <StatCard :label="t('lcs.detail.stat_cards.active_terms')" :value="active ? 'v' + active.version : '—'" :sub="active ? lc.currency + ' ' + money(active.amount).replace('৳','') + ' · ±' + active.tolerance_pct + '%' : ''" />
-      <StatCard :label="t('lcs.detail.stat_cards.incoterm')" :value="lc.incoterm || '—'" />
-      <StatCard :label="t('lcs.detail.stat_cards.latest_shipment')" :value="lc.latest_shipment_date || '—'" />
-      <StatCard :label="t('lcs.detail.stat_cards.presentation_period')" :value="lc.presentation_period_days ? t('lcs.detail.stat_cards.presentation_period_days', { n: lc.presentation_period_days }) : '—'" />
-      <StatCard :label="t('lcs.detail.stat_cards.port_loading')" :value="lc.port_of_loading || '—'" />
-      <StatCard :label="t('lcs.detail.stat_cards.port_discharge')" :value="lc.port_of_discharge || '—'" />
+      <StatCard :label="t('lcs.detail.stat_cards.active_terms')" :value="active ? 'v' + active.version : '—'" :sub="active ? lc.currency + ' ' + money(active.amount).replace('৳','') + ' · ±' + active.tolerance_pct + '%' : ''" :accent="CARD.activeTerms.accent" :icon="CARD.activeTerms.icon" />
+      <StatCard :label="t('lcs.detail.stat_cards.incoterm')" :value="lc.incoterm || '—'" :accent="CARD.incoterm.accent" :icon="CARD.incoterm.icon" />
+      <StatCard :label="t('lcs.detail.stat_cards.latest_shipment')" :value="lc.latest_shipment_date || '—'" :accent="CARD.latestShipment.accent" :icon="CARD.latestShipment.icon" />
+      <StatCard :label="t('lcs.detail.stat_cards.presentation_period')" :value="lc.presentation_period_days ? t('lcs.detail.stat_cards.presentation_period_days', { n: lc.presentation_period_days }) : '—'" :accent="CARD.presentationPeriod.accent" :icon="CARD.presentationPeriod.icon" />
+      <StatCard :label="t('lcs.detail.stat_cards.port_loading')" :value="lc.port_of_loading || '—'" :accent="CARD.portLoading.accent" :icon="CARD.portLoading.icon" />
+      <StatCard :label="t('lcs.detail.stat_cards.port_discharge')" :value="lc.port_of_discharge || '—'" :accent="CARD.portDischarge.accent" :icon="CARD.portDischarge.icon" />
     </div>
     <p v-if="lc.lc_role !== 'export_local'" class="text-xs text-gray-400 dark:text-zinc-500 -mt-2 mb-4">
       {{ t('lcs.detail.manual_journal_note') }}
