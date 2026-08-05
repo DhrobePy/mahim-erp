@@ -1,0 +1,1 @@
+function l(i,u,a,e=14,f=!1){const r=new Date;r.setHours(0,0,0,0);const m=r.getTime()-(e-1)*864e5,n=Array.from({length:e},()=>0);for(const t of i){const s=u(t);if(!s)continue;const c=new Date(s);c.setHours(0,0,0,0);const o=Math.round((c.getTime()-m)/864e5);o<0||o>=e||(n[o]+=a(t))}if(!f)return n;let g=0;return n.map(t=>g+=t)}export{l as b};
