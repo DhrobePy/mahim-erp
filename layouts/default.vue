@@ -98,6 +98,12 @@ const visibleSections = computed(() => {
     if (admin) admin.links.unshift(accessLink)
     else out.push({ title: 'admin', links: [accessLink] })
   }
+  // The user manual is reference material, not a sensitive admin tool —
+  // every logged-in user gets it regardless of their module grants.
+  const manualLink = { to: '/admin/manual', icon: 'i-heroicons-book-open', module: 'manual' }
+  const adminSection = out.find((s) => s.title === 'admin')
+  if (adminSection) adminSection.links.push(manualLink)
+  else out.push({ title: 'admin', links: [manualLink] })
   return out
 })
 

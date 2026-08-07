@@ -47,7 +47,8 @@
       "bank_requests": "Bank service requests",
       "tax_it10b": "Tax — IT-10B",
       "tax_corporate": "Corporate tax computation",
-      "access": "Access & roles"
+      "access": "Access & roles",
+      "manual": "User manual"
     },
     "roles": {
       "admin": "Admin",

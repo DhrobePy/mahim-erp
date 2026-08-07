@@ -441,6 +441,17 @@
         "adjustment_added": "Adjustment added",
         "failed": "Failed"
       }
+    },
+    "manual": {
+      "kicker": "Admin",
+      "title": "User Manual",
+      "subtitle": "A plain-language, task-based guide to every module in the app",
+      "language_label": "Manual language",
+      "search_placeholder": "Search the manual...",
+      "expand_all": "Expand all",
+      "collapse_all": "Collapse all",
+      "open_page": "Open this page",
+      "no_results": "No sections match your search."
     }
   }
 }
