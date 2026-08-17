@@ -4,6 +4,8 @@
     "title": "Parties",
     "subtitle": "Customers, suppliers, transporters & banks",
     "new_party": "New party",
+    "print_receivables": "Print receivables",
+    "print_payables": "Print payables",
     "search_placeholder": "Search code or name…",
     "columns": {
       "code": "Code",

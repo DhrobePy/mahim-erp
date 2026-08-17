@@ -102,6 +102,7 @@ const saveAdj = async () => {
 <template>
   <div>
     <PageHeader :kicker="t('stock.kicker')" :title="t('stock.title')" :subtitle="t('stock.subtitle')">
+      <UButton icon="i-heroicons-printer" variant="soft" color="gray" to="/print/stock" target="_blank">{{ t('common.print') }}</UButton>
       <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openAdj">{{ t('stock.stock_entry') }}</UButton>
     </PageHeader>
 

@@ -4,6 +4,8 @@
     "title": "পার্টি",
     "subtitle": "ক্রেতা, সরবরাহকারী, পরিবহনকারী ও ব্যাংক",
     "new_party": "নতুন পার্টি",
+    "print_receivables": "প্রাপ্য প্রিন্ট করুন",
+    "print_payables": "দেনা প্রিন্ট করুন",
     "search_placeholder": "কোড বা নাম খুঁজুন…",
     "columns": {
       "code": "কোড",

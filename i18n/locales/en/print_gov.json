@@ -152,6 +152,43 @@
       "total_input_vat": "Total input VAT credit",
       "net_vat_payable": "Net VAT payable to NBR",
       "disclaimer": "Working paper only — reconcile against actual Mushak 6.1/6.3 registers before filing Mushak 9.1."
+    },
+    "receivables": {
+      "back": "← back",
+      "title": "RECEIVABLES LIST (DEBTORS STATEMENT)",
+      "as_of": "As of {date}",
+      "col_party": "Customer",
+      "col_ar": "Accounts Receivable (৳)",
+      "col_lc": "Bills Receivable — LC (৳)",
+      "col_total": "Total Receivable (৳)",
+      "grand_total": "Total receivables",
+      "empty": "No outstanding receivables.",
+      "disclaimer": "Management working paper generated from posted GL entries — figures reflect the ledger as of the moment this was printed."
+    },
+    "payables": {
+      "back": "← back",
+      "title": "PAYABLES LIST (CREDITORS STATEMENT)",
+      "as_of": "As of {date}",
+      "col_party": "Supplier",
+      "col_ap": "Accounts Payable (৳)",
+      "col_freight": "Freight Payable (৳)",
+      "col_total": "Total Payable (৳)",
+      "grand_total": "Total payables",
+      "empty": "No outstanding payables.",
+      "disclaimer": "Management working paper generated from posted GL entries — figures reflect the ledger as of the moment this was printed."
+    },
+    "stockList": {
+      "back": "← back",
+      "title": "STOCK LIST",
+      "as_of": "As of {date}",
+      "col_sku": "SKU",
+      "col_item": "Item",
+      "col_warehouse": "Warehouse",
+      "col_qty": "Qty",
+      "col_value": "Value (৳)",
+      "grand_total": "Total stock value",
+      "empty": "No stock on hand.",
+      "disclaimer": "Live inventory snapshot generated from posted stock movements as of the moment this was printed."
     }
   }
 }

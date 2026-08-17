@@ -89,6 +89,8 @@ const save = async () => {
 <template>
   <div>
     <PageHeader :kicker="t('parties.kicker')" :title="t('parties.title')" :subtitle="t('parties.subtitle')">
+      <UButton icon="i-heroicons-printer" variant="soft" color="gray" to="/print/receivables" target="_blank">{{ t('parties.print_receivables') }}</UButton>
+      <UButton icon="i-heroicons-printer" variant="soft" color="gray" to="/print/payables" target="_blank">{{ t('parties.print_payables') }}</UButton>
       <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNew">{{ t('parties.new_party') }}</UButton>
     </PageHeader>
 
