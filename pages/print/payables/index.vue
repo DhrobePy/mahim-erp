@@ -5,6 +5,7 @@ const route = useRoute()
 const client = useSupabaseClient()
 const { money } = useFmt()
 const { logoUrl } = useCompanyLogo()
+const { activeCompanyId, load: loadProfile } = useProfile()
 const { locale: printLocale, t, toggle: toggleLang } = usePrintLocale()
 
 const company = ref<any>(null)
@@ -16,11 +17,17 @@ const loading = ref(true)
 // against. 2200 (Salary Payable) is excluded deliberately — payroll
 // postings carry no party_id (employees aren't in the parties table), so
 // it can't appear on a per-party statement anyway.
+//
+// Scoped to activeCompanyId, not just RLS — see receivables/index.vue. This
+// page opens in its own tab (layout:false skips the default layout's
+// useProfile().load()), so load the profile ourselves first.
 const load = async () => {
   loading.value = true
+  await loadProfile()
   const { data } = await client
     .from('journal_lines')
     .select('debit, credit, party_id, accounts!inner(code), parties(name)')
+    .eq('company_id', activeCompanyId.value)
     .in('accounts.code', ['2100', '2110'])
     .not('party_id', 'is', null)
 
@@ -38,7 +45,7 @@ const load = async () => {
     .filter((r) => Math.abs(r.total) >= 1)
     .sort((a, b) => b.total - a.total)
 
-  const { data: c } = await client.from('companies').select('*').limit(1).single()
+  const { data: c } = await client.from('companies').select('*').eq('id', activeCompanyId.value).single()
   company.value = c
   loading.value = false
   if (route.query.auto) setTimeout(() => window.print(), 600)

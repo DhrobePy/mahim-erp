@@ -5,6 +5,7 @@ const route = useRoute()
 const client = useSupabaseClient()
 const { money } = useFmt()
 const { logoUrl } = useCompanyLogo()
+const { activeCompanyId, load: loadProfile } = useProfile()
 const { locale: printLocale, t, toggle: toggleLang } = usePrintLocale()
 
 const company = ref<any>(null)
@@ -13,13 +14,17 @@ const loading = ref(true)
 
 // current_stock is a view (sum of stock_movements) — PostgREST can't embed
 // items/warehouses on it directly, so join client-side like /stock does.
+// Scoped to activeCompanyId, not just RLS — see print/receivables/index.vue.
+// This page opens in its own tab (layout:false skips the default layout's
+// useProfile().load()), so load the profile ourselves first.
 const load = async () => {
   loading.value = true
+  await loadProfile()
   const [{ data: stock }, { data: it }, { data: wh }, { data: c }] = await Promise.all([
-    client.from('current_stock').select('*'),
-    client.from('items').select('id, sku, name').is('deleted_at', null),
-    client.from('warehouses').select('id, name').is('deleted_at', null),
-    client.from('companies').select('*').limit(1).single()
+    client.from('current_stock').select('*').eq('company_id', activeCompanyId.value),
+    client.from('items').select('id, sku, name').eq('company_id', activeCompanyId.value).is('deleted_at', null),
+    client.from('warehouses').select('id, name').eq('company_id', activeCompanyId.value).is('deleted_at', null),
+    client.from('companies').select('*').eq('id', activeCompanyId.value).single()
   ])
   const itemMap = new Map((it ?? []).map((i: any) => [i.id, i]))
   const whMap = new Map((wh ?? []).map((w: any) => [w.id, w]))

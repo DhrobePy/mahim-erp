@@ -5,6 +5,7 @@ const route = useRoute()
 const client = useSupabaseClient()
 const { money } = useFmt()
 const { logoUrl } = useCompanyLogo()
+const { activeCompanyId, load: loadProfile } = useProfile()
 const { locale: printLocale, t, toggle: toggleLang } = usePrintLocale()
 
 const company = ref<any>(null)
@@ -15,11 +16,21 @@ const loading = ref(true)
 // party_id when posted (invoices/create_invoice_from_challan) — GDNI (1220)
 // is a company-wide bucket, never tagged to one customer, so it has no
 // place in a per-customer statement and is deliberately left out here.
+//
+// Scoped to activeCompanyId, not just RLS — a user who belongs to more than
+// one company (parent + subsidiaries) would otherwise get every company's
+// rows and letterhead mixed together, since journal_lines RLS only checks
+// membership, not "is this the company currently selected in the header."
+// This page opens in its own tab (layout:false, so the default layout's
+// useProfile().load() never runs) — load the profile ourselves first so
+// activeCompanyId is actually populated before it's used below.
 const load = async () => {
   loading.value = true
+  await loadProfile()
   const { data } = await client
     .from('journal_lines')
     .select('debit, credit, party_id, accounts!inner(code), parties(name)')
+    .eq('company_id', activeCompanyId.value)
     .in('accounts.code', ['1200', '1210'])
     .not('party_id', 'is', null)
 
@@ -37,7 +48,7 @@ const load = async () => {
     .filter((r) => Math.abs(r.total) >= 1)
     .sort((a, b) => b.total - a.total)
 
-  const { data: c } = await client.from('companies').select('*').limit(1).single()
+  const { data: c } = await client.from('companies').select('*').eq('id', activeCompanyId.value).single()
   company.value = c
   loading.value = false
   if (route.query.auto) setTimeout(() => window.print(), 600)
