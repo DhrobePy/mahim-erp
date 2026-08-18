@@ -262,7 +262,10 @@ const columns = computed(() => [
         </template>
         <template #submitted_at-data="{ row }"><span class="num">{{ fmtDate(row.submitted_at) }}</span></template>
         <template #accepted_at-data="{ row }"><span class="num" :class="!row.accepted_at ? 'text-gray-400 dark:text-zinc-600' : ''">{{ fmtDate(row.accepted_at) }}</span></template>
-        <template #lbpd_created_at-data="{ row }"><span class="num" :class="!row.lbpd_created_at ? 'text-gray-400 dark:text-zinc-600' : ''">{{ fmtDate(row.lbpd_created_at) }}</span></template>
+        <template #lbpd_created_at-data="{ row }">
+          <span class="num" :class="!row.lbpd_created_at ? 'text-gray-400 dark:text-zinc-600' : ''">{{ fmtDate(row.lbpd_created_at) }}</span>
+          <div v-if="row.lbpd_principal" class="text-[10.5px] num text-gray-400 dark:text-zinc-600">{{ moneyIn(row.lbpd_principal, 'BDT') }}</div>
+        </template>
         <template #maturity_date-data="{ row }">
           <span class="num" :class="isOverdue(row) ? 'text-red-600 dark:text-red-400 font-medium' : isDueSoon(row) ? 'text-amber-600 dark:text-amber-400 font-medium' : ''">
             {{ fmtDate(row.maturity_date) }}
