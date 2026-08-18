@@ -6,6 +6,7 @@
     "empty": "এখনো কোনো লোকাল এক্সপোর্ট এলসি বিল নেই।",
     "sight": "সাইট",
     "tenure_days": "{days} দিন",
+    "no_fx_rate": "রেট নির্ধারিত নয়",
     "new_entry": "নতুন এন্ট্রি",
     "modal": {
       "new_title": "নতুন এলসি / বিল এন্ট্রি",
@@ -13,17 +14,23 @@
       "lc_label": "প্রাপ্ত এলসি",
       "lc_placeholder": "এলসি নির্বাচন করুন",
       "bill_no_label": "বিল নং",
-      "amount_label": "পরিমাণ",
+      "amount_label": "পরিমাণ ({currency})",
+      "fx_rate_label": "বিনিময় হার ({currency} → টাকা)",
+      "fx_rate_hint": "শুধু রেফারেন্সের জন্য, বকেয়া মোটের জন্য — নিচের এলবিপিডি ও সেটেলমেন্ট সবসময় প্রকৃত টাকার অঙ্ক",
+      "received_amount_label": "প্রাপ্ত পরিমাণ (টাকা)",
+      "received_amount_hint": "চূড়ান্ত সেটেলমেন্টে প্রকৃত জমাকৃত টাকা",
       "lbpd_header": "এলবিপিডি (ঐচ্ছিক)",
       "lbpd_facility_label": "সুবিধা",
       "lbpd_facility_placeholder": "— কোনোটি নয় —",
-      "lbpd_principal_label": "প্রদত্ত মূল অর্থ",
+      "lbpd_principal_label": "প্রদত্ত মূল অর্থ (টাকা)",
+      "lbpd_principal_hint": "এলসি'র মুদ্রা যাই হোক না কেন, এলবিপিডি সবসময় টাকায় প্রদান করা হয়",
       "create": "তৈরি করুন"
     },
     "stats": {
       "open": "খোলা বিল",
       "outstanding": "বকেয়া (টাকা)",
       "outstanding_sub": "এখনো গৃহীত হয়নি এমন বিলের এলসি মূল্য",
+      "outstanding_sub_missing_fx": "{count}টি বিদেশি মুদ্রার বিলে বিনিময় হার নেই — বাদ দেওয়া হয়েছে",
       "pending_acceptance": "অ্যাকসেপ্টেন্স অপেক্ষমাণ",
       "due_soon": "৭ দিনের মধ্যে মেয়াদপূর্তি",
       "overdue": "মেয়াদোত্তীর্ণ"

@@ -15,7 +15,7 @@ const load = async () => {
   const [b, l, f] = await Promise.all([
     client.from('bills')
       .select(`
-        id, bill_no, amount, submitted_at, accepted_at, maturity_date, received_at, status,
+        id, bill_no, amount, submitted_at, accepted_at, maturity_date, received_at, received_amount_bdt, fx_rate, status,
         lcs!inner(id, lc_no, lc_role, lc_type, usance_days, currency,
           counterparty:counterparty_party_id(name),
           bank:bank_party_id(name),
@@ -42,6 +42,7 @@ const load = async () => {
       party: row.lcs.counterparty?.name ?? '—',
       currency: row.lcs.currency,
       lc_amount: amendments[0]?.amount ?? null,
+      fx_rate: row.fx_rate,
       tenure: row.lcs.lc_type === 'usance' ? row.lcs.usance_days : null,
       lc_type: row.lcs.lc_type,
       amount: row.amount,
@@ -53,6 +54,7 @@ const load = async () => {
       lbpd_principal: lbpd?.principal ?? null,
       maturity_date: row.maturity_date,
       received_at: row.received_at,
+      received_amount_bdt: row.received_amount_bdt,
       status: row.status
     }
   })
@@ -67,6 +69,18 @@ const isOverdue = (row: any) => !row.received_at && row.maturity_date && row.mat
 const isDueSoon = (row: any) => !row.received_at && row.maturity_date && row.maturity_date >= today &&
   row.maturity_date <= new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
 
+// BDT-equivalent of the LC face value — for BDT LCs it's the amount as-is;
+// for foreign-currency LCs it's an estimate via the bill's own fx_rate
+// (reference only, never used for LBPD/settlement — those are always real
+// BDT figures entered directly). Returns null when a rate is needed but
+// hasn't been set yet, so callers can tell "zero" apart from "unknown".
+const bdtEquivalent = (row: any) => {
+  if (row.lc_amount == null) return null
+  if (row.currency === 'BDT') return Number(row.lc_amount)
+  if (!row.fx_rate) return null
+  return Number(row.lc_amount) * Number(row.fx_rate)
+}
+
 const stats = computed(() => {
   const open = bills.value.filter((b) => !b.received_at)
   return {
@@ -74,7 +88,8 @@ const stats = computed(() => {
     pendingAcceptance: bills.value.filter((b) => !b.accepted_at).length,
     dueSoon: open.filter(isDueSoon).length,
     overdue: open.filter(isOverdue).length,
-    outstandingBdt: open.filter((b) => b.currency === 'BDT').reduce((s, b) => s + Number(b.lc_amount || 0), 0)
+    outstandingBdt: open.reduce((s, b) => s + (bdtEquivalent(b) ?? 0), 0),
+    missingFxRate: open.filter((b) => b.currency !== 'BDT' && !b.fx_rate).length
   }
 })
 
@@ -117,23 +132,27 @@ const blankForm = () => ({
   lc_id: null as string | null,
   bill_no: '',
   amount: 0,
+  fx_rate: null as number | null,
   status: 'submitted',
   submitted_at: today,
   accepted_at: null as string | null,
   maturity_date: null as string | null,
   received_at: null as string | null,
+  received_amount_bdt: null as number | null,
   lbpd_id: null as string | null,
   lbpd_facility_id: null as string | null,
   lbpd_created_at: null as string | null,
   lbpd_principal: null as number | null
 })
 const form = reactive(blankForm())
+const selectedLcCurrency = computed(() => lcOptions.value.find((l: any) => l.id === form.lc_id)?.currency ?? 'BDT')
 const openNew = () => { Object.assign(form, blankForm()); open.value = true }
 const openEdit = (row: any) => {
   Object.assign(form, {
-    id: row.id, lc_id: row.lc_id, bill_no: row.bill_no, amount: row.amount, status: row.status,
+    id: row.id, lc_id: row.lc_id, bill_no: row.bill_no, amount: row.amount, fx_rate: row.fx_rate, status: row.status,
     submitted_at: row.submitted_at, accepted_at: row.accepted_at, maturity_date: row.maturity_date,
-    received_at: row.received_at, lbpd_id: row.lbpd_id, lbpd_facility_id: row.lbpd_facility_id,
+    received_at: row.received_at, received_amount_bdt: row.received_amount_bdt,
+    lbpd_id: row.lbpd_id, lbpd_facility_id: row.lbpd_facility_id,
     lbpd_created_at: row.lbpd_created_at, lbpd_principal: row.lbpd_principal
   })
   open.value = true
@@ -145,9 +164,12 @@ const save = async () => {
   saving.value = true
   try {
     const billPayload: any = {
-      lc_id: form.lc_id, bill_no: form.bill_no, amount: form.amount, status: form.status,
+      lc_id: form.lc_id, bill_no: form.bill_no, amount: form.amount,
+      fx_rate: selectedLcCurrency.value !== 'BDT' ? (form.fx_rate || null) : null,
+      status: form.status,
       submitted_at: form.submitted_at, accepted_at: form.accepted_at || null,
-      maturity_date: form.maturity_date || null, received_at: form.received_at || null
+      maturity_date: form.maturity_date || null, received_at: form.received_at || null,
+      received_amount_bdt: form.received_amount_bdt || null
     }
     let billId = form.id
     if (form.id) {
@@ -210,7 +232,12 @@ const columns = computed(() => [
 
     <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
       <StatCard :label="t('lc_tracker.stats.open')" :value="stats.openCount" icon="i-heroicons-document-text" accent="#f59e0b" />
-      <StatCard :label="t('lc_tracker.stats.outstanding')" :value="moneyIn(stats.outstandingBdt, 'BDT')" :sub="t('lc_tracker.stats.outstanding_sub')" icon="i-heroicons-banknotes" accent="#38bdf8" />
+      <StatCard
+        :label="t('lc_tracker.stats.outstanding')" :value="moneyIn(stats.outstandingBdt, 'BDT')"
+        :sub="stats.missingFxRate > 0 ? t('lc_tracker.stats.outstanding_sub_missing_fx', { count: stats.missingFxRate }) : t('lc_tracker.stats.outstanding_sub')"
+        :tone="stats.missingFxRate > 0 ? 'amber' : 'default'"
+        icon="i-heroicons-banknotes" accent="#38bdf8"
+      />
       <StatCard :label="t('lc_tracker.stats.pending_acceptance')" :value="stats.pendingAcceptance" icon="i-heroicons-clock" accent="#a78bfa" />
       <StatCard :label="t('lc_tracker.stats.due_soon')" :value="stats.dueSoon" :tone="stats.dueSoon > 0 ? 'amber' : 'default'" icon="i-heroicons-exclamation-triangle" accent="#f59e0b" />
       <StatCard :label="t('lc_tracker.stats.overdue')" :value="stats.overdue" :tone="stats.overdue > 0 ? 'red' : 'default'" icon="i-heroicons-fire" accent="#ef4444" />
@@ -226,6 +253,9 @@ const columns = computed(() => [
         <template #party-data="{ row }">{{ row.party }}</template>
         <template #lc_amount-data="{ row }">
           <span class="num font-medium">{{ row.lc_amount != null ? moneyIn(row.lc_amount, row.currency) : '—' }}</span>
+          <div v-if="row.currency !== 'BDT'" class="text-[10.5px] num" :class="bdtEquivalent(row) != null ? 'text-gray-400 dark:text-zinc-600' : 'text-amber-600 dark:text-amber-400'">
+            {{ bdtEquivalent(row) != null ? `≈ ${moneyIn(bdtEquivalent(row), 'BDT')}` : t('lc_tracker.no_fx_rate') }}
+          </div>
         </template>
         <template #tenure-data="{ row }">
           <span class="num">{{ row.lc_type === 'usance' ? t('lc_tracker.tenure_days', { days: row.tenure }) : t('lc_tracker.sight') }}</span>
@@ -244,10 +274,13 @@ const columns = computed(() => [
             <UButton icon="i-heroicons-check" size="2xs" color="green" variant="soft" @click="saveReceived(row)" />
             <UButton icon="i-heroicons-x-mark" size="2xs" color="gray" variant="ghost" @click="cancelEdit" />
           </div>
-          <div v-else class="flex items-center gap-1 group">
-            <span class="num" :class="!row.received_at ? 'text-gray-400 dark:text-zinc-600' : 'text-emerald-600 dark:text-emerald-400 font-medium'">{{ fmtDate(row.received_at) }}</span>
-            <UButton v-if="canWrite" icon="i-heroicons-pencil-square" size="2xs" variant="ghost" class="opacity-0 group-hover:opacity-100" @click="startEdit(row)" />
-            <UButton v-if="canWrite && row.received_at" icon="i-heroicons-x-mark" size="2xs" color="red" variant="ghost" class="opacity-0 group-hover:opacity-100" @click="clearReceived(row)" />
+          <div v-else class="group">
+            <div class="flex items-center gap-1">
+              <span class="num" :class="!row.received_at ? 'text-gray-400 dark:text-zinc-600' : 'text-emerald-600 dark:text-emerald-400 font-medium'">{{ fmtDate(row.received_at) }}</span>
+              <UButton v-if="canWrite" icon="i-heroicons-pencil-square" size="2xs" variant="ghost" class="opacity-0 group-hover:opacity-100" @click="startEdit(row)" />
+              <UButton v-if="canWrite && row.received_at" icon="i-heroicons-x-mark" size="2xs" color="red" variant="ghost" class="opacity-0 group-hover:opacity-100" @click="clearReceived(row)" />
+            </div>
+            <div v-if="row.received_amount_bdt" class="text-[10.5px] num text-gray-400 dark:text-zinc-600">{{ moneyIn(row.received_amount_bdt, 'BDT') }}</div>
           </div>
         </template>
         <template #status-data="{ row }">
@@ -270,7 +303,10 @@ const columns = computed(() => [
             <USelect v-model="form.lc_id" :options="lcOptions" option-attribute="lc_no" value-attribute="id" :placeholder="t('lc_tracker.modal.lc_placeholder')" />
           </UFormGroup>
           <UFormGroup :label="t('lc_tracker.modal.bill_no_label')" required><UInput v-model="form.bill_no" /></UFormGroup>
-          <UFormGroup :label="t('lc_tracker.modal.amount_label')"><UInput v-model.number="form.amount" type="number" /></UFormGroup>
+          <UFormGroup :label="t('lc_tracker.modal.amount_label', { currency: selectedLcCurrency })"><UInput v-model.number="form.amount" type="number" /></UFormGroup>
+          <UFormGroup v-if="selectedLcCurrency !== 'BDT'" :label="t('lc_tracker.modal.fx_rate_label', { currency: selectedLcCurrency })" :hint="t('lc_tracker.modal.fx_rate_hint')">
+            <UInput v-model.number="form.fx_rate" type="number" step="0.01" />
+          </UFormGroup>
           <UFormGroup :label="t('common.status')">
             <USelect v-model="form.status" :options="statusOptions" option-attribute="label" value-attribute="value" />
           </UFormGroup>
@@ -278,6 +314,9 @@ const columns = computed(() => [
           <UFormGroup :label="t('lc_tracker.columns.acceptance')"><UInput v-model="form.accepted_at" type="date" /></UFormGroup>
           <UFormGroup :label="t('lc_tracker.columns.maturity')"><UInput v-model="form.maturity_date" type="date" /></UFormGroup>
           <UFormGroup :label="t('lc_tracker.columns.received')"><UInput v-model="form.received_at" type="date" /></UFormGroup>
+          <UFormGroup :label="t('lc_tracker.modal.received_amount_label')" :hint="t('lc_tracker.modal.received_amount_hint')">
+            <UInput v-model.number="form.received_amount_bdt" type="number" />
+          </UFormGroup>
 
           <div class="col-span-2 border-t border-gray-100 dark:border-zinc-800 pt-3 mt-1">
             <p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('lc_tracker.modal.lbpd_header') }}</p>
@@ -286,7 +325,7 @@ const columns = computed(() => [
             <USelect v-model="form.lbpd_facility_id" :options="facilities" option-attribute="name" value-attribute="id" :placeholder="t('lc_tracker.modal.lbpd_facility_placeholder')" />
           </UFormGroup>
           <UFormGroup :label="t('lc_tracker.columns.lbpd_created')"><UInput v-model="form.lbpd_created_at" type="date" /></UFormGroup>
-          <UFormGroup :label="t('lc_tracker.modal.lbpd_principal_label')" class="col-span-2">
+          <UFormGroup :label="t('lc_tracker.modal.lbpd_principal_label')" class="col-span-2" :hint="t('lc_tracker.modal.lbpd_principal_hint')">
             <UInput v-model.number="form.lbpd_principal" type="number" />
           </UFormGroup>
         </div>

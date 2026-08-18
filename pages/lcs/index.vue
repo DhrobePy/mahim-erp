@@ -110,8 +110,10 @@ const openEdit = (row: any) => {
 watch(() => form.lc_role, (role) => {
   if (suppressRoleWatch.value) return
   form.counterparty_party_id = null
+  // Default suggestion only — local LCs are usually BDT but can be USD/other;
+  // never force it, since LBPD/settlement are tracked in BDT separately
+  // regardless of what currency the LC itself is opened in.
   if (role !== 'export_local' && form.currency === 'BDT') form.currency = 'USD'
-  if (role === 'export_local') form.currency = 'BDT'
 })
 
 // "Register from PDF": extract fields client-side, prefill the form for

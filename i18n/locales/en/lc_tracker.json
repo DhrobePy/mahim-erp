@@ -6,6 +6,7 @@
     "empty": "No local export LC bills yet.",
     "sight": "Sight",
     "tenure_days": "{days} days",
+    "no_fx_rate": "rate not set",
     "new_entry": "New entry",
     "modal": {
       "new_title": "New LC / bill entry",
@@ -13,17 +14,23 @@
       "lc_label": "Received LC",
       "lc_placeholder": "Select LC",
       "bill_no_label": "Bill no.",
-      "amount_label": "Amount",
+      "amount_label": "Amount ({currency})",
+      "fx_rate_label": "Exchange rate ({currency} → BDT)",
+      "fx_rate_hint": "Reference only, for the Outstanding total — LBPD and settlement below are always real BDT figures",
+      "received_amount_label": "Amount received (BDT)",
+      "received_amount_hint": "Actual BDT credited at final settlement",
       "lbpd_header": "LBPD (optional)",
       "lbpd_facility_label": "Facility",
       "lbpd_facility_placeholder": "— none —",
-      "lbpd_principal_label": "Principal disbursed",
+      "lbpd_principal_label": "Principal disbursed (BDT)",
+      "lbpd_principal_hint": "LBPD is always disbursed in BDT regardless of the LC's currency",
       "create": "Create"
     },
     "stats": {
       "open": "Open bills",
       "outstanding": "Outstanding (BDT)",
       "outstanding_sub": "LC value of bills not yet received",
+      "outstanding_sub_missing_fx": "{count} foreign-currency bill(s) missing an exchange rate — excluded",
       "pending_acceptance": "Pending acceptance",
       "due_soon": "Due within 7 days",
       "overdue": "Overdue"
