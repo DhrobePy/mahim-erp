@@ -131,7 +131,7 @@ table.lines thead th { background: #f4f4f5; text-align: left; }
 table.lines .num { text-align: right; font-family: 'JetBrains Mono', monospace; }
 .total-row td { font-weight: 700; border-top: 2px solid #111; }
 .words { margin-top: 4px; font-style: italic; }
-.sig-block { margin-top: 40px; }
+.sig-block { margin-top: 40px; display: flex; justify-content: flex-end; }
 .sig-line { border-top: 1px solid #111; width: 200px; margin: 46px 0 4px; }
 @media print {
   .no-print { display: none !important; }

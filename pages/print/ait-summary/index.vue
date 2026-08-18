@@ -112,7 +112,7 @@ table.lines th, table.lines td { border: 1px solid #ccc; padding: 4px 8px; }
 table.lines thead th { background: #f4f4f5; text-align: left; }
 table.lines .num { text-align: right; font-family: 'JetBrains Mono', monospace; }
 .disclaimer { margin-top: 20px; font-style: italic; }
-.sig-block { margin-top: 40px; }
+.sig-block { margin-top: 40px; display: flex; justify-content: flex-end; }
 @media print {
   .no-print { display: none !important; }
   .print-root { background: #fff; padding: 0; }

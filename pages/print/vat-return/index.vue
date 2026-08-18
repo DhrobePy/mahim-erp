@@ -118,7 +118,7 @@ tr.section-row td { font-weight: 700; background: #fafafa; }
 tr.subtotal-row td { font-weight: 700; }
 tr.total-row td { font-weight: 700; font-size: 14px; border-top: 2px solid #111; }
 .disclaimer { margin-top: 20px; font-style: italic; }
-.sig-block { margin-top: 40px; }
+.sig-block { margin-top: 40px; display: flex; justify-content: flex-end; }
 @media print {
   .no-print { display: none !important; }
   .print-root { background: #fff; padding: 0; }

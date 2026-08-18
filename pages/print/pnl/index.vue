@@ -154,7 +154,7 @@ tr.detail td { font-size: 11px; color: #444; padding-left: 16px; }
 tr.subtotal td { font-weight: 700; border-top: 1px solid #111; padding-top: 8px; }
 tr.total td { font-weight: 700; font-size: 15px; border-top: 2px solid #111; padding-top: 10px; }
 .disclaimer { margin-top: 24px; font-style: italic; }
-.sig-block { margin-top: 40px; }
+.sig-block { margin-top: 40px; display: flex; justify-content: flex-end; }
 @media print {
   .no-print { display: none !important; }
   .print-root { background: #fff; padding: 0; }

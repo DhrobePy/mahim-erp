@@ -113,7 +113,7 @@ const fmtDate = (d?: string) => d
 .body-text { text-align: justify; margin: 10px 0; }
 .enclosures { margin: 14px 0; }
 .enclosures ol { margin: 4px 0 0 18px; padding: 0; }
-.sig-block { margin-top: 50px; }
+.sig-block { margin-top: 50px; display: flex; justify-content: flex-end; }
 .sig-line { border-top: 1px solid #111; width: 200px; margin: 46px 0 4px; }
 .cc { margin-top: 30px; }
 @media print {

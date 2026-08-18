@@ -133,7 +133,7 @@ const body2 = computed(() => emp.value ? t('printHr.salarycert.body2', {
 .body-text { text-align: justify; margin: 12px 0; }
 table.meta { width: 100%; border-collapse: collapse; margin: 18px 0; }
 table.meta td { border: 1px solid #444; padding: 6px 8px; vertical-align: top; }
-.sig-block { margin-top: 40px; }
+.sig-block { margin-top: 40px; display: flex; justify-content: flex-end; }
 .sig-line { border-top: 1px solid #111; width: 200px; margin: 46px 0 4px; }
 @media print {
   .no-print { display: none !important; }

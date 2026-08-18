@@ -130,7 +130,7 @@ table.lines .num { text-align: right; font-family: 'JetBrains Mono', monospace; 
 table.lines .empty { text-align: center; color: #666; padding: 16px; }
 tr.total-row td { font-weight: 700; font-size: 14px; border-top: 2px solid #111; }
 .disclaimer { margin-top: 20px; font-style: italic; }
-.sig-block { margin-top: 40px; }
+.sig-block { margin-top: 40px; display: flex; justify-content: flex-end; }
 @media print {
   .no-print { display: none !important; }
   .print-root { background: #fff; padding: 0; }

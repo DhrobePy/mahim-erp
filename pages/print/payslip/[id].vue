@@ -143,7 +143,7 @@ table.lines .num { text-align: right; font-family: 'JetBrains Mono', monospace; 
 tr.total-row td { font-weight: 700; border-top: 2px solid #111; }
 .net-table { margin-top: 10px; }
 .words { margin-top: 6px; font-style: italic; }
-.sig-block { margin-top: 40px; }
+.sig-block { margin-top: 40px; display: flex; justify-content: flex-end; }
 .sig-line { border-top: 1px solid #111; width: 200px; margin: 46px 0 4px; }
 @media print {
   .no-print { display: none !important; }
