@@ -189,6 +189,10 @@
       "grand_total": "Total stock value",
       "empty": "No stock on hand.",
       "disclaimer": "Live inventory snapshot generated from posted stock movements as of the moment this was printed."
+    },
+    "common": {
+      "prepared_by": "Prepared by",
+      "authorised_signature": "Authorized Signatory"
     }
   }
 }

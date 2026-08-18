@@ -11,6 +11,7 @@ const { locale: printLocale, t, toggle: toggleLang } = usePrintLocale()
 const company = ref<any>(null)
 const rows = ref<any[]>([])
 const loading = ref(true)
+const useSignature = ref(true)
 
 // current_stock is a view (sum of stock_movements) — PostgREST can't embed
 // items/warehouses on it directly, so join client-side like /stock does.
@@ -52,6 +53,9 @@ const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'l
   <div class="print-root">
     <div class="no-print toolbar">
       <NuxtLink to="/stock" class="back">{{ t('printGov.stockList.back') }}</NuxtLink>
+      <button v-if="company?.signature_path" class="lang-btn" @click="useSignature = !useSignature">
+        {{ useSignature ? t('print.toolbar.esign_on') : t('print.toolbar.esign_off') }}
+      </button>
       <button class="lang-btn" @click="toggleLang">{{ t('print.toolbar.lang_toggle') }}</button>
       <button class="print-btn" @click="() => window.print()">{{ t('print.toolbar.print_btn') }}</button>
     </div>
@@ -93,6 +97,10 @@ const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'l
       </table>
 
       <p class="small disclaimer">{{ t('printGov.stockList.disclaimer') }}</p>
+
+      <div class="sig-block">
+        <SignatureBlock :company="company" :show-signature="useSignature" :label="t('printGov.common.authorised_signature')" />
+      </div>
     </div>
   </div>
 </template>
@@ -122,6 +130,7 @@ table.lines .num { text-align: right; font-family: 'JetBrains Mono', monospace; 
 table.lines .empty { text-align: center; color: #666; padding: 16px; }
 tr.total-row td { font-weight: 700; font-size: 14px; border-top: 2px solid #111; }
 .disclaimer { margin-top: 20px; font-style: italic; }
+.sig-block { margin-top: 40px; }
 @media print {
   .no-print { display: none !important; }
   .print-root { background: #fff; padding: 0; }

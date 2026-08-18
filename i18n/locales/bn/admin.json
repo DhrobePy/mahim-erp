@@ -132,7 +132,21 @@
         "name_code_required": "নাম ও কোড আবশ্যক",
         "created": "{name} তৈরি হয়েছে",
         "failed": "ব্যর্থ হয়েছে",
-        "switched": "সক্রিয় কোম্পানি পরিবর্তন হয়েছে"
+        "switched": "সক্রিয় কোম্পানি পরিবর্তন হয়েছে",
+        "signature_updated": "স্বাক্ষর আপডেট হয়েছে",
+        "signature_removed": "স্বাক্ষর সরানো হয়েছে",
+        "signatory_updated": "স্বাক্ষরকারীর তথ্য আপডেট হয়েছে"
+      },
+      "signatory": {
+        "card_title": "অনুমোদিত স্বাক্ষরকারী",
+        "card_subtitle": "প্রতিটি প্রিন্ট করা ডকুমেন্টের স্বাক্ষর অংশে ব্যবহৃত হবে — প্রতিটি প্রিন্টে দেখাবেন নাকি শুধু ফাঁকা লাইন রাখবেন তা বেছে নেওয়া যায়",
+        "upload_signature": "স্বাক্ষর আপলোড করুন",
+        "uploading": "আপলোড হচ্ছে…",
+        "remove_signature": "সরিয়ে ফেলুন",
+        "signatory_name": "স্বাক্ষরকারীর নাম",
+        "signatory_designation": "পদবি",
+        "signatory_designation_placeholder": "যেমন: ব্যবস্থাপনা পরিচালক",
+        "save": "স্বাক্ষরকারী সংরক্ষণ করুন"
       }
     },
     "directors": {

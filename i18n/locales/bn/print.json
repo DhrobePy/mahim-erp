@@ -3,7 +3,9 @@
     "toolbar": {
       "print_btn": "🖨 প্রিন্ট",
       "loading": "লোড হচ্ছে…",
-      "lang_toggle": "English"
+      "lang_toggle": "English",
+      "esign_on": "✍️ ই-স্বাক্ষর: চালু",
+      "esign_off": "✍️ ই-স্বাক্ষর: বন্ধ"
     },
     "challan": {
       "back": "← চালান তালিকায় ফিরুন",

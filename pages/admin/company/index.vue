@@ -10,6 +10,8 @@ const loading = ref(true)
 const saving = ref(false)
 const savingCosting = ref(false)
 const uploadingLogo = ref(false)
+const uploadingSignature = ref(false)
+const savingSignatory = ref(false)
 
 const impliedOverheadPct = computed(() => {
   const mat = Number(company.value?.ref_material_cost) || 0
@@ -33,6 +35,8 @@ const logoUrl = computed(() =>
   company.value?.logo_path
     ? client.storage.from('company-assets').getPublicUrl(company.value.logo_path).data.publicUrl
     : null)
+const { signatureUrl: resolveSignatureUrl } = useCompanySignature()
+const signatureImgUrl = computed(() => resolveSignatureUrl(company.value))
 
 const saveProfile = async () => {
   saving.value = true
@@ -76,6 +80,44 @@ const onLogo = async (ev: Event) => {
     uploadingLogo.value = false
     ;(ev.target as HTMLInputElement).value = ''
   }
+}
+
+const onSignature = async (ev: Event) => {
+  const file = (ev.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  uploadingSignature.value = true
+  try {
+    const path = `${activeCompanyId.value}/signature-${Date.now()}-${file.name}`
+    const up = await client.storage.from('company-assets').upload(path, file, { upsert: true })
+    if (up.error) throw up.error
+    const { error } = await client.from('companies').update({ signature_path: path } as any).eq('id', activeCompanyId.value)
+    if (error) throw error
+    company.value.signature_path = path
+    toast.add({ title: t('admin.company.toasts.signature_updated') })
+  } catch (e: any) {
+    toast.add({ title: t('admin.company.toasts.upload_failed'), description: e.message, color: 'red' })
+  } finally {
+    uploadingSignature.value = false
+    ;(ev.target as HTMLInputElement).value = ''
+  }
+}
+
+const removeSignature = async () => {
+  const { error } = await client.from('companies').update({ signature_path: null } as any).eq('id', activeCompanyId.value)
+  if (error) { toast.add({ title: t('common.save_failed'), description: error.message, color: 'red' }); return }
+  company.value.signature_path = null
+  toast.add({ title: t('admin.company.toasts.signature_removed') })
+}
+
+const saveSignatory = async () => {
+  savingSignatory.value = true
+  const { error } = await client.from('companies').update({
+    signatory_name: company.value.signatory_name,
+    signatory_designation: company.value.signatory_designation
+  } as any).eq('id', activeCompanyId.value)
+  if (error) toast.add({ title: t('common.save_failed'), description: error.message, color: 'red' })
+  else toast.add({ title: t('admin.company.toasts.signatory_updated') })
+  savingSignatory.value = false
 }
 
 // --- New subsidiary ---
@@ -139,6 +181,37 @@ const switchTo = async (companyId: string) => {
         </div>
         <div class="flex justify-end mt-4">
           <UButton :loading="saving" @click="saveProfile">{{ t('admin.company.profile.save') }}</UButton>
+        </div>
+      </UCard>
+
+      <UCard>
+        <template #header>
+          <p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('admin.company.signatory.card_title') }}</p>
+        </template>
+        <p class="text-[12px] text-gray-500 dark:text-zinc-500 mb-3">{{ t('admin.company.signatory.card_subtitle') }}</p>
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-28 h-16 rounded ring-1 ring-gray-200 dark:ring-zinc-800 flex items-center justify-center overflow-hidden bg-white shrink-0">
+            <img v-if="signatureImgUrl" :src="signatureImgUrl" class="w-full h-full object-contain" alt="Authorized signature">
+            <UIcon v-else name="i-heroicons-pencil-square" class="text-2xl text-gray-300" />
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="cursor-pointer">
+              <span class="text-xs px-2.5 py-1.5 rounded bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 hover:bg-gray-200 dark:hover:bg-zinc-700 font-medium">
+                {{ uploadingSignature ? t('admin.company.signatory.uploading') : t('admin.company.signatory.upload_signature') }}
+              </span>
+              <input type="file" accept="image/*" class="hidden" :disabled="uploadingSignature" @change="onSignature">
+            </label>
+            <UButton v-if="signatureImgUrl" size="xs" variant="ghost" color="red" @click="removeSignature">{{ t('admin.company.signatory.remove_signature') }}</UButton>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <UFormGroup :label="t('admin.company.signatory.signatory_name')"><UInput v-model="company.signatory_name" /></UFormGroup>
+          <UFormGroup :label="t('admin.company.signatory.signatory_designation')">
+            <UInput v-model="company.signatory_designation" :placeholder="t('admin.company.signatory.signatory_designation_placeholder')" />
+          </UFormGroup>
+        </div>
+        <div class="flex justify-end mt-4">
+          <UButton :loading="savingSignatory" @click="saveSignatory">{{ t('admin.company.signatory.save') }}</UButton>
         </div>
       </UCard>
 

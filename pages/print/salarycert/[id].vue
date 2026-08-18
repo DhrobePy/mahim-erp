@@ -12,6 +12,7 @@ const id = route.params.id as string
 const emp = ref<any>(null)
 const company = ref<any>(null)
 const loading = ref(true)
+const useSignature = ref(true)
 
 const load = async () => {
   loading.value = true
@@ -53,6 +54,9 @@ const body2 = computed(() => emp.value ? t('printHr.salarycert.body2', {
   <div class="print-root">
     <div class="no-print toolbar">
       <NuxtLink :to="`/hr/${id}`" class="back">{{ t('printHr.salarycert.back') }}</NuxtLink>
+      <button v-if="company?.signature_path" class="lang-btn" @click="useSignature = !useSignature">
+        {{ useSignature ? t('print.toolbar.esign_on') : t('print.toolbar.esign_off') }}
+      </button>
       <button class="lang-btn" @click="toggleLang">{{ t('print.toolbar.lang_toggle') }}</button>
       <button class="print-btn" @click="() => window.print()">{{ t('print.toolbar.print_btn') }}</button>
     </div>
@@ -94,9 +98,11 @@ const body2 = computed(() => emp.value ? t('printHr.salarycert.body2', {
 
       <div class="sig-block">
         <p>{{ t('printHr.salarycert.yours_faithfully') }}</p>
-        <div class="sig-line" />
-        <p><b>{{ t('printHr.salarycert.for_company', { company: company.legal_name || company.name }) }}</b></p>
-        <p class="small">{{ t('printHr.salarycert.authorised_signature_hr') }}</p>
+        <SignatureBlock
+          :company="company" :show-signature="useSignature"
+          :for-label="t('printHr.salarycert.for_company', { company: company.legal_name || company.name })"
+          :label="t('printHr.salarycert.authorised_signature_hr')"
+        />
       </div>
     </div>
   </div>

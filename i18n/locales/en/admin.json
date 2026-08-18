@@ -132,7 +132,21 @@
         "name_code_required": "Name and code are required",
         "created": "{name} created",
         "failed": "Failed",
-        "switched": "Switched active company"
+        "switched": "Switched active company",
+        "signature_updated": "Signature updated",
+        "signature_removed": "Signature removed",
+        "signatory_updated": "Signatory details updated"
+      },
+      "signatory": {
+        "card_title": "Authorized signatory",
+        "card_subtitle": "Used on every printed document's signature block, with an option per printout to show it or leave a blank line",
+        "upload_signature": "Upload signature",
+        "uploading": "Uploading…",
+        "remove_signature": "Remove",
+        "signatory_name": "Signatory name",
+        "signatory_designation": "Designation",
+        "signatory_designation_placeholder": "e.g. Managing Director",
+        "save": "Save signatory"
       }
     },
     "directors": {

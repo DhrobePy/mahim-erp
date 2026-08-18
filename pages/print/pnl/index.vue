@@ -12,6 +12,7 @@ const to = (route.query.to as string) || ''
 const company = ref<any>(null)
 const loading = ref(true)
 const rawLines = ref<any[]>([])
+const useSignature = ref(true)
 
 const pnlSection = (code: string) => {
   if (code.startsWith('41') || code.startsWith('42') || code.startsWith('43') || code === '4900') return 'revenue'
@@ -81,6 +82,9 @@ const fmtDate = (d?: string) => d
   <div class="print-root">
     <div class="no-print toolbar">
       <NuxtLink to="/accounting/pnl" class="back">{{ t('printGov.pnl.back') }}</NuxtLink>
+      <button v-if="company?.signature_path" class="lang-btn" @click="useSignature = !useSignature">
+        {{ useSignature ? t('print.toolbar.esign_on') : t('print.toolbar.esign_off') }}
+      </button>
       <button class="lang-btn" @click="toggleLang">{{ t('print.toolbar.lang_toggle') }}</button>
       <button class="print-btn" @click="() => window.print()">{{ t('print.toolbar.print_btn') }}</button>
     </div>
@@ -116,6 +120,10 @@ const fmtDate = (d?: string) => d
       </table>
 
       <p class="small disclaimer">{{ t('printGov.pnl.disclaimer') }}</p>
+
+      <div class="sig-block">
+        <SignatureBlock :company="company" :show-signature="useSignature" :label="t('printGov.common.authorised_signature')" />
+      </div>
     </div>
   </div>
 </template>
@@ -146,6 +154,7 @@ tr.detail td { font-size: 11px; color: #444; padding-left: 16px; }
 tr.subtotal td { font-weight: 700; border-top: 1px solid #111; padding-top: 8px; }
 tr.total td { font-weight: 700; font-size: 15px; border-top: 2px solid #111; padding-top: 10px; }
 .disclaimer { margin-top: 24px; font-style: italic; }
+.sig-block { margin-top: 40px; }
 @media print {
   .no-print { display: none !important; }
   .print-root { background: #fff; padding: 0; }

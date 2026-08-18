@@ -13,6 +13,7 @@ const doc = ref<any>(null)
 const company = ref<any>(null)
 const { logoUrl } = useCompanyLogo()
 const loading = ref(true)
+const useSignature = ref(true)
 
 const { defaultsFor } = useLcClauses()
 const clauses = ref<string[]>([])
@@ -60,6 +61,9 @@ const fmtDate = (d?: string) => d
     <div class="no-print toolbar">
       <NuxtLink :to="`/quotations/${id}`" class="back">{{ t('printTrade.quote.back') }}</NuxtLink>
       <PrintClausePicker v-if="doc" v-model="clauses" :docs="[clauseDocFor[doc.doc_type]]" />
+      <button v-if="company?.signature_path" class="lang-btn" @click="useSignature = !useSignature">
+        {{ useSignature ? t('print.toolbar.esign_on') : t('print.toolbar.esign_off') }}
+      </button>
       <button class="lang-btn" @click="toggleLang">{{ t('print.toolbar.lang_toggle') }}</button>
       <button class="print-btn" @click="() => window.print()">{{ t('print.toolbar.print_btn') }}</button>
     </div>
@@ -133,11 +137,11 @@ const fmtDate = (d?: string) => d
 
       <div class="row spread sig-block">
         <div class="sig"><div class="sig-line" /><div class="small">{{ t('printTrade.quote.accepted_by_buyer') }}</div></div>
-        <div class="sig">
-          <div class="sig-line" />
-          <div>{{ t('printTrade.quote.for_company', { company: company.legal_name || company.name }) }}</div>
-          <div class="small">{{ t('printTrade.quote.authorised_signature') }}</div>
-        </div>
+        <SignatureBlock
+          :company="company" :show-signature="useSignature"
+          :for-label="t('printTrade.quote.for_company', { company: company.legal_name || company.name })"
+          :label="t('printTrade.quote.authorised_signature')"
+        />
       </div>
     </div>
 

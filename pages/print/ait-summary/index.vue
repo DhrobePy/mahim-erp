@@ -11,6 +11,7 @@ const company = ref<any>(null)
 const summary = ref<any>(null)
 const entries = ref<any[]>([])
 const loading = ref(true)
+const useSignature = ref(true)
 
 const load = async () => {
   loading.value = true
@@ -42,6 +43,9 @@ const fmtDate = (d?: string) => d
   <div class="print-root">
     <div class="no-print toolbar">
       <NuxtLink to="/accounting/ait-summary" class="back">{{ t('printGov.aitSummary.back') }}</NuxtLink>
+      <button v-if="company?.signature_path" class="lang-btn" @click="useSignature = !useSignature">
+        {{ useSignature ? t('print.toolbar.esign_on') : t('print.toolbar.esign_off') }}
+      </button>
       <button class="lang-btn" @click="toggleLang">{{ t('print.toolbar.lang_toggle') }}</button>
       <button class="print-btn" @click="() => window.print()">{{ t('print.toolbar.print_btn') }}</button>
     </div>
@@ -75,6 +79,10 @@ const fmtDate = (d?: string) => d
       </table>
 
       <p class="small disclaimer">{{ t('printGov.aitSummary.disclaimer') }}</p>
+
+      <div class="sig-block">
+        <SignatureBlock :company="company" :show-signature="useSignature" :label="t('printGov.common.authorised_signature')" />
+      </div>
     </div>
   </div>
 </template>
@@ -104,6 +112,7 @@ table.lines th, table.lines td { border: 1px solid #ccc; padding: 4px 8px; }
 table.lines thead th { background: #f4f4f5; text-align: left; }
 table.lines .num { text-align: right; font-family: 'JetBrains Mono', monospace; }
 .disclaimer { margin-top: 20px; font-style: italic; }
+.sig-block { margin-top: 40px; }
 @media print {
   .no-print { display: none !important; }
   .print-root { background: #fff; padding: 0; }

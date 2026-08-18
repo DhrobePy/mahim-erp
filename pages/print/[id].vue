@@ -18,6 +18,7 @@ const { logoUrl } = useCompanyLogo()
 const bill = ref<any>(null)
 const challanLines = ref<any[]>([])
 const loading = ref(true)
+const useSignature = ref(true)
 
 const docs = reactive({ boe: true, ci: true, pl: true, dc: true })
 const activeDocs = computed(() =>
@@ -114,6 +115,9 @@ const body2 = computed(() => t('printTrade.boe.bill.body2', {
       <label><input v-model="docs.pl" type="checkbox"> {{ t('printTrade.boe.toggle_pl') }}</label>
       <label><input v-model="docs.dc" type="checkbox"> {{ t('printTrade.boe.toggle_dc') }}</label>
       <PrintClausePicker v-model="clauses" :docs="activeDocs" />
+      <button v-if="company?.signature_path" class="lang-btn" @click="useSignature = !useSignature">
+        {{ useSignature ? t('print.toolbar.esign_on') : t('print.toolbar.esign_off') }}
+      </button>
       <button class="lang-btn" @click="toggleLang">{{ t('print.toolbar.lang_toggle') }}</button>
       <button class="print-btn" @click="() => window.print()">{{ t('print.toolbar.print_btn') }}</button>
     </div>
@@ -149,11 +153,11 @@ const body2 = computed(() => t('printTrade.boe.bill.body2', {
               <div class="small">{{ inv.lcs?.bank?.address || '' }}</div>
               <div class="small">{{ t('printTrade.boe.bill.account_label', { name: inv.parties?.name }) }}</div>
             </div>
-            <div class="sig">
-              <div class="sig-line" />
-              <div>{{ t('printTrade.boe.common.for_company', { company: company.legal_name || company.name }) }}</div>
-              <div class="small">{{ t('printTrade.boe.common.authorised_signature') }}</div>
-            </div>
+            <SignatureBlock
+              :company="company" :show-signature="useSignature"
+              :for-label="t('printTrade.boe.common.for_company', { company: company.legal_name || company.name })"
+              :label="t('printTrade.boe.common.authorised_signature')"
+            />
           </div>
         </div>
       </template>
@@ -229,11 +233,11 @@ const body2 = computed(() => t('printTrade.boe.bill.body2', {
 
         <div class="row spread sig-block">
           <div class="sig"><div class="sig-line" /><div class="small">Prepared by</div></div>
-          <div class="sig">
-            <div class="sig-line" />
-            <div>For <b>{{ company.legal_name || company.name }}</b></div>
-            <div class="small">Authorised Signature</div>
-          </div>
+          <SignatureBlock
+            :company="company" :show-signature="useSignature"
+            :for-label="`For ${company.legal_name || company.name}`"
+            label="Authorised Signature"
+          />
         </div>
       </div>
 
@@ -297,11 +301,11 @@ const body2 = computed(() => t('printTrade.boe.bill.body2', {
 
         <div class="row spread sig-block">
           <div class="sig"><div class="sig-line" /><div class="small">Prepared by</div></div>
-          <div class="sig">
-            <div class="sig-line" />
-            <div>For <b>{{ company.legal_name || company.name }}</b></div>
-            <div class="small">Authorised Signature</div>
-          </div>
+          <SignatureBlock
+            :company="company" :show-signature="useSignature"
+            :for-label="`For ${company.legal_name || company.name}`"
+            label="Authorised Signature"
+          />
         </div>
       </div>
 

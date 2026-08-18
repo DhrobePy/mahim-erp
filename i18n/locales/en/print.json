@@ -3,7 +3,9 @@
     "toolbar": {
       "print_btn": "🖨 Print",
       "loading": "Loading…",
-      "lang_toggle": "বাংলা"
+      "lang_toggle": "বাংলা",
+      "esign_on": "✍️ E-Sign: On",
+      "esign_off": "✍️ E-Sign: Off"
     },
     "challan": {
       "back": "← back to challans",

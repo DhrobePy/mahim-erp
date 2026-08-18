@@ -12,6 +12,7 @@ const id = route.params.id as string
 const sale = ref<any>(null)
 const company = ref<any>(null)
 const loading = ref(true)
+const useSignature = ref(true)
 
 const load = async () => {
   loading.value = true
@@ -41,6 +42,9 @@ const total = computed(() => subtotal.value + vatAmount.value)
   <div class="print-root">
     <div class="no-print toolbar">
       <NuxtLink to="/accounting/cash-sales" class="back">{{ t('printTrade.cashsale.back') }}</NuxtLink>
+      <button v-if="company?.signature_path" class="lang-btn" @click="useSignature = !useSignature">
+        {{ useSignature ? t('print.toolbar.esign_on') : t('print.toolbar.esign_off') }}
+      </button>
       <button class="lang-btn" @click="toggleLang">{{ t('print.toolbar.lang_toggle') }}</button>
       <button class="print-btn" @click="() => window.print()">{{ t('print.toolbar.print_btn') }}</button>
     </div>
@@ -89,9 +93,11 @@ const total = computed(() => subtotal.value + vatAmount.value)
 
       <div class="sig-block">
         <p>{{ t('printTrade.cashsale.received_by') }}</p>
-        <div class="sig-line" />
-        <p><b>{{ t('printTrade.cashsale.for_company', { company: company.legal_name || company.name }) }}</b></p>
-        <p class="small">{{ t('printTrade.cashsale.authorised_signature') }}</p>
+        <SignatureBlock
+          :company="company" :show-signature="useSignature"
+          :for-label="t('printTrade.cashsale.for_company', { company: company.legal_name || company.name })"
+          :label="t('printTrade.cashsale.authorised_signature')"
+        />
       </div>
     </div>
   </div>

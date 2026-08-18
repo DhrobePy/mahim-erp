@@ -12,6 +12,7 @@ const id = route.params.id as string
 const line = ref<any>(null)
 const company = ref<any>(null)
 const loading = ref(true)
+const useSignature = ref(true)
 
 const load = async () => {
   loading.value = true
@@ -46,6 +47,9 @@ const totalDeductions = computed(() => deductions.value.reduce((s, d) => s + d.a
   <div class="print-root">
     <div class="no-print toolbar">
       <NuxtLink :to="`/hr/${line?.employee_id}`" class="back">← back</NuxtLink>
+      <button v-if="company?.signature_path" class="lang-btn" @click="useSignature = !useSignature">
+        {{ useSignature ? t('print.toolbar.esign_on') : t('print.toolbar.esign_off') }}
+      </button>
       <button class="print-btn" @click="() => window.print()">🖨 Print</button>
     </div>
 
@@ -100,9 +104,11 @@ const totalDeductions = computed(() => deductions.value.reduce((s, d) => s + d.a
       <p class="small words">In words: {{ takaWords(line.net_pay) }}</p>
 
       <div class="sig-block">
-        <p><b>For {{ company.legal_name || company.name }}</b></p>
-        <div class="sig-line" />
-        <p class="small">Authorised Signature</p>
+        <SignatureBlock
+          :company="company" :show-signature="useSignature"
+          :for-label="`For ${company.legal_name || company.name}`"
+          label="Authorised Signature"
+        />
       </div>
     </div>
   </div>
@@ -116,6 +122,7 @@ const totalDeductions = computed(() => deductions.value.reduce((s, d) => s + d.a
 }
 .toolbar .back { color: #fbbf24; text-decoration: none; }
 .print-btn { background: #f59e0b; color: #000; border: 0; border-radius: 4px; padding: 6px 16px; font-weight: 600; cursor: pointer; }
+.lang-btn { background: transparent; color: #e4e4e7; border: 1px solid #52525b; border-radius: 4px; padding: 5px 14px; font-weight: 500; cursor: pointer; }
 .sheet {
   width: 210mm; min-height: 200mm; margin: 0 auto 20px; background: #fff; color: #111;
   padding: 20mm 18mm; box-shadow: 0 2px 12px rgba(0,0,0,.4); font-size: 13px; line-height: 1.6;
