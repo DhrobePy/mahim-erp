@@ -6,6 +6,20 @@
     "empty": "এখনো কোনো লোকাল এক্সপোর্ট এলসি বিল নেই।",
     "sight": "সাইট",
     "tenure_days": "{days} দিন",
+    "new_entry": "নতুন এন্ট্রি",
+    "modal": {
+      "new_title": "নতুন এলসি / বিল এন্ট্রি",
+      "edit_title": "এন্ট্রি সম্পাদনা",
+      "lc_label": "প্রাপ্ত এলসি",
+      "lc_placeholder": "এলসি নির্বাচন করুন",
+      "bill_no_label": "বিল নং",
+      "amount_label": "পরিমাণ",
+      "lbpd_header": "এলবিপিডি (ঐচ্ছিক)",
+      "lbpd_facility_label": "সুবিধা",
+      "lbpd_facility_placeholder": "— কোনোটি নয় —",
+      "lbpd_principal_label": "প্রদত্ত মূল অর্থ",
+      "create": "তৈরি করুন"
+    },
     "stats": {
       "open": "খোলা বিল",
       "outstanding": "বকেয়া (টাকা)",
@@ -37,7 +51,11 @@
       "load_failed": "লোড ব্যর্থ হয়েছে",
       "save_failed": "সংরক্ষণ ব্যর্থ হয়েছে",
       "saved": "সংরক্ষিত হয়েছে",
-      "cleared": "মুছে ফেলা হয়েছে"
+      "cleared": "মুছে ফেলা হয়েছে",
+      "created": "এন্ট্রি তৈরি হয়েছে",
+      "updated": "এন্ট্রি হালনাগাদ হয়েছে",
+      "pick_lc": "একটি এলসি নির্বাচন করুন",
+      "bill_no_required": "বিল নং আবশ্যক"
     }
   }
 }

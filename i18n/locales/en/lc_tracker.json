@@ -6,6 +6,20 @@
     "empty": "No local export LC bills yet.",
     "sight": "Sight",
     "tenure_days": "{days} days",
+    "new_entry": "New entry",
+    "modal": {
+      "new_title": "New LC / bill entry",
+      "edit_title": "Edit entry",
+      "lc_label": "Received LC",
+      "lc_placeholder": "Select LC",
+      "bill_no_label": "Bill no.",
+      "amount_label": "Amount",
+      "lbpd_header": "LBPD (optional)",
+      "lbpd_facility_label": "Facility",
+      "lbpd_facility_placeholder": "— none —",
+      "lbpd_principal_label": "Principal disbursed",
+      "create": "Create"
+    },
     "stats": {
       "open": "Open bills",
       "outstanding": "Outstanding (BDT)",
@@ -37,7 +51,11 @@
       "load_failed": "Failed to load",
       "save_failed": "Save failed",
       "saved": "Saved",
-      "cleared": "Cleared"
+      "cleared": "Cleared",
+      "created": "Entry created",
+      "updated": "Entry updated",
+      "pick_lc": "Pick an LC",
+      "bill_no_required": "Bill no. is required"
     }
   }
 }
