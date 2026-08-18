@@ -25,7 +25,7 @@ export default defineNuxtConfig({
           'en/ceo.json', 'en/challans.json', 'en/dashboard.json', 'en/hr.json', 'en/invoices.json',
           'en/items.json', 'en/lcs.json', 'en/parties.json', 'en/procurement.json', 'en/production.json',
           'en/quotations.json', 'en/sales.json', 'en/stock.json', 'en/print.json', 'en/admin.json',
-          'en/system.json', 'en/print_trade.json', 'en/print_hr.json', 'en/print_gov.json'
+          'en/system.json', 'en/print_trade.json', 'en/print_hr.json', 'en/print_gov.json', 'en/lc_tracker.json'
         ]
       },
       {
@@ -36,7 +36,7 @@ export default defineNuxtConfig({
           'bn/ceo.json', 'bn/challans.json', 'bn/dashboard.json', 'bn/hr.json', 'bn/invoices.json',
           'bn/items.json', 'bn/lcs.json', 'bn/parties.json', 'bn/procurement.json', 'bn/production.json',
           'bn/quotations.json', 'bn/sales.json', 'bn/stock.json', 'bn/print.json', 'bn/admin.json',
-          'bn/system.json', 'bn/print_trade.json', 'bn/print_hr.json', 'bn/print_gov.json'
+          'bn/system.json', 'bn/print_trade.json', 'bn/print_hr.json', 'bn/print_gov.json', 'bn/lc_tracker.json'
         ]
       }
     ],

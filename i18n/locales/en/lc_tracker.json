@@ -1,0 +1,43 @@
+{
+  "lc_tracker": {
+    "kicker": "Finance",
+    "title": "LC / LBPD Tracker",
+    "subtitle": "Local export LCs — documents, acceptance, discounting and maturity in one view",
+    "empty": "No local export LC bills yet.",
+    "sight": "Sight",
+    "tenure_days": "{days} days",
+    "stats": {
+      "open": "Open bills",
+      "outstanding": "Outstanding (BDT)",
+      "outstanding_sub": "LC value of bills not yet received",
+      "pending_acceptance": "Pending acceptance",
+      "due_soon": "Due within 7 days",
+      "overdue": "Overdue"
+    },
+    "columns": {
+      "lc_no": "Received LC",
+      "bank": "Issuing bank",
+      "party": "Party",
+      "lc_amount": "LC amount",
+      "tenure": "Payment tenure",
+      "docs_submitted": "Docs submitted",
+      "acceptance": "Acceptance received",
+      "lbpd_created": "LBPD created",
+      "maturity": "Maturity date",
+      "received": "Bills received"
+    },
+    "statuses": {
+      "submitted": "Submitted",
+      "accepted": "Accepted",
+      "discounted": "Discounted",
+      "realized": "Realized",
+      "overdue": "Overdue"
+    },
+    "toast": {
+      "load_failed": "Failed to load",
+      "save_failed": "Save failed",
+      "saved": "Saved",
+      "cleared": "Cleared"
+    }
+  }
+}

@@ -25,6 +25,7 @@
       "lcs": "LCs",
       "invoices": "Invoices",
       "banking": "Banking / LBPD",
+      "lc_tracker": "LC / LBPD Tracker",
       "accounting": "Accounting",
       "bank_accounts": "Bank & cash accounts",
       "cash_sales": "Cash sales",

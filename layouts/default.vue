@@ -49,6 +49,7 @@ const sections = [
     title: 'finance',
     links: [
       { to: '/banking', icon: 'i-heroicons-banknotes', module: 'banking' },
+      { to: '/banking/lc-tracker', icon: 'i-heroicons-clock', module: 'banking', labelKey: 'lc_tracker' },
       { to: '/accounting', icon: 'i-heroicons-calculator', module: 'accounting' },
       { to: '/accounting/accounts', icon: 'i-heroicons-credit-card', module: 'bank_accounts' },
       { to: '/accounting/cash-sales', icon: 'i-heroicons-shopping-bag', module: 'cash_sales' },
@@ -214,14 +215,14 @@ const roleLabel = computed(() => {
               v-for="link in section.links"
               :key="link.to"
               :to="link.to"
-              :title="sidebarCollapsed ? t(`nav.links.${link.module}`) : undefined"
+              :title="sidebarCollapsed ? t(`nav.links.${link.labelKey || link.module}`) : undefined"
               active-class="!border-amber-500 !text-amber-600 dark:!text-amber-400 bg-amber-50/60 dark:bg-amber-500/[0.06]"
               class="flex items-center gap-2.5 py-[7px] text-[13px] border-l-2 border-transparent text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors duration-150 cursor-pointer"
               :class="sidebarCollapsed ? 'justify-center px-0' : 'pl-[15px] pr-3'"
               @click="mobileNavOpen = false"
             >
               <UIcon :name="link.icon" class="text-base opacity-70 shrink-0" />
-              <span v-if="!sidebarCollapsed">{{ t(`nav.links.${link.module}`) }}</span>
+              <span v-if="!sidebarCollapsed">{{ t(`nav.links.${link.labelKey || link.module}`) }}</span>
             </ULink>
           </template>
         </template>
