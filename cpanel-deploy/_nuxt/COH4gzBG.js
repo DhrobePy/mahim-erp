@@ -1,1 +1,0 @@
-import{m as c}from"./1lSdaec1.js";const f=()=>{const e=c();return{replaceLines:async(r,i,s,n)=>{const o=await e.from(r).delete().eq(i,s);if(o.error)throw o.error;if(n.length){const t=await e.from(r).insert(n);if(t.error)throw t.error}}}};export{f as u};

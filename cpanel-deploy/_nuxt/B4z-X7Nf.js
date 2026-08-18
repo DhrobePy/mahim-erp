@@ -1,1 +1,0 @@
-import{m as r}from"./1lSdaec1.js";const n=()=>{const a=r();return{signatureUrl:t=>t?.signature_path?a.storage.from("company-assets").getPublicUrl(t.signature_path).data.publicUrl:null}};export{n as u};
