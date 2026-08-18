@@ -4,6 +4,7 @@ const toast = useToast()
 const { canWrite } = useProfile()
 const { money, num } = useFmt()
 const { deleteRecord } = useRecycleBin()
+const { replaceLines } = useLineReconcile()
 const { t } = useI18n()
 
 const docs = ref<any[]>([])
@@ -25,7 +26,7 @@ const load = async () => {
   loading.value = true
   const [d, p, i] = await Promise.all([
     client.from('sales_documents')
-      .select('*, parties(name), parent:parent_doc_id(doc_no), sales_document_lines(qty, unit_price)')
+      .select('*, parties(name), parent:parent_doc_id(doc_no), sales_document_lines(id, item_id, qty, unit_price)')
       .is('deleted_at', null)
       .order('created_at', { ascending: false }),
     client.from('parties').select('id, name').eq('is_customer', true).is('deleted_at', null).order('name'),
@@ -70,6 +71,7 @@ const docTypeOptions = computed(() => [
   { value: 'contract', label: t('quotations.doc_types.contract') }
 ])
 const form = reactive({
+  id: null as string | null,
   doc_type: 'quotation',
   customer_party_id: null as string | null,
   valid_until: new Date(Date.now() + 15 * 86400000).toISOString().slice(0, 10),
@@ -82,12 +84,22 @@ const lines = ref<any[]>([])
 const blankLine = () => ({ item_id: null, qty: 0, unit_price: 0 })
 const openNew = () => {
   Object.assign(form, {
-    doc_type: 'quotation', customer_party_id: null,
+    id: null, doc_type: 'quotation', customer_party_id: null,
     valid_until: new Date(Date.now() + 15 * 86400000).toISOString().slice(0, 10),
     payment_terms: 'Irrevocable Local L/C, at sight', delivery_terms: 'Ex-factory, Dhaka',
     is_deemed_export: true, notes: ''
   })
   lines.value = [blankLine()]
+  open.value = true
+}
+const openEdit = (row: any) => {
+  Object.assign(form, {
+    id: row.id, doc_type: row.doc_type, customer_party_id: row.customer_party_id, valid_until: row.valid_until,
+    payment_terms: row.payment_terms, delivery_terms: row.delivery_terms, is_deemed_export: row.is_deemed_export,
+    notes: row.notes ?? ''
+  })
+  lines.value = (row.sales_document_lines ?? []).map((l: any) => ({ item_id: l.item_id, qty: l.qty, unit_price: l.unit_price }))
+  if (!lines.value.length) lines.value = [blankLine()]
   open.value = true
 }
 
@@ -97,13 +109,25 @@ const save = async () => {
   if (!payload.length) { toast.add({ title: t('quotations.index.toast.add_line'), color: 'red' }); return }
   saving.value = true
   try {
-    const { data: doc, error } = await client.from('sales_documents').insert({ ...form } as any).select('id').single()
-    if (error) throw error
-    const res = await client.from('sales_document_lines').insert(
-      payload.map((l) => ({ ...l, sales_document_id: (doc as any).id })) as any
-    )
-    if (res.error) throw res.error
-    toast.add({ title: t('quotations.index.toast.created', { type: typeLabel.value[form.doc_type] }) })
+    const headerPayload: any = {
+      doc_type: form.doc_type, customer_party_id: form.customer_party_id, valid_until: form.valid_until,
+      payment_terms: form.payment_terms, delivery_terms: form.delivery_terms, is_deemed_export: form.is_deemed_export,
+      notes: form.notes
+    }
+    if (form.id) {
+      const { error } = await client.from('sales_documents').update(headerPayload).eq('id', form.id)
+      if (error) throw error
+      await replaceLines('sales_document_lines', 'sales_document_id', form.id, payload.map((l) => ({ ...l, sales_document_id: form.id })))
+      toast.add({ title: t('quotations.index.toast.updated') })
+    } else {
+      const { data: doc, error } = await client.from('sales_documents').insert(headerPayload).select('id').single()
+      if (error) throw error
+      const res = await client.from('sales_document_lines').insert(
+        payload.map((l) => ({ ...l, sales_document_id: (doc as any).id })) as any
+      )
+      if (res.error) throw res.error
+      toast.add({ title: t('quotations.index.toast.created', { type: typeLabel.value[form.doc_type] }) })
+    }
     open.value = false
     await load()
   } catch (e: any) {
@@ -169,6 +193,7 @@ const onDelete = async (row: any) => {
         <template #actions-data="{ row }">
           <div class="flex gap-1 justify-end items-center">
             <UButton icon="i-heroicons-printer" size="xs" color="gray" variant="ghost" :to="`/print/quote/${row.id}`" target="_blank" :aria-label="t('quotations.index.print_aria')" />
+            <UButton v-if="canWrite && row.status === 'draft'" icon="i-heroicons-pencil-square" size="xs" variant="ghost" @click="openEdit(row)" />
             <template v-if="canWrite && ['draft', 'sent', 'accepted'].includes(row.status)">
               <UButton v-if="row.status === 'draft'" size="2xs" variant="soft" @click="setStatus(row, 'sent')">{{ t('quotations.index.sent') }}</UButton>
               <UButton v-if="row.status === 'sent'" size="2xs" variant="soft" color="green" @click="setStatus(row, 'accepted')">{{ t('quotations.index.accepted') }}</UButton>
@@ -188,7 +213,7 @@ const onDelete = async (row: any) => {
 
     <USlideover v-model="open" :ui="{ width: 'w-screen max-w-2xl' }">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">{{ t('quotations.index.modal_title') }}</p></template>
+        <template #header><p class="font-medium">{{ form.id ? t('quotations.index.modal_title_edit') : t('quotations.index.modal_title') }}</p></template>
         <div class="grid grid-cols-2 gap-4 mb-4">
           <UFormGroup :label="t('quotations.index.type_label')" required>
             <USelect v-model="form.doc_type" :options="docTypeOptions" option-attribute="label" value-attribute="value" />
@@ -222,7 +247,7 @@ const onDelete = async (row: any) => {
         <template #footer>
           <div class="flex justify-end gap-2">
             <UButton color="gray" variant="ghost" @click="open = false">{{ t('common.cancel') }}</UButton>
-            <UButton :loading="saving" @click="save">{{ t('quotations.index.create') }}</UButton>
+            <UButton :loading="saving" @click="save">{{ form.id ? t('common.save') : t('quotations.index.create') }}</UButton>
           </div>
         </template>
       </UCard>

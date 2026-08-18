@@ -37,11 +37,21 @@ const exposure = (fac: any) =>
 
 // --- Facility ---
 const facOpen = ref(false)
-const facForm = reactive({ bank_party_id: null as string | null, name: '', facility_type: 'lbpd', limit_amount: 0, interest_rate: 12 })
+const facBlank = () => ({ id: null as string | null, bank_party_id: null as string | null, name: '', facility_type: 'lbpd', limit_amount: 0, interest_rate: 12 })
+const facForm = reactive(facBlank())
+const openNewFacility = () => { Object.assign(facForm, facBlank()); facOpen.value = true }
+const openEditFacility = (row: any) => {
+  Object.assign(facForm, { id: row.id, bank_party_id: row.bank_party_id, name: row.name, facility_type: row.facility_type, limit_amount: row.limit_amount, interest_rate: row.interest_rate })
+  facOpen.value = true
+}
 const saveFacility = async () => {
-  const { error } = await client.from('bank_facilities').insert({ ...facForm } as any)
+  const payload: any = { ...facForm }
+  delete payload.id
+  const { error } = facForm.id
+    ? await client.from('bank_facilities').update(payload).eq('id', facForm.id)
+    : await client.from('bank_facilities').insert(payload)
   if (error) toast.add({ title: t('banking.toasts.facility_failed'), description: error.message, color: 'red' })
-  else { toast.add({ title: t('banking.toasts.facility_added') }); facOpen.value = false; await load() }
+  else { toast.add({ title: facForm.id ? t('banking.toasts.facility_updated') : t('banking.toasts.facility_added') }); facOpen.value = false; await load() }
 }
 
 // --- Bill actions ---
@@ -107,7 +117,7 @@ const disbColor = (s: string) =>
 <template>
   <div>
     <PageHeader :kicker="t('banking.kicker')" :title="t('banking.title')" :subtitle="t('banking.subtitle')">
-      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="facOpen = true">{{ t('banking.new_facility') }}</UButton>
+      <UButton v-if="canWrite" icon="i-heroicons-plus" @click="openNewFacility">{{ t('banking.new_facility') }}</UButton>
     </PageHeader>
 
     <UCard class="mb-6">
@@ -134,6 +144,7 @@ const disbColor = (s: string) =>
         </template>
         <template #actions-data="{ row }">
           <div class="flex gap-1 justify-end">
+            <UButton v-if="canWrite" icon="i-heroicons-pencil-square" variant="ghost" size="xs" @click="openEditFacility(row)" />
             <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="removeFacility(row)" />
           </div>
         </template>
@@ -211,7 +222,7 @@ const disbColor = (s: string) =>
 
     <USlideover v-model="facOpen">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">{{ t('banking.facility_dialog.title') }}</p></template>
+        <template #header><p class="font-medium">{{ facForm.id ? t('banking.facility_dialog.edit_title') : t('banking.facility_dialog.title') }}</p></template>
         <div class="grid grid-cols-2 gap-4">
           <UFormGroup :label="t('banking.facility_dialog.bank')" required>
             <USelect v-model="facForm.bank_party_id" :options="banks" option-attribute="name" value-attribute="id" placeholder="—" />
@@ -226,7 +237,7 @@ const disbColor = (s: string) =>
         <template #footer>
           <div class="flex justify-end gap-2">
             <UButton color="gray" variant="ghost" @click="facOpen = false">{{ t('common.cancel') }}</UButton>
-            <UButton @click="saveFacility">{{ t('banking.facility_dialog.add') }}</UButton>
+            <UButton @click="saveFacility">{{ facForm.id ? t('common.save') : t('banking.facility_dialog.add') }}</UButton>
           </div>
         </template>
       </UCard>

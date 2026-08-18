@@ -46,6 +46,7 @@
       "delete_aria": "Delete",
       "empty": "No sales orders yet.",
       "modal_title": "New sales order",
+      "modal_title_edit": "Edit sales order",
       "buyer_label": "Buyer",
       "buyer_placeholder": "—",
       "lc_label": "LC (leave empty if verbal / pending)",
@@ -60,7 +61,8 @@
       "toast": {
         "pick_buyer": "Pick a buyer",
         "save_failed": "Save failed",
-        "created": "Sales order created"
+        "created": "Sales order created",
+        "updated": "Sales order updated"
       }
     },
     "detail": {

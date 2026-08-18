@@ -3,6 +3,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { deleteRecord } = useRecycleBin()
+const { replaceLines } = useLineReconcile()
 const { t } = useI18n()
 
 const grns = ref<any[]>([])
@@ -25,7 +26,7 @@ const columns = [
 const load = async () => {
   loading.value = true
   const [g, d, s, i, w, po] = await Promise.all([
-    client.from('grns').select('*, parties(name), grn_lines(id, item_id, invoice_qty, accepted_qty, unit_price)').is('deleted_at', null).order('created_at', { ascending: false }),
+    client.from('grns').select('*, parties(name), grn_lines(id, item_id, invoice_qty, accepted_qty, unit_price, gross_weight, core_tare_weight, moisture_pct, batch_no, is_fsc, po_line_id)').is('deleted_at', null).order('created_at', { ascending: false }),
     client.from('debit_notes').select('*, parties(name)').order('created_at', { ascending: false }),
     client.from('parties').select('id, code, name').eq('is_supplier', true).is('deleted_at', null).order('name'),
     client.from('items').select('id, sku, name').eq('is_active', true).is('deleted_at', null).order('sku'),
@@ -68,6 +69,7 @@ const applyPO = (poId: string | null) => {
 const open = ref(false)
 const saving = ref(false)
 const form = reactive({
+  id: null as string | null,
   supplier_party_id: null as string | null,
   warehouse_id: null as string | null,
   mushak_61_no: '',
@@ -80,8 +82,22 @@ const blankLine = () => ({
   core_tare_weight: 0, moisture_pct: 0, unit_price: 0, batch_no: '', is_fsc: false, po_line_id: null as string | null
 })
 const openNew = () => {
-  Object.assign(form, { supplier_party_id: null, warehouse_id: null, mushak_61_no: '', vat_applicable: true, note: '' })
+  Object.assign(form, { id: null, supplier_party_id: null, warehouse_id: null, mushak_61_no: '', vat_applicable: true, note: '' })
   lines.value = [blankLine()]
+  selectedPOId.value = null
+  open.value = true
+}
+const openEdit = (row: any) => {
+  Object.assign(form, {
+    id: row.id, supplier_party_id: row.supplier_party_id, warehouse_id: row.warehouse_id,
+    mushak_61_no: row.mushak_61_no ?? '', vat_applicable: row.vat_applicable, note: row.note ?? ''
+  })
+  lines.value = (row.grn_lines ?? []).map((l: any) => ({
+    item_id: l.item_id, invoice_qty: l.invoice_qty, gross_weight: l.gross_weight,
+    core_tare_weight: l.core_tare_weight, moisture_pct: l.moisture_pct, unit_price: l.unit_price,
+    batch_no: l.batch_no ?? '', is_fsc: l.is_fsc, po_line_id: l.po_line_id
+  }))
+  if (!lines.value.length) lines.value = [blankLine()]
   selectedPOId.value = null
   open.value = true
 }
@@ -97,20 +113,29 @@ const save = async (complete: boolean) => {
   }
   saving.value = true
   try {
-    const { data: grn, error } = await client.from('grns')
-      .insert({ ...form } as any).select('id').single()
-    if (error) throw error
-    const payload = lines.value
-      .filter((l) => l.item_id)
-      .map((l) => ({ ...l, grn_id: (grn as any).id, batch_no: l.batch_no || null }))
-    if (!payload.length) throw new Error(t('procurement.grn.toast.add_line_required'))
-    const res = await client.from('grn_lines').insert(payload as any)
-    if (res.error) throw res.error
+    const headerPayload: any = {
+      supplier_party_id: form.supplier_party_id, warehouse_id: form.warehouse_id,
+      mushak_61_no: form.mushak_61_no, vat_applicable: form.vat_applicable, note: form.note
+    }
+    const lineRows = lines.value.filter((l) => l.item_id).map((l) => ({ ...l, batch_no: l.batch_no || null }))
+    if (!lineRows.length) throw new Error(t('procurement.grn.toast.add_line_required'))
+    let grnId = form.id
+    if (form.id) {
+      const { error } = await client.from('grns').update(headerPayload).eq('id', form.id)
+      if (error) throw error
+      await replaceLines('grn_lines', 'grn_id', form.id, lineRows.map((l) => ({ ...l, grn_id: form.id })))
+    } else {
+      const { data: grn, error } = await client.from('grns').insert(headerPayload).select('id').single()
+      if (error) throw error
+      grnId = (grn as any).id
+      const res = await client.from('grn_lines').insert(lineRows.map((l) => ({ ...l, grn_id: grnId })) as any)
+      if (res.error) throw res.error
+    }
     if (complete) {
-      const rpc = await client.rpc('complete_grn', { p_grn_id: (grn as any).id } as any)
+      const rpc = await client.rpc('complete_grn', { p_grn_id: grnId } as any)
       if (rpc.error) throw rpc.error
     }
-    toast.add({ title: complete ? t('procurement.grn.toast.completed_and_posted') : t('procurement.grn.toast.saved_draft') })
+    toast.add({ title: complete ? t('procurement.grn.toast.completed_and_posted') : (form.id ? t('procurement.grn.toast.updated_draft') : t('procurement.grn.toast.saved_draft')) })
     open.value = false
     await load()
   } catch (e: any) {
@@ -157,6 +182,10 @@ const statusColor = (s: string) =>
           <div class="flex items-center gap-1.5 justify-end">
             <UButton
               v-if="canWrite && row.status === 'draft'"
+              icon="i-heroicons-pencil-square" size="xs" variant="ghost" @click="openEdit(row)"
+            />
+            <UButton
+              v-if="canWrite && row.status === 'draft'"
               size="xs" variant="soft" @click="completeDraft(row)"
             >{{ t('procurement.grn.complete_and_post') }}</UButton>
             <UButton
@@ -196,7 +225,7 @@ const statusColor = (s: string) =>
 
     <USlideover v-model="open" :ui="{ width: 'w-screen max-w-3xl' }">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">{{ t('procurement.grn.form.title') }}</p></template>
+        <template #header><p class="font-medium">{{ form.id ? t('procurement.grn.form.edit_title') : t('procurement.grn.form.title') }}</p></template>
         <div class="grid grid-cols-3 gap-3 mb-4">
           <UFormGroup :label="t('procurement.grn.form.supplier')" required>
             <USelect v-model="form.supplier_party_id" :options="suppliers" option-attribute="name" value-attribute="id" :placeholder="t('procurement.grn.form.supplier_placeholder')" />
@@ -242,7 +271,7 @@ const statusColor = (s: string) =>
         <template #footer>
           <div class="flex justify-end gap-2">
             <UButton color="gray" variant="ghost" @click="open = false">{{ t('common.cancel') }}</UButton>
-            <UButton color="gray" variant="soft" :loading="saving" @click="save(false)">{{ t('procurement.grn.form.save_draft') }}</UButton>
+            <UButton color="gray" variant="soft" :loading="saving" @click="save(false)">{{ form.id ? t('common.save') : t('procurement.grn.form.save_draft') }}</UButton>
             <UButton :loading="saving" @click="save(true)">{{ t('procurement.grn.complete_and_post') }}</UButton>
           </div>
         </template>

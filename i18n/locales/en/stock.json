@@ -4,6 +4,7 @@
     "title": "Stock",
     "subtitle": "Current balance by item and warehouse",
     "stock_entry": "Stock entry",
+    "edit_entry": "Edit stock entry",
     "columns": {
       "item": "Item",
       "sku": "SKU",
@@ -16,7 +17,13 @@
     "no_stock": "No stock yet. Add a stock entry to begin.",
     "select_item_warehouse": "Select item and warehouse",
     "stock_updated": "Stock updated",
+    "stock_entry_updated": "Stock entry updated",
+    "stock_entry_deleted": "Stock entry deleted",
+    "delete_confirm": "Delete this stock entry ({note})? This cannot be undone.",
     "failed": "Failed",
+    "manual_entries": {
+      "header": "Manual stock entries"
+    },
     "fields": {
       "item": "Item",
       "select_item": "Select item",

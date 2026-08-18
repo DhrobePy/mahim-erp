@@ -42,6 +42,7 @@
     },
     "facility_dialog": {
       "title": "নতুন ব্যাংক সুবিধা",
+      "edit_title": "ব্যাংক সুবিধা সম্পাদনা",
       "bank": "ব্যাংক",
       "type": "ধরন",
       "limit": "সীমা (৳)",
@@ -69,6 +70,7 @@
     "toasts": {
       "facility_failed": "সুবিধা যোগ ব্যর্থ হয়েছে",
       "facility_added": "সুবিধা যোগ হয়েছে",
+      "facility_updated": "সুবিধা হালনাগাদ হয়েছে",
       "acceptance_failed": "গ্রহণ ব্যর্থ হয়েছে",
       "bill_accepted": "{bill} গৃহীত হয়েছে — ইউজেন্স থেকে মেয়াদপূর্তি নির্ধারিত হয়েছে",
       "disbursement_failed": "ডিসবার্সমেন্ট ব্যর্থ হয়েছে",

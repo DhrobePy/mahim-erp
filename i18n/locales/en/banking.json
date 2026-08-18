@@ -42,6 +42,7 @@
     },
     "facility_dialog": {
       "title": "New bank facility",
+      "edit_title": "Edit bank facility",
       "bank": "Bank",
       "type": "Type",
       "limit": "Limit (৳)",
@@ -69,6 +70,7 @@
     "toasts": {
       "facility_failed": "Facility failed",
       "facility_added": "Facility added",
+      "facility_updated": "Facility updated",
       "acceptance_failed": "Acceptance failed",
       "bill_accepted": "{bill} accepted — maturity set from usance",
       "disbursement_failed": "Disbursement failed",

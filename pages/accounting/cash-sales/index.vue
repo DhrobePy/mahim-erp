@@ -4,6 +4,7 @@ const toast = useToast()
 const { canWrite } = useProfile()
 const { money } = useFmt()
 const { deleteRecord } = useRecycleBin()
+const { replaceLines } = useLineReconcile()
 const { t } = useI18n()
 
 const sales = ref<any[]>([])
@@ -51,6 +52,7 @@ const rowTotal = (row: any) => {
 const open = ref(false)
 const saving = ref(false)
 const form = reactive({
+  id: null as string | null,
   customer_party_id: null as string | null,
   customer_name: '',
   cash_bank_account_id: null as string | null,
@@ -63,11 +65,22 @@ const lines = ref<any[]>([])
 const blankLine = () => ({ item_id: null, qty: 0, unit_price: 0 })
 const openNew = () => {
   Object.assign(form, {
-    customer_party_id: null, customer_name: '', cash_bank_account_id: null,
+    id: null, customer_party_id: null, customer_name: '', cash_bank_account_id: null,
     vat_applicable: true, vat_rate: 15, sale_date: new Date().toISOString().slice(0, 10)
   })
   walkIn.value = true
   lines.value = [blankLine()]
+  open.value = true
+}
+const openEdit = (row: any) => {
+  Object.assign(form, {
+    id: row.id, customer_party_id: row.customer_party_id, customer_name: row.customer_name ?? '',
+    cash_bank_account_id: row.cash_bank_account_id, vat_applicable: row.vat_applicable,
+    vat_rate: row.vat_rate, sale_date: row.sale_date
+  })
+  walkIn.value = !row.customer_party_id
+  lines.value = (row.cash_sale_lines ?? []).map((l: any) => ({ item_id: l.item_id, qty: l.qty, unit_price: l.unit_price }))
+  if (!lines.value.length) lines.value = [blankLine()]
   open.value = true
 }
 
@@ -82,7 +95,7 @@ const save = async () => {
   if (!payload.length) { toast.add({ title: t('accounting.cash_sales.toasts.add_line'), color: 'red' }); return }
   saving.value = true
   try {
-    const insertPayload: any = {
+    const headerPayload: any = {
       cash_bank_account_id: form.cash_bank_account_id,
       vat_applicable: form.vat_applicable,
       vat_rate: form.vat_rate,
@@ -90,13 +103,20 @@ const save = async () => {
       customer_party_id: walkIn.value ? null : form.customer_party_id,
       customer_name: walkIn.value ? (form.customer_name || null) : null
     }
-    const { data: cs, error } = await client.from('cash_sales').insert(insertPayload).select('id').single()
-    if (error) throw error
-    const res = await client.from('cash_sale_lines').insert(
-      payload.map((l) => ({ ...l, cash_sale_id: (cs as any).id })) as any
-    )
-    if (res.error) throw res.error
-    toast.add({ title: t('accounting.cash_sales.toasts.saved_draft') })
+    if (form.id) {
+      const { error } = await client.from('cash_sales').update(headerPayload).eq('id', form.id)
+      if (error) throw error
+      await replaceLines('cash_sale_lines', 'cash_sale_id', form.id, payload.map((l) => ({ ...l, cash_sale_id: form.id })))
+      toast.add({ title: t('accounting.cash_sales.toasts.updated_draft') })
+    } else {
+      const { data: cs, error } = await client.from('cash_sales').insert(headerPayload).select('id').single()
+      if (error) throw error
+      const res = await client.from('cash_sale_lines').insert(
+        payload.map((l) => ({ ...l, cash_sale_id: (cs as any).id })) as any
+      )
+      if (res.error) throw res.error
+      toast.add({ title: t('accounting.cash_sales.toasts.saved_draft') })
+    }
     open.value = false
     await load()
   } catch (e: any) {
@@ -151,6 +171,7 @@ const remove = async (row: any) => {
         <template #actions-data="{ row }">
           <div class="flex gap-1 justify-end">
             <UButton icon="i-heroicons-printer" size="xs" color="gray" variant="ghost" :to="`/print/cashsale/${row.id}`" target="_blank" :aria-label="t('accounting.cash_sales.print_aria')" />
+            <UButton v-if="canWrite && row.status === 'draft'" icon="i-heroicons-pencil-square" variant="ghost" size="xs" @click="openEdit(row)" />
             <UButton v-if="canWrite && row.status === 'draft'" size="xs" variant="soft" color="green" :loading="completing === row.id" @click="complete(row)">{{ t('accounting.cash_sales.complete') }}</UButton>
             <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="remove(row)" />
           </div>
@@ -163,7 +184,7 @@ const remove = async (row: any) => {
 
     <USlideover v-model="open" :ui="{ width: 'w-screen max-w-2xl' }">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">{{ t('accounting.cash_sales.dialog.title') }}</p></template>
+        <template #header><p class="font-medium">{{ form.id ? t('accounting.cash_sales.dialog.edit_title') : t('accounting.cash_sales.dialog.title') }}</p></template>
         <div class="grid grid-cols-2 gap-4 mb-4">
           <UFormGroup :label="t('common.date')"><UInput v-model="form.sale_date" type="date" /></UFormGroup>
           <UFormGroup :label="t('accounting.cash_sales.dialog.received_into')" required>
@@ -211,7 +232,7 @@ const remove = async (row: any) => {
         <template #footer>
           <div class="flex justify-end gap-2">
             <UButton color="gray" variant="ghost" @click="open = false">{{ t('common.cancel') }}</UButton>
-            <UButton :loading="saving" @click="save">{{ t('accounting.cash_sales.dialog.save_draft') }}</UButton>
+            <UButton :loading="saving" @click="save">{{ form.id ? t('common.save') : t('accounting.cash_sales.dialog.save_draft') }}</UButton>
           </div>
         </template>
       </UCard>

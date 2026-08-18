@@ -3,6 +3,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { deleteRecord } = useRecycleBin()
+const { replaceLines } = useLineReconcile()
 const { t } = useI18n()
 
 const pos = ref<any[]>([])
@@ -18,7 +19,7 @@ const load = async () => {
   loading.value = true
   const [{ data: p }, { data: sp }, { data: it }] = await Promise.all([
     client.from('purchase_orders')
-      .select('*, parties(name), purchase_order_lines(id, qty, unit_price, received_qty)')
+      .select('*, parties(name), purchase_order_lines(id, item_id, qty, unit_price, received_qty)')
       .is('deleted_at', null)
       .order('created_at', { ascending: false }),
     client.from('parties').select('id, name').eq('is_supplier', true).is('deleted_at', null).order('name'),
@@ -39,6 +40,7 @@ onMounted(load)
 const open = ref(false)
 const saving = ref(false)
 const form = reactive({
+  id: null as string | null,
   supplier_party_id: null as string | null,
   order_date: new Date().toISOString().slice(0, 10),
   expected_date: null as string | null,
@@ -60,10 +62,20 @@ const landedUnitCost = (l: { qty: number; unit_price: number }) => {
 
 const openNew = () => {
   Object.assign(form, {
-    supplier_party_id: null, order_date: new Date().toISOString().slice(0, 10), expected_date: null,
+    id: null, supplier_party_id: null, order_date: new Date().toISOString().slice(0, 10), expected_date: null,
     currency: 'BDT', freight_cost: 0, customs_duty: 0, clearing_agent_fee: 0, other_landed_cost: 0, note: ''
   })
   lines.value = [{ item_id: null, qty: 1, unit_price: 0 }]
+  open.value = true
+}
+const openEdit = (row: any) => {
+  Object.assign(form, {
+    id: row.id, supplier_party_id: row.supplier_party_id, order_date: row.order_date, expected_date: row.expected_date,
+    currency: row.currency, freight_cost: row.freight_cost, customs_duty: row.customs_duty,
+    clearing_agent_fee: row.clearing_agent_fee, other_landed_cost: row.other_landed_cost, note: row.note ?? ''
+  })
+  lines.value = row.purchase_order_lines.map((l: any) => ({ item_id: l.item_id, qty: l.qty, unit_price: l.unit_price }))
+  if (!lines.value.length) lines.value = [{ item_id: null, qty: 1, unit_price: 0 }]
   open.value = true
 }
 
@@ -73,17 +85,25 @@ const save = async () => {
   if (!validLines.length) { toast.add({ title: t('procurement.po.toast.add_line_required'), color: 'red' }); return }
   saving.value = true
   try {
-    const { data: po, error } = await client.from('purchase_orders').insert({
+    const headerPayload: any = {
       supplier_party_id: form.supplier_party_id, order_date: form.order_date, expected_date: form.expected_date,
       currency: form.currency, freight_cost: form.freight_cost, customs_duty: form.customs_duty,
       clearing_agent_fee: form.clearing_agent_fee, other_landed_cost: form.other_landed_cost, note: form.note
-    } as any).select('id').single()
-    if (error) throw error
-    const { error: lErr } = await client.from('purchase_order_lines').insert(
-      validLines.map((l) => ({ po_id: (po as any).id, item_id: l.item_id, qty: l.qty, unit_price: l.unit_price }))
-    )
-    if (lErr) throw lErr
-    toast.add({ title: t('procurement.po.toast.created_draft') })
+    }
+    if (form.id) {
+      const { error } = await client.from('purchase_orders').update(headerPayload).eq('id', form.id)
+      if (error) throw error
+      await replaceLines('purchase_order_lines', 'po_id', form.id, validLines.map((l) => ({ po_id: form.id, item_id: l.item_id, qty: l.qty, unit_price: l.unit_price })))
+      toast.add({ title: t('procurement.po.toast.updated_draft') })
+    } else {
+      const { data: po, error } = await client.from('purchase_orders').insert(headerPayload).select('id').single()
+      if (error) throw error
+      const { error: lErr } = await client.from('purchase_order_lines').insert(
+        validLines.map((l) => ({ po_id: (po as any).id, item_id: l.item_id, qty: l.qty, unit_price: l.unit_price }))
+      )
+      if (lErr) throw lErr
+      toast.add({ title: t('procurement.po.toast.created_draft') })
+    }
     open.value = false
     await load()
   } catch (e: any) {
@@ -136,6 +156,7 @@ const cancel = async (row: any) => {
         </template>
         <template #actions-data="{ row }">
           <div class="flex items-center gap-1.5 justify-end">
+            <UButton v-if="canWrite && row.status === 'draft'" icon="i-heroicons-pencil-square" size="xs" variant="ghost" @click="openEdit(row)" />
             <UButton v-if="canWrite && row.status === 'draft'" size="xs" variant="soft" @click="approve(row)">{{ t('procurement.po.approve') }}</UButton>
             <UButton
               v-if="canWrite && ['draft','approved'].includes(row.status)"
@@ -149,7 +170,7 @@ const cancel = async (row: any) => {
     <USlideover v-model="open" :ui="{ width: 'w-screen max-w-3xl' }">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
         <template #header>
-          <p class="font-medium">{{ t('procurement.po.form.title') }}</p>
+          <p class="font-medium">{{ form.id ? t('procurement.po.form.edit_title') : t('procurement.po.form.title') }}</p>
           <p class="text-xs text-gray-500">{{ t('procurement.po.form.subtitle') }}</p>
         </template>
 
@@ -204,7 +225,7 @@ const cancel = async (row: any) => {
         <template #footer>
           <div class="flex justify-end gap-2">
             <UButton color="gray" variant="ghost" @click="open = false">{{ t('common.cancel') }}</UButton>
-            <UButton :loading="saving" @click="save">{{ t('procurement.po.form.save_as_draft') }}</UButton>
+            <UButton :loading="saving" @click="save">{{ form.id ? t('common.save') : t('procurement.po.form.save_as_draft') }}</UButton>
           </div>
         </template>
       </UCard>

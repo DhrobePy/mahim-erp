@@ -34,6 +34,7 @@
       "no_debit_notes": "No debit notes.",
       "form": {
         "title": "New GRN",
+        "edit_title": "Edit GRN",
         "supplier": "Supplier",
         "supplier_placeholder": "—",
         "warehouse": "Warehouse",
@@ -63,6 +64,7 @@
         "add_line_required": "Add at least one line",
         "completed_and_posted": "GRN completed & posted",
         "saved_draft": "GRN saved as draft",
+        "updated_draft": "GRN updated",
         "grn_failed": "GRN failed",
         "completion_failed": "Completion failed",
         "named_completed": "{grn} completed & posted"
@@ -86,6 +88,7 @@
       "cancel": "Cancel",
       "form": {
         "title": "New purchase order",
+        "edit_title": "Edit purchase order",
         "subtitle": "Created as draft — approve before receiving against it",
         "supplier": "Supplier",
         "supplier_placeholder": "Select supplier",
@@ -112,6 +115,7 @@
         "pick_supplier": "Pick a supplier",
         "add_line_required": "Add at least one line item",
         "created_draft": "Purchase order created as draft",
+        "updated_draft": "Purchase order updated",
         "save_failed": "Save failed",
         "approve_failed": "Approve failed",
         "named_approved": "{po} approved"

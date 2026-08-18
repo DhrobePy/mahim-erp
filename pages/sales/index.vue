@@ -3,6 +3,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { deleteRecord } = useRecycleBin()
+const { replaceLines } = useLineReconcile()
 const { t } = useI18n()
 
 const orders = ref<any[]>([])
@@ -43,6 +44,7 @@ onMounted(load)
 const open = ref(false)
 const saving = ref(false)
 const form = reactive({
+  id: null as string | null,
   customer_party_id: null as string | null,
   lc_id: null as string | null,
   is_deemed_export: true,
@@ -51,8 +53,15 @@ const form = reactive({
 const lines = ref<any[]>([])
 const blankLine = () => ({ item_id: null, qty: 0, unit_price: 0 })
 const openNew = () => {
-  Object.assign(form, { customer_party_id: null, lc_id: null, is_deemed_export: true, note: '' })
+  Object.assign(form, { id: null, customer_party_id: null, lc_id: null, is_deemed_export: true, note: '' })
   lines.value = [blankLine()]
+  open.value = true
+}
+const isEditable = (row: any) => row.status === 'open' && (row.sales_order_lines ?? []).every((l: any) => Number(l.delivered_qty) === 0)
+const openEdit = (row: any) => {
+  Object.assign(form, { id: row.id, customer_party_id: row.customer_party_id, lc_id: row.lc_id, is_deemed_export: row.is_deemed_export, note: row.note ?? '' })
+  lines.value = (row.sales_order_lines ?? []).map((l: any) => ({ item_id: l.item_id, qty: l.qty, unit_price: l.unit_price }))
+  if (!lines.value.length) lines.value = [blankLine()]
   open.value = true
 }
 
@@ -60,14 +69,21 @@ const save = async () => {
   if (!form.customer_party_id) { toast.add({ title: t('sales.index.toast.pick_buyer'), color: 'red' }); return }
   saving.value = true
   try {
-    const { data: so, error } = await client.from('sales_orders').insert({ ...form } as any).select('id').single()
-    if (error) throw error
+    const headerPayload: any = { customer_party_id: form.customer_party_id, lc_id: form.lc_id, is_deemed_export: form.is_deemed_export, note: form.note }
     const payload = lines.value.filter((l) => l.item_id && l.qty > 0)
-      .map((l) => ({ ...l, so_id: (so as any).id }))
     if (!payload.length) throw new Error(t('sales.index.toast.add_line'))
-    const res = await client.from('sales_order_lines').insert(payload as any)
-    if (res.error) throw res.error
-    toast.add({ title: t('sales.index.toast.created') })
+    if (form.id) {
+      const { error } = await client.from('sales_orders').update(headerPayload).eq('id', form.id)
+      if (error) throw error
+      await replaceLines('sales_order_lines', 'so_id', form.id, payload.map((l) => ({ ...l, so_id: form.id })))
+      toast.add({ title: t('sales.index.toast.updated') })
+    } else {
+      const { data: so, error } = await client.from('sales_orders').insert(headerPayload).select('id').single()
+      if (error) throw error
+      const res = await client.from('sales_order_lines').insert(payload.map((l) => ({ ...l, so_id: (so as any).id })) as any)
+      if (res.error) throw res.error
+      toast.add({ title: t('sales.index.toast.created') })
+    }
     open.value = false
     await load()
   } catch (e: any) {
@@ -115,6 +131,7 @@ const onDelete = async (row: any) => {
         </template>
         <template #actions-data="{ row }">
           <div class="flex gap-1 justify-end">
+            <UButton v-if="canWrite && isEditable(row)" icon="i-heroicons-pencil-square" size="xs" variant="ghost" @click="openEdit(row)" />
             <UButton v-if="canWrite" icon="i-heroicons-trash" size="xs" color="red" variant="ghost" :aria-label="t('sales.index.delete_aria')" @click="onDelete(row)" />
           </div>
         </template>
@@ -126,7 +143,7 @@ const onDelete = async (row: any) => {
 
     <USlideover v-model="open" :ui="{ width: 'w-screen max-w-2xl' }">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">{{ t('sales.index.modal_title') }}</p></template>
+        <template #header><p class="font-medium">{{ form.id ? t('sales.index.modal_title_edit') : t('sales.index.modal_title') }}</p></template>
         <div class="grid grid-cols-2 gap-4 mb-4">
           <UFormGroup :label="t('sales.index.buyer_label')" required>
             <USelect v-model="form.customer_party_id" :options="customers" option-attribute="name" value-attribute="id" :placeholder="t('sales.index.buyer_placeholder')" />
@@ -151,7 +168,7 @@ const onDelete = async (row: any) => {
         <template #footer>
           <div class="flex justify-end gap-2">
             <UButton color="gray" variant="ghost" @click="open = false">{{ t('common.cancel') }}</UButton>
-            <UButton :loading="saving" @click="save">{{ t('sales.index.create_order') }}</UButton>
+            <UButton :loading="saving" @click="save">{{ form.id ? t('common.save') : t('sales.index.create_order') }}</UButton>
           </div>
         </template>
       </UCard>

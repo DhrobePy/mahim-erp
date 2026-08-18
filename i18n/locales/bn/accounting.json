@@ -17,7 +17,8 @@
       },
       "journal_register": {
         "header": "জার্নাল রেজিস্টার (সর্বশেষ ৫০)",
-        "empty": "এখনো কোনো জার্নাল নেই।"
+        "empty": "এখনো কোনো জার্নাল নেই।",
+        "delete_aria": "ম্যানুয়াল জার্নাল মুছুন"
       },
       "journal_dialog": {
         "title": "ম্যানুয়াল জার্নাল ভাউচার",
@@ -44,6 +45,7 @@
       "inactive": "নিষ্ক্রিয়",
       "dialog": {
         "title": "নতুন হিসাব",
+        "edit_title": "হিসাব সম্পাদনা",
         "kind": "ধরন",
         "bank_account_option": "ব্যাংক হিসাব",
         "cash_point_option": "নগদ পয়েন্ট",
@@ -53,12 +55,15 @@
         "branch_hint": "ঐচ্ছিক",
         "account_no": "হিসাব নং",
         "opening_balance": "প্রারম্ভিক ব্যালেন্স (৳)",
-        "as_of": "যে তারিখ পর্যন্ত"
+        "opening_locked_hint": "তৈরির পর লক করা",
+        "as_of": "যে তারিখ পর্যন্ত",
+        "is_active": "সক্রিয়"
       },
       "toasts": {
         "name_required": "নাম আবশ্যক",
         "pick_bank": "একটি ব্যাংক নির্বাচন করুন",
-        "created": "হিসাব তৈরি হয়েছে"
+        "created": "হিসাব তৈরি হয়েছে",
+        "updated": "হিসাব হালনাগাদ হয়েছে"
       }
     },
     "cash_sales": {
@@ -78,6 +83,7 @@
       "empty": "এখনো কোনো নগদ বিক্রয় নেই।",
       "dialog": {
         "title": "নতুন নগদ বিক্রয়",
+        "edit_title": "নগদ বিক্রয় সম্পাদনা",
         "received_into": "গৃহীত হিসাব",
         "customer": "ক্রেতা",
         "walk_in_tab": "ওয়াক-ইন",
@@ -99,6 +105,7 @@
         "add_line": "অন্তত একটি লাইন যোগ করুন",
         "save_failed": "সংরক্ষণ ব্যর্থ হয়েছে",
         "saved_draft": "নগদ বিক্রয় খসড়া হিসেবে সংরক্ষিত হয়েছে",
+        "updated_draft": "নগদ বিক্রয় হালনাগাদ হয়েছে",
         "completion_failed": "সম্পন্ন করা ব্যর্থ হয়েছে",
         "completed": "{sale} সম্পন্ন হয়েছে — জিএলে পোস্ট হয়েছে"
       }
@@ -197,6 +204,7 @@
     },
     "journal_detail": {
       "source_link": "→ উৎস: {table}",
+      "delete": "মুছুন",
       "header": "ভাউচার লাইন",
       "balance_line": "ডেবিট {debit} / ক্রেডিট {credit}",
       "columns": {

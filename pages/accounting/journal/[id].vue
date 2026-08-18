@@ -1,8 +1,11 @@
 <script setup lang="ts">
 const route = useRoute()
+const router = useRouter()
 const client = useSupabaseClient()
 const { money } = useFmt()
 const { docLink } = useDocLink()
+const { canWrite } = useProfile()
+const { deleteRecord } = useRecycleBin()
 const { t } = useI18n()
 
 const id = route.params.id as string
@@ -24,6 +27,9 @@ const totals = computed(() => ({
   c: (journal.value?.journal_lines ?? []).reduce((s: number, l: any) => s + Number(l.credit), 0)
 }))
 const sourceLink = computed(() => docLink(journal.value?.ref_table, journal.value?.ref_id))
+const removeJournal = async () => {
+  if (await deleteRecord('journals', journal.value.id, journal.value.journal_no)) router.push('/accounting')
+}
 </script>
 
 <template>
@@ -34,6 +40,10 @@ const sourceLink = computed(() => docLink(journal.value?.ref_table, journal.valu
         :to="sourceLink"
         class="text-[12.5px] text-amber-600 dark:text-amber-400 hover:underline self-center"
       >{{ t('accounting.journal_detail.source_link', { table: journal.ref_table?.replace(/_/g, ' ') }) }}</NuxtLink>
+      <UButton
+        v-if="canWrite && !journal.ref_table" icon="i-heroicons-trash" color="red" variant="soft" size="xs"
+        @click="removeJournal"
+      >{{ t('accounting.journal_detail.delete') }}</UButton>
     </PageHeader>
 
     <UCard>

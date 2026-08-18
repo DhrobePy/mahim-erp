@@ -3,6 +3,7 @@ const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite } = useProfile()
 const { deleteRecord } = useRecycleBin()
+const { replaceLines } = useLineReconcile()
 const { t } = useI18n()
 
 const challans = ref<any[]>([])
@@ -26,7 +27,7 @@ const load = async () => {
   loading.value = true
   const [c, o, l, i] = await Promise.all([
     client.from('delivery_challans')
-      .select('*, parties(name), lcs(lc_no), covers:covers_challan_id(challan_no), delivery_challan_lines(id, qty, unit_price, items(sku))')
+      .select('*, parties(name), lcs(lc_no), covers:covers_challan_id(challan_no), delivery_challan_lines(id, item_id, qty, unit_price, items(sku))')
       .is('deleted_at', null)
       .order('created_at', { ascending: false }),
     client.from('sales_orders')
@@ -47,6 +48,7 @@ onMounted(load)
 const open = ref(false)
 const saving = ref(false)
 const form = reactive({
+  id: null as string | null,
   so_id: null as string | null,
   challan_kind: 'standard',
   lc_id: null as string | null,
@@ -60,16 +62,28 @@ const kindOptions = computed(() => [
 ])
 const openNew = () => {
   Object.assign(form, {
-    so_id: null, challan_kind: 'standard', lc_id: null,
+    id: null, so_id: null, challan_kind: 'standard', lc_id: null,
     actual_delivery_date: new Date().toISOString().slice(0, 10),
     document_date: new Date().toISOString().slice(0, 10)
   })
   lines.value = []
   open.value = true
 }
+const openEdit = (row: any) => {
+  Object.assign(form, {
+    id: row.id, so_id: row.so_id, challan_kind: row.challan_kind, lc_id: row.lc_id,
+    actual_delivery_date: row.actual_delivery_date, document_date: row.document_date
+  })
+  const itemBySku = new Map(items.value.map((i: any) => [i.id, i.sku]))
+  lines.value = (row.delivery_challan_lines ?? []).map((l: any) => ({
+    item_id: l.item_id, sku: l.items?.sku ?? itemBySku.get(l.item_id), qty: l.qty, unit_price: l.unit_price
+  }))
+  open.value = true
+}
 
-// prefill lines with the SO's undelivered quantities
+// prefill lines with the SO's undelivered quantities — create-only, inert while editing
 watch(() => form.so_id, (soId) => {
+  if (form.id) return
   const so = orders.value.find((o) => o.id === soId)
   if (!so) { lines.value = []; return }
   form.lc_id = so.lc_id
@@ -83,32 +97,45 @@ watch(() => form.so_id, (soId) => {
 
 const save = async (issue: boolean) => {
   const so = orders.value.find((o) => o.id === form.so_id)
-  if (!so) { toast.add({ title: t('challans.toast.pick_so'), color: 'red' }); return }
+  if (!so && !form.id) { toast.add({ title: t('challans.toast.pick_so'), color: 'red' }); return }
   if (form.challan_kind === 'standard' && !form.lc_id) {
     toast.add({ title: t('challans.toast.standard_needs_lc'), color: 'red' })
     return
   }
   saving.value = true
   try {
-    const { data: ch, error } = await client.from('delivery_challans').insert({
-      so_id: form.so_id,
-      challan_kind: form.challan_kind,
-      lc_id: form.challan_kind === 'original' ? null : form.lc_id,
-      customer_party_id: so.customer_party_id,
-      actual_delivery_date: form.actual_delivery_date,
-      document_date: form.document_date
-    } as any).select('id').single()
-    if (error) throw error
     const payload = lines.value.filter((l) => l.item_id && l.qty > 0)
-      .map((l) => ({ challan_id: (ch as any).id, item_id: l.item_id, qty: l.qty, unit_price: l.unit_price }))
+      .map((l) => ({ item_id: l.item_id, qty: l.qty, unit_price: l.unit_price }))
     if (!payload.length) throw new Error(t('challans.toast.nothing_to_deliver'))
-    const res = await client.from('delivery_challan_lines').insert(payload as any)
-    if (res.error) throw res.error
+    let challanId = form.id
+    if (form.id) {
+      const headerPayload: any = {
+        so_id: form.so_id, challan_kind: form.challan_kind,
+        lc_id: form.challan_kind === 'original' ? null : form.lc_id,
+        actual_delivery_date: form.actual_delivery_date, document_date: form.document_date
+      }
+      const { error } = await client.from('delivery_challans').update(headerPayload).eq('id', form.id)
+      if (error) throw error
+      await replaceLines('delivery_challan_lines', 'challan_id', form.id, payload.map((l) => ({ ...l, challan_id: form.id })))
+    } else {
+      const { data: ch, error } = await client.from('delivery_challans').insert({
+        so_id: form.so_id,
+        challan_kind: form.challan_kind,
+        lc_id: form.challan_kind === 'original' ? null : form.lc_id,
+        customer_party_id: so!.customer_party_id,
+        actual_delivery_date: form.actual_delivery_date,
+        document_date: form.document_date
+      } as any).select('id').single()
+      if (error) throw error
+      challanId = (ch as any).id
+      const res = await client.from('delivery_challan_lines').insert(payload.map((l) => ({ ...l, challan_id: challanId })) as any)
+      if (res.error) throw res.error
+    }
     if (issue) {
-      const rpc = await client.rpc('issue_challan', { p_challan_id: (ch as any).id } as any)
+      const rpc = await client.rpc('issue_challan', { p_challan_id: challanId } as any)
       if (rpc.error) throw rpc.error
     }
-    toast.add({ title: issue ? t('challans.toast.issued_stock') : t('challans.toast.saved_draft') })
+    toast.add({ title: issue ? t('challans.toast.issued_stock') : (form.id ? t('challans.toast.updated_draft') : t('challans.toast.saved_draft')) })
     open.value = false
     await load()
   } catch (e: any) {
@@ -206,6 +233,7 @@ const statusLabel = (s: string) => s === 'draft' ? t('common.draft') : t(`challa
               icon="i-heroicons-printer" size="xs" color="gray" variant="ghost"
               :to="`/print/challan/${row.id}`" target="_blank" :aria-label="t('challans.print_aria')"
             />
+            <UButton v-if="canWrite && row.status === 'draft'" icon="i-heroicons-pencil-square" size="xs" variant="ghost" @click="openEdit(row)" />
             <UButton v-if="canWrite && row.status === 'draft'" size="xs" variant="soft" @click="issueDraft(row)">{{ t('challans.issue') }}</UButton>
             <UButton
               v-if="canWrite && row.challan_kind === 'original' && row.status === 'delivered_unbilled'"
@@ -226,7 +254,7 @@ const statusLabel = (s: string) => s === 'draft' ? t('common.draft') : t(`challa
 
     <USlideover v-model="open" :ui="{ width: 'w-screen max-w-2xl' }">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">{{ t('challans.modal_title') }}</p></template>
+        <template #header><p class="font-medium">{{ form.id ? t('challans.modal_title_edit') : t('challans.modal_title') }}</p></template>
         <div class="grid grid-cols-2 gap-4 mb-4">
           <UFormGroup :label="t('challans.so_label')" required>
             <USelect v-model="form.so_id" :options="orders" option-attribute="so_no" value-attribute="id" :placeholder="t('challans.so_placeholder')" />
@@ -255,7 +283,7 @@ const statusLabel = (s: string) => s === 'draft' ? t('common.draft') : t(`challa
         <template #footer>
           <div class="flex justify-end gap-2">
             <UButton color="gray" variant="ghost" @click="open = false">{{ t('challans.cancel') }}</UButton>
-            <UButton color="gray" variant="soft" :loading="saving" @click="save(false)">{{ t('challans.save_draft') }}</UButton>
+            <UButton color="gray" variant="soft" :loading="saving" @click="save(false)">{{ form.id ? t('common.save') : t('challans.save_draft') }}</UButton>
             <UButton :loading="saving" @click="save(true)">{{ t('challans.issue_now') }}</UButton>
           </div>
         </template>

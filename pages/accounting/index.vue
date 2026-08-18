@@ -2,6 +2,7 @@
 const client = useSupabaseClient()
 const toast = useToast()
 const { canWrite, activeCompanyId } = useProfile()
+const { deleteRecord } = useRecycleBin()
 const { t } = useI18n()
 
 const tb = ref<any[]>([])
@@ -15,6 +16,7 @@ const load = async () => {
     client.from('trial_balance').select('*'),
     client.from('journals')
       .select('*, journal_lines(id, debit, credit, note, accounts(code, name))')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false }).limit(50),
     client.from('accounts').select('code, name').eq('is_postable', true).is('deleted_at', null).order('code')
   ])
@@ -72,6 +74,9 @@ const save = async () => {
 }
 
 const expanded = ref<string | null>(null)
+const removeJournal = async (row: any) => {
+  if (await deleteRecord('journals', row.id, row.journal_no)) await load()
+}
 </script>
 
 <template>
@@ -118,7 +123,13 @@ const expanded = ref<string | null>(null)
                 <span class="num text-xs text-gray-500 dark:text-zinc-500 ml-2">{{ j.journal_date }}</span>
                 <p class="text-xs text-gray-500">{{ j.memo }}</p>
               </div>
-              <UIcon :name="expanded === j.id ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" class="text-gray-400" />
+              <div class="flex items-center gap-1">
+                <UButton
+                  v-if="canWrite && !j.ref_table" icon="i-heroicons-trash" color="red" variant="ghost" size="xs"
+                  :aria-label="t('accounting.home.journal_register.delete_aria')" @click.stop="removeJournal(j)"
+                />
+                <UIcon :name="expanded === j.id ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" class="text-gray-400" />
+              </div>
             </button>
             <div v-if="expanded === j.id" class="mt-2 text-xs space-y-1">
               <div v-for="l in j.journal_lines" :key="l.id" class="flex justify-between px-2">

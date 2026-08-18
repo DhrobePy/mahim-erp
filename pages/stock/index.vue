@@ -8,6 +8,7 @@ const { t } = useI18n()
 const rows = ref<any[]>([])
 const items = ref<any[]>([])
 const warehouses = ref<any[]>([])
+const manualEntries = ref<any[]>([])
 const loading = ref(true)
 
 const columns = computed(() => [
@@ -21,13 +22,19 @@ const columns = computed(() => [
 
 const load = async () => {
   loading.value = true
-  const [{ data: stock }, { data: it }, { data: wh }] = await Promise.all([
+  const [{ data: stock }, { data: it }, { data: wh }, { data: man }] = await Promise.all([
     client.from('current_stock').select('*'),
     client.from('items').select('id, sku, name, reorder_level, uoms(code)').is('deleted_at', null),
-    client.from('warehouses').select('id, code, name').is('deleted_at', null)
+    client.from('warehouses').select('id, code, name').is('deleted_at', null),
+    client.from('stock_movements')
+      .select('id, item_id, warehouse_id, movement_type, quantity, unit_cost, note, moved_at, items(sku, name), warehouses(code)')
+      .eq('ref_no', 'MANUAL')
+      .order('moved_at', { ascending: false })
+      .limit(100)
   ])
   items.value = it ?? []
   warehouses.value = wh ?? []
+  manualEntries.value = man ?? []
 
   const itemMap = new Map((it ?? []).map((i: any) => [i.id, i]))
   const whMap = new Map((wh ?? []).map((w: any) => [w.id, w]))
@@ -52,6 +59,7 @@ onMounted(load)
 const open = ref(false)
 const saving = ref(false)
 const adj = reactive({
+  id: null as string | null,
   item_id: null as string | null,
   warehouse_id: null as string | null,
   movement_type: 'adjustment',
@@ -66,7 +74,14 @@ const adjTypes = computed(() => [
 ])
 
 const openAdj = () => {
-  Object.assign(adj, { item_id: null, warehouse_id: warehouses.value[0]?.id ?? null, movement_type: 'adjustment', quantity: 0, unit_cost: 0, note: '' })
+  Object.assign(adj, { id: null, item_id: null, warehouse_id: warehouses.value[0]?.id ?? null, movement_type: 'adjustment', quantity: 0, unit_cost: 0, note: '' })
+  open.value = true
+}
+const openEditAdj = (row: any) => {
+  Object.assign(adj, {
+    id: row.id, item_id: row.item_id, warehouse_id: row.warehouse_id, movement_type: row.movement_type,
+    quantity: row.quantity, unit_cost: row.unit_cost, note: row.note ?? ''
+  })
   open.value = true
 }
 
@@ -77,18 +92,27 @@ const saveAdj = async () => {
   }
   saving.value = true
   try {
-    const { error } = await client.from('stock_movements').insert({
-      item_id: adj.item_id,
-      warehouse_id: adj.warehouse_id,
-      movement_type: adj.movement_type,
-      quantity: Number(adj.quantity),
-      unit_cost: Number(adj.unit_cost),
-      ref_no: 'MANUAL',
-      note: adj.note,
-      created_by: user.value?.id
-    })
-    if (error) throw error
-    toast.add({ title: t('stock.stock_updated') })
+    if (adj.id) {
+      const { error } = await client.from('stock_movements').update({
+        item_id: adj.item_id, warehouse_id: adj.warehouse_id, movement_type: adj.movement_type,
+        quantity: Number(adj.quantity), unit_cost: Number(adj.unit_cost), note: adj.note
+      }).eq('id', adj.id).eq('ref_no', 'MANUAL')
+      if (error) throw error
+      toast.add({ title: t('stock.stock_entry_updated') })
+    } else {
+      const { error } = await client.from('stock_movements').insert({
+        item_id: adj.item_id,
+        warehouse_id: adj.warehouse_id,
+        movement_type: adj.movement_type,
+        quantity: Number(adj.quantity),
+        unit_cost: Number(adj.unit_cost),
+        ref_no: 'MANUAL',
+        note: adj.note,
+        created_by: user.value?.id
+      })
+      if (error) throw error
+      toast.add({ title: t('stock.stock_updated') })
+    }
     open.value = false
     await load()
   } catch (e: any) {
@@ -96,6 +120,13 @@ const saveAdj = async () => {
   } finally {
     saving.value = false
   }
+}
+
+const removeAdj = async (row: any) => {
+  if (!confirm(t('stock.delete_confirm', { note: row.note || row.items?.sku }))) return
+  const { error } = await client.from('stock_movements').delete().eq('id', row.id).eq('ref_no', 'MANUAL')
+  if (error) toast.add({ title: t('stock.failed'), description: error.message, color: 'red' })
+  else { toast.add({ title: t('stock.stock_entry_deleted') }); await load() }
 }
 </script>
 
@@ -125,9 +156,35 @@ const saveAdj = async () => {
       </UTable>
     </UCard>
 
+    <UCard v-if="manualEntries.length" class="mt-6">
+      <template #header><p class="microlabel text-gray-400 dark:text-zinc-500">{{ t('stock.manual_entries.header') }}</p></template>
+      <UTable
+        :rows="manualEntries"
+        :columns="[
+          { key: 'date', label: t('common.date') }, { key: 'item', label: t('stock.columns.item') },
+          { key: 'warehouse', label: t('stock.columns.warehouse') }, { key: 'type', label: t('common.type') },
+          { key: 'qty', label: t('stock.columns.qty') }, { key: 'note', label: t('common.note') },
+          { key: 'actions', label: '' }
+        ]"
+      >
+        <template #date-data="{ row }"><span class="num">{{ new Date(row.moved_at).toISOString().slice(0, 10) }}</span></template>
+        <template #item-data="{ row }">{{ row.items?.sku }}</template>
+        <template #warehouse-data="{ row }">{{ row.warehouses?.code }}</template>
+        <template #type-data="{ row }">{{ t(`stock.adj_types.${row.movement_type}`) }}</template>
+        <template #qty-data="{ row }"><span class="num">{{ Number(row.quantity).toLocaleString('en-IN') }}</span></template>
+        <template #note-data="{ row }"><span class="text-gray-400 dark:text-zinc-500">{{ row.note || '—' }}</span></template>
+        <template #actions-data="{ row }">
+          <div class="flex gap-1 justify-end">
+            <UButton v-if="canWrite" icon="i-heroicons-pencil-square" variant="ghost" size="xs" @click="openEditAdj(row)" />
+            <UButton v-if="canWrite" icon="i-heroicons-trash" color="red" variant="ghost" size="xs" @click="removeAdj(row)" />
+          </div>
+        </template>
+      </UTable>
+    </UCard>
+
     <USlideover v-model="open">
       <UCard class="flex flex-col h-full" :ui="{ ring: '', rounded: 'rounded-none', shadow: '', body: { base: 'flex-1 overflow-y-auto' } }">
-        <template #header><p class="font-medium">{{ t('stock.stock_entry') }}</p></template>
+        <template #header><p class="font-medium">{{ adj.id ? t('stock.edit_entry') : t('stock.stock_entry') }}</p></template>
         <div class="space-y-4">
           <UFormGroup :label="t('stock.fields.item')" required>
             <USelect
@@ -156,7 +213,7 @@ const saveAdj = async () => {
         <template #footer>
           <div class="flex justify-end gap-2">
             <UButton color="gray" variant="ghost" @click="open = false">{{ t('common.cancel') }}</UButton>
-            <UButton :loading="saving" @click="saveAdj">{{ t('stock.post') }}</UButton>
+            <UButton :loading="saving" @click="saveAdj">{{ adj.id ? t('common.save') : t('stock.post') }}</UButton>
           </div>
         </template>
       </UCard>

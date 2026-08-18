@@ -17,7 +17,8 @@
       },
       "journal_register": {
         "header": "Journal register (latest 50)",
-        "empty": "No journals yet."
+        "empty": "No journals yet.",
+        "delete_aria": "Delete manual journal"
       },
       "journal_dialog": {
         "title": "Manual journal voucher",
@@ -44,6 +45,7 @@
       "inactive": "inactive",
       "dialog": {
         "title": "New account",
+        "edit_title": "Edit account",
         "kind": "Kind",
         "bank_account_option": "Bank account",
         "cash_point_option": "Cash point",
@@ -53,12 +55,15 @@
         "branch_hint": "optional",
         "account_no": "Account no.",
         "opening_balance": "Opening balance (৳)",
-        "as_of": "As of"
+        "opening_locked_hint": "locked after creation",
+        "as_of": "As of",
+        "is_active": "Active"
       },
       "toasts": {
         "name_required": "Name is required",
         "pick_bank": "Pick a bank",
-        "created": "Account created"
+        "created": "Account created",
+        "updated": "Account updated"
       }
     },
     "cash_sales": {
@@ -78,6 +83,7 @@
       "empty": "No cash sales yet.",
       "dialog": {
         "title": "New cash sale",
+        "edit_title": "Edit cash sale",
         "received_into": "Received into",
         "customer": "Customer",
         "walk_in_tab": "Walk-in",
@@ -99,6 +105,7 @@
         "add_line": "Add at least one line",
         "save_failed": "Save failed",
         "saved_draft": "Cash sale saved as draft",
+        "updated_draft": "Cash sale updated",
         "completion_failed": "Completion failed",
         "completed": "{sale} completed — posted to GL"
       }
@@ -197,6 +204,7 @@
     },
     "journal_detail": {
       "source_link": "→ source: {table}",
+      "delete": "Delete",
       "header": "Voucher lines",
       "balance_line": "Dr {debit} / Cr {credit}",
       "columns": {
